@@ -1,6 +1,7 @@
 import { createContext, useContext, useState, useEffect, ReactNode } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { useParams, useNavigate } from "react-router-dom";
+import { supabase } from "@/integrations/supabase/client";
 
 interface OrgContextType {
   currentOrg: {
@@ -11,7 +12,7 @@ interface OrgContextType {
     role: string;
   } | null;
   setCurrentOrgBySlug: (slug: string) => void;
-  basePath: string; // e.g. "/clinic/my-clinic"
+  basePath: string;
 }
 
 const OrgContext = createContext<OrgContextType>({
@@ -21,10 +22,12 @@ const OrgContext = createContext<OrgContextType>({
 });
 
 export function OrgProvider({ children }: { children: ReactNode }) {
-  const { orgMemberships, loading } = useAuth();
+  const { orgMemberships, roles, loading } = useAuth();
   const { slug } = useParams<{ slug: string }>();
   const navigate = useNavigate();
   const [currentOrg, setCurrentOrg] = useState<OrgContextType["currentOrg"]>(null);
+
+  const isSuperAdmin = roles.includes("super_admin");
 
   const setCurrentOrgBySlug = (targetSlug: string) => {
     const membership = orgMemberships.find((m) => m.org_slug === targetSlug);
@@ -41,9 +44,10 @@ export function OrgProvider({ children }: { children: ReactNode }) {
 
   // Sync from URL slug
   useEffect(() => {
-    if (loading || orgMemberships.length === 0) return;
+    if (loading) return;
 
     if (slug) {
+      // First check regular memberships
       const membership = orgMemberships.find((m) => m.org_slug === slug);
       if (membership) {
         setCurrentOrg({
@@ -53,12 +57,31 @@ export function OrgProvider({ children }: { children: ReactNode }) {
           clinic_type: membership.clinic_type,
           role: membership.role,
         });
+      } else if (isSuperAdmin) {
+        // Super admin can access any org — fetch it directly
+        supabase
+          .from("organizations")
+          .select("id, name, slug, clinic_type")
+          .eq("slug", slug)
+          .maybeSingle()
+          .then(({ data }) => {
+            if (data) {
+              setCurrentOrg({
+                org_id: data.id,
+                org_name: data.name,
+                org_slug: data.slug,
+                clinic_type: data.clinic_type,
+                role: "owner", // super admin gets full access
+              });
+            } else {
+              navigate("/admin", { replace: true });
+            }
+          });
       } else {
-        // User doesn't have access to this org
         navigate("/select-clinic", { replace: true });
       }
     }
-  }, [slug, orgMemberships, loading, navigate]);
+  }, [slug, orgMemberships, loading, isSuperAdmin, navigate]);
 
   const basePath = currentOrg ? `/clinic/${currentOrg.org_slug}` : "";
 
