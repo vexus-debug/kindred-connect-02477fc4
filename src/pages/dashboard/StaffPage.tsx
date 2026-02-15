@@ -5,7 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Plus, Pencil, UserCog } from "lucide-react";
 import { useStaff, type StaffMember } from "@/hooks/useStaff";
-import { useAuth } from "@/hooks/useAuth";
+import { useOrg } from "@/hooks/useOrg";
 import { AddStaffDialog } from "@/components/dashboard/AddStaffDialog";
 import { EditStaffDialog } from "@/components/dashboard/EditStaffDialog";
 import { PageHeader } from "@/components/dashboard/PageHeader";
@@ -28,8 +28,9 @@ const stagger = {
 
 export default function StaffPage() {
   const { data: staff = [], isLoading } = useStaff();
-  const { roles } = useAuth();
-  const isAdmin = roles.includes("admin");
+  const { currentOrg } = useOrg();
+  const orgRole = currentOrg?.role || "";
+  const isAdmin = orgRole === "owner" || orgRole === "admin";
 
   const [addOpen, setAddOpen] = useState(false);
   const [editStaff, setEditStaff] = useState<StaffMember | null>(null);

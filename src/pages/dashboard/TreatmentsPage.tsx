@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Search, Plus, Pencil, Trash2, Stethoscope } from "lucide-react";
 import { useTreatments, useDeleteTreatment, type Treatment } from "@/hooks/useTreatments";
 import { TreatmentDialog } from "@/components/dashboard/TreatmentDialog";
-import { useAuth } from "@/hooks/useAuth";
+import { useOrg } from "@/hooks/useOrg";
 import { PageHeader } from "@/components/dashboard/PageHeader";
 import { EmptyState } from "@/components/dashboard/EmptyState";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -20,8 +20,9 @@ export default function TreatmentsPage() {
   const [search, setSearch] = useState("");
   const { data: treatments = [], isLoading } = useTreatments();
   const deleteTreatment = useDeleteTreatment();
-  const { roles } = useAuth();
-  const isAdmin = roles.includes("admin");
+  const { currentOrg } = useOrg();
+  const orgRole = currentOrg?.role || "";
+  const isAdmin = orgRole === "owner" || orgRole === "admin";
 
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editTreatment, setEditTreatment] = useState<Treatment | null>(null);
