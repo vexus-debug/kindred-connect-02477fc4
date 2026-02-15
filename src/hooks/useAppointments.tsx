@@ -2,6 +2,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
 import { format } from "date-fns";
+import { useOrg } from "@/hooks/useOrg";
 
 export interface AppointmentRow {
   id: string;
@@ -22,13 +23,17 @@ export interface AppointmentRow {
 }
 
 export function useAppointmentsByDate(date: Date) {
+  const { currentOrg } = useOrg();
+  const orgId = currentOrg?.org_id;
   const dateStr = format(date, "yyyy-MM-dd");
   return useQuery({
-    queryKey: ["appointments", dateStr],
+    queryKey: ["appointments", dateStr, orgId],
+    enabled: !!orgId,
     queryFn: async () => {
       const { data, error } = await (supabase as any)
         .from("appointments")
         .select("*, patients(first_name, last_name), staff(full_name), treatments(name)")
+        .eq("org_id", orgId)
         .eq("appointment_date", dateStr)
         .order("appointment_time");
       if (error) throw error;
@@ -39,6 +44,7 @@ export function useAppointmentsByDate(date: Date) {
 
 export function useCreateAppointment() {
   const queryClient = useQueryClient();
+  const { currentOrg } = useOrg();
   return useMutation({
     mutationFn: async (appointment: {
       patient_id: string;
@@ -50,7 +56,7 @@ export function useCreateAppointment() {
       is_walk_in: boolean;
       notes?: string;
     }) => {
-      const { data, error } = await (supabase as any).from("appointments").insert(appointment).select().single();
+      const { data, error } = await (supabase as any).from("appointments").insert({ ...appointment, org_id: currentOrg?.org_id }).select().single();
       if (error) throw error;
       return data;
     },

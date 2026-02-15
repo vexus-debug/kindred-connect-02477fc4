@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
+import { useOrg } from "@/hooks/useOrg";
 
 export interface Patient {
   id: string;
@@ -23,12 +24,16 @@ export interface Patient {
 }
 
 export function usePatients() {
+  const { currentOrg } = useOrg();
+  const orgId = currentOrg?.org_id;
   return useQuery({
-    queryKey: ["patients"],
+    queryKey: ["patients", orgId],
+    enabled: !!orgId,
     queryFn: async () => {
       const { data, error } = await (supabase as any)
         .from("patients")
         .select("*")
+        .eq("org_id", orgId)
         .order("created_at", { ascending: false });
       if (error) throw error;
       return (data || []) as Patient[];
@@ -38,9 +43,10 @@ export function usePatients() {
 
 export function useCreatePatient() {
   const queryClient = useQueryClient();
+  const { currentOrg } = useOrg();
   return useMutation({
     mutationFn: async (patient: any) => {
-      const { data, error } = await (supabase as any).from("patients").insert(patient).select().single();
+      const { data, error } = await (supabase as any).from("patients").insert({ ...patient, org_id: currentOrg?.org_id }).select().single();
       if (error) throw error;
       return data;
     },

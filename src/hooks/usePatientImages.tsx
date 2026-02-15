@@ -1,17 +1,21 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
+import { useOrg } from "@/hooks/useOrg";
 
 export function usePatientImages(patientId?: string) {
+  const { currentOrg } = useOrg();
+  const orgId = currentOrg?.org_id;
   return useQuery({
-    queryKey: ["patient_images", patientId],
-    enabled: !!patientId,
+    queryKey: ["patient_images", patientId, orgId],
+    enabled: !!patientId && !!orgId,
     queryFn: async () => {
       const { data, error } = await (supabase as any)
         .from("patient_images")
         .select("*")
+        .eq("org_id", orgId)
         .eq("patient_id", patientId!)
-        .order("date_taken", { ascending: false });
+        .order("created_at", { ascending: false });
       if (error) throw error;
       return data || [];
     },
@@ -20,18 +24,18 @@ export function usePatientImages(patientId?: string) {
 
 export function useUploadPatientImage() {
   const qc = useQueryClient();
+  const { currentOrg } = useOrg();
   return useMutation({
     mutationFn: async ({ file, patientId, imageType, toothNumber, description, userId }: {
-      file: File; patientId: string; imageType: string; toothNumber?: number; description?: string; userId?: string;
+      file: File; patientId: string; imageType: string; toothNumber?: string | number; description?: string; userId?: string;
     }) => {
       const ext = file.name.split(".").pop();
-      const path = `${patientId}/${Date.now()}.${ext}`;
+      const path = `${currentOrg?.org_id}/${patientId}/${Date.now()}.${ext}`;
       const { error: uploadError } = await supabase.storage.from("patient-images").upload(path, file);
       if (uploadError) throw uploadError;
-      const { data: { publicUrl } } = supabase.storage.from("patient-images").getPublicUrl(path);
       const { data, error } = await (supabase as any).from("patient_images").insert({
-        patient_id: patientId, image_url: publicUrl, image_type: imageType,
-        tooth_number: toothNumber || null, description: description || "", uploaded_by: userId || null,
+        patient_id: patientId, image_url: path, image_type: imageType,
+        tooth_number: toothNumber || null, description: description || "", uploaded_by: userId || null, org_id: currentOrg?.org_id,
       }).select().single();
       if (error) throw error;
       return data;

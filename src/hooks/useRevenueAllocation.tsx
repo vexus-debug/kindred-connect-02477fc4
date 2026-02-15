@@ -1,14 +1,19 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { useOrg } from "@/hooks/useOrg";
 
 export function useRevenueAllocationRules() {
+  const { currentOrg } = useOrg();
+  const orgId = currentOrg?.org_id;
   return useQuery({
-    queryKey: ["revenue-allocation-rules"],
+    queryKey: ["revenue-allocation-rules", orgId],
+    enabled: !!orgId,
     queryFn: async () => {
       const { data, error } = await (supabase as any)
         .from("revenue_allocation_rules")
         .select("*")
+        .eq("org_id", orgId)
         .order("category");
       if (error) throw error;
       return data || [];
@@ -17,13 +22,17 @@ export function useRevenueAllocationRules() {
 }
 
 export function useStaffAllocationRules() {
+  const { currentOrg } = useOrg();
+  const orgId = currentOrg?.org_id;
   return useQuery({
-    queryKey: ["staff-allocation-rules"],
+    queryKey: ["staff-allocation-rules", orgId],
+    enabled: !!orgId,
     queryFn: async () => {
       const { data, error } = await (supabase as any)
         .from("staff_allocation_rules")
         .select("*")
-        .order("role_title");
+        .eq("org_id", orgId)
+        .order("category");
       if (error) throw error;
       return (data || []) as any[];
     },
@@ -80,10 +89,13 @@ export function useToggleAllocationActive() {
 }
 
 export function useRevenueSummary() {
+  const { currentOrg } = useOrg();
+  const orgId = currentOrg?.org_id;
   return useQuery({
-    queryKey: ["revenue-summary"],
+    queryKey: ["revenue-summary", orgId],
+    enabled: !!orgId,
     queryFn: async () => {
-      const { data: allPayments } = await (supabase as any).from("payments").select("amount");
+      const { data: allPayments } = await (supabase as any).from("payments").select("amount").eq("org_id", orgId);
       const totalRevenue = (allPayments || []).reduce((s: number, p: any) => s + Number(p.amount), 0);
 
       const startOfMonth = new Date();
@@ -92,11 +104,12 @@ export function useRevenueSummary() {
       const { data: monthPayments } = await (supabase as any)
         .from("payments")
         .select("amount")
+        .eq("org_id", orgId)
         .gte("payment_date", startOfMonth.toISOString().split("T")[0]);
       const monthRevenue = (monthPayments || []).reduce((s: number, p: any) => s + Number(p.amount), 0);
 
-      const { data: warChest } = await (supabase as any).from("war_chest_entries").select("excess_amount");
-      const warChestTotal = (warChest || []).reduce((s: number, e: any) => s + Number(e.excess_amount), 0);
+      const { data: warChest } = await (supabase as any).from("war_chest_entries").select("amount").eq("org_id", orgId);
+      const warChestTotal = (warChest || []).reduce((s: number, e: any) => s + Number(e.amount), 0);
 
       return { totalRevenue, monthRevenue, warChestTotal };
     },
@@ -104,16 +117,20 @@ export function useRevenueSummary() {
 }
 
 export function useAllocationBreakdown() {
+  const { currentOrg } = useOrg();
+  const orgId = currentOrg?.org_id;
   return useQuery({
-    queryKey: ["allocation-breakdown"],
+    queryKey: ["allocation-breakdown", orgId],
+    enabled: !!orgId,
     queryFn: async () => {
-      const { data: allAllocations } = await (supabase as any).from("revenue_allocations").select("category, amount");
+      const { data: allAllocations } = await (supabase as any).from("revenue_allocations").select("category, amount").eq("org_id", orgId);
       const startOfMonth = new Date();
       startOfMonth.setDate(1);
       startOfMonth.setHours(0, 0, 0, 0);
       const { data: monthAllocations } = await (supabase as any)
         .from("revenue_allocations")
         .select("category, amount, created_at")
+        .eq("org_id", orgId)
         .gte("created_at", startOfMonth.toISOString());
 
       const allTime: Record<string, number> = {};
@@ -127,22 +144,26 @@ export function useAllocationBreakdown() {
 }
 
 export function useStaffAllocationBreakdown() {
+  const { currentOrg } = useOrg();
+  const orgId = currentOrg?.org_id;
   return useQuery({
-    queryKey: ["staff-allocation-breakdown"],
+    queryKey: ["staff-allocation-breakdown", orgId],
+    enabled: !!orgId,
     queryFn: async () => {
-      const { data: allAllocations } = await (supabase as any).from("staff_revenue_allocations").select("role_title, amount");
+      const { data: allAllocations } = await (supabase as any).from("staff_revenue_allocations").select("staff_id, amount").eq("org_id", orgId);
       const startOfMonth = new Date();
       startOfMonth.setDate(1);
       startOfMonth.setHours(0, 0, 0, 0);
       const { data: monthAllocations } = await (supabase as any)
         .from("staff_revenue_allocations")
-        .select("role_title, amount, created_at")
+        .select("staff_id, amount, created_at")
+        .eq("org_id", orgId)
         .gte("created_at", startOfMonth.toISOString());
 
       const allTime: Record<string, number> = {};
       const thisMonth: Record<string, number> = {};
-      ((allAllocations as any[]) || []).forEach((a) => { allTime[a.role_title] = (allTime[a.role_title] || 0) + Number(a.amount); });
-      ((monthAllocations as any[]) || []).forEach((a) => { thisMonth[a.role_title] = (thisMonth[a.role_title] || 0) + Number(a.amount); });
+      ((allAllocations as any[]) || []).forEach((a) => { allTime[a.staff_id] = (allTime[a.staff_id] || 0) + Number(a.amount); });
+      ((monthAllocations as any[]) || []).forEach((a) => { thisMonth[a.staff_id] = (thisMonth[a.staff_id] || 0) + Number(a.amount); });
 
       return { allTime, thisMonth };
     },

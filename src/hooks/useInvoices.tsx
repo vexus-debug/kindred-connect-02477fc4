@@ -1,5 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { useOrg } from "@/hooks/useOrg";
 
 export interface InvoiceWithPatient {
   id: string;
@@ -10,6 +11,7 @@ export interface InvoiceWithPatient {
   discount_percent: number;
   payment_method: string;
   total_amount: number;
+  subtotal: number;
   amount_paid: number;
   notes: string;
   created_at: string;
@@ -27,12 +29,16 @@ export interface InvoiceItem {
 }
 
 export function useInvoices() {
+  const { currentOrg } = useOrg();
+  const orgId = currentOrg?.org_id;
   return useQuery({
-    queryKey: ["invoices"],
+    queryKey: ["invoices", orgId],
+    enabled: !!orgId,
     queryFn: async () => {
       const { data, error } = await (supabase as any)
         .from("invoices")
         .select("*, patients(first_name, last_name)")
+        .eq("org_id", orgId)
         .order("invoice_date", { ascending: false });
       if (error) throw error;
       return (data || []).map((inv: any) => ({
@@ -41,10 +47,11 @@ export function useInvoices() {
         patient_id: inv.patient_id,
         invoice_date: inv.invoice_date,
         status: inv.status,
-        discount_percent: inv.discount_percent,
+        discount_percent: inv.discount || 0,
         payment_method: inv.payment_method,
-        total_amount: inv.total_amount,
-        amount_paid: inv.amount_paid,
+        total_amount: inv.total || 0,
+        subtotal: inv.subtotal || 0,
+        amount_paid: 0, // computed from payments
         notes: inv.notes,
         created_at: inv.created_at,
         patient_name: inv.patients
@@ -71,30 +78,33 @@ export function useInvoiceItems(invoiceId: string | null) {
 }
 
 export function useBillingStats() {
+  const { currentOrg } = useOrg();
+  const orgId = currentOrg?.org_id;
   return useQuery({
-    queryKey: ["billing_stats"],
+    queryKey: ["billing_stats", orgId],
+    enabled: !!orgId,
     queryFn: async () => {
       const today = new Date().toISOString().split("T")[0];
       const { data: todayPayments } = await (supabase as any)
         .from("payments")
         .select("amount")
+        .eq("org_id", orgId)
         .eq("payment_date", today);
       const collectedToday = (todayPayments || []).reduce((s: number, p: any) => s + Number(p.amount), 0);
 
       const { data: outstanding } = await (supabase as any)
         .from("invoices")
-        .select("total_amount, amount_paid")
+        .select("total")
+        .eq("org_id", orgId)
         .neq("status", "paid");
-      const totalOutstanding = (outstanding || []).reduce(
-        (s: number, i: any) => s + (Number(i.total_amount) - Number(i.amount_paid)),
-        0
-      );
+      const totalOutstanding = (outstanding || []).reduce((s: number, i: any) => s + Number(i.total), 0);
 
       const thirtyDaysAgo = new Date();
       thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
       const { count } = await (supabase as any)
         .from("invoices")
         .select("id", { count: "exact", head: true })
+        .eq("org_id", orgId)
         .eq("status", "pending")
         .lt("invoice_date", thirtyDaysAgo.toISOString().split("T")[0]);
 
@@ -119,6 +129,7 @@ interface CreateInvoiceInput {
 
 export function useCreateInvoice() {
   const queryClient = useQueryClient();
+  const { currentOrg } = useOrg();
   return useMutation({
     mutationFn: async (input: CreateInvoiceInput) => {
       const subtotal = input.line_items.reduce((s, i) => s + i.line_total, 0);
@@ -130,13 +141,14 @@ export function useCreateInvoice() {
       const { data: invoice, error: invError } = await (supabase as any)
         .from("invoices")
         .insert({
-          invoice_number: "TEMP",
+          invoice_number: `INV-${Date.now()}`,
           patient_id: input.patient_id,
-          discount_percent: input.discount_percent,
+          discount: discountAmount,
           payment_method: input.payment_method,
-          total_amount: total,
-          amount_paid: paid,
+          subtotal,
+          total,
           status,
+          org_id: currentOrg?.org_id,
         })
         .select()
         .single();
@@ -158,6 +170,7 @@ export function useCreateInvoice() {
           invoice_id: invoice.id,
           amount: paid,
           payment_method: input.payment_method,
+          org_id: currentOrg?.org_id,
         });
         if (payError) throw payError;
       }
@@ -196,17 +209,9 @@ export function useUpdateInvoice() {
       const discountAmount = (subtotal * discount_percent) / 100;
       const total = subtotal - discountAmount;
 
-      const { data: current } = await (supabase as any)
-        .from("invoices")
-        .select("amount_paid")
-        .eq("id", id)
-        .single();
-      const paid = current?.amount_paid ?? 0;
-      const status = paid >= total ? "paid" : paid > 0 ? "partial" : "pending";
-
       const { error: invError } = await (supabase as any)
         .from("invoices")
-        .update({ discount_percent, notes, total_amount: total, status })
+        .update({ discount: discountAmount, notes, subtotal, total })
         .eq("id", id);
       if (invError) throw invError;
 
