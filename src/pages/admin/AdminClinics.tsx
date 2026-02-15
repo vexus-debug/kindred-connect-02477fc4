@@ -1,31 +1,53 @@
 import { useState } from "react";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { Building2, Search, Users, UserCheck, ExternalLink } from "lucide-react";
+import { Building2, Search, Users, UserCheck, ExternalLink, Trash2, Settings } from "lucide-react";
 import { useAllOrganizations, useOrgMemberCounts, useOrgPatientCounts } from "@/hooks/useAdminData";
 import { format } from "date-fns";
-import { Link } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
+import { CreateClinicDialog } from "@/components/admin/CreateClinicDialog";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "@/hooks/use-toast";
+import { useQueryClient } from "@tanstack/react-query";
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 
 export default function AdminClinics() {
   const { data: orgs, isLoading } = useAllOrganizations();
   const { data: memberCounts } = useOrgMemberCounts();
   const { data: patientCounts } = useOrgPatientCounts();
   const [search, setSearch] = useState("");
+  const navigate = useNavigate();
+  const queryClient = useQueryClient();
 
   const filtered = (orgs || []).filter((o: any) =>
     o.name.toLowerCase().includes(search.toLowerCase()) ||
     o.slug.toLowerCase().includes(search.toLowerCase())
   );
 
+  const handleDelete = async (orgId: string, orgName: string) => {
+    const { error } = await supabase.from("organizations").delete().eq("id", orgId);
+    if (error) {
+      toast({ title: "Failed to delete", description: error.message, variant: "destructive" });
+    } else {
+      toast({ title: `"${orgName}" deleted` });
+      queryClient.invalidateQueries({ queryKey: ["admin-organizations"] });
+      queryClient.invalidateQueries({ queryKey: ["admin-platform-stats"] });
+    }
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold text-foreground tracking-tight">Clinics</h1>
-          <p className="text-sm text-muted-foreground mt-0.5">Manage all registered organizations.</p>
+          <p className="text-sm text-muted-foreground mt-0.5">Create, manage, and access all registered clinics.</p>
         </div>
+        <CreateClinicDialog />
       </div>
 
       <div className="relative max-w-sm">
@@ -64,8 +86,10 @@ export default function AdminClinics() {
                 <Badge variant="secondary" className="text-[10px] capitalize">{org.clinic_type}</Badge>
               </div>
               <h3 className="font-semibold text-foreground mb-1">{org.name}</h3>
-              <p className="text-xs text-muted-foreground mb-3">/{org.slug}</p>
-              <div className="flex items-center gap-4 text-xs text-muted-foreground mb-3">
+              <p className="text-xs text-muted-foreground mb-1">/{org.slug}</p>
+              {org.email && <p className="text-xs text-muted-foreground mb-0.5">{org.email}</p>}
+              {org.phone && <p className="text-xs text-muted-foreground mb-0.5">{org.phone}</p>}
+              <div className="flex items-center gap-4 text-xs text-muted-foreground my-3">
                 <span className="flex items-center gap-1">
                   <Users className="h-3.5 w-3.5" />
                   {memberCounts?.[org.id] || 0} members
@@ -79,11 +103,40 @@ export default function AdminClinics() {
                 <span className="text-[10px] text-muted-foreground">
                   Created {format(new Date(org.created_at), "MMM d, yyyy")}
                 </span>
-                <Button variant="ghost" size="sm" asChild className="h-7 text-xs text-secondary hover:text-secondary">
-                  <Link to={`/clinic/${org.slug}/dashboard`}>
-                    Open <ExternalLink className="ml-1 h-3 w-3" />
-                  </Link>
-                </Button>
+                <div className="flex items-center gap-1">
+                  <Button
+                    variant="default"
+                    size="sm"
+                    className="h-7 text-xs gap-1"
+                    onClick={() => navigate(`/clinic/${org.slug}/dashboard`)}
+                  >
+                    <ExternalLink className="h-3 w-3" /> Open
+                  </Button>
+                  <AlertDialog>
+                    <AlertDialogTrigger asChild>
+                      <Button variant="ghost" size="sm" className="h-7 w-7 p-0 text-muted-foreground hover:text-destructive">
+                        <Trash2 className="h-3.5 w-3.5" />
+                      </Button>
+                    </AlertDialogTrigger>
+                    <AlertDialogContent>
+                      <AlertDialogHeader>
+                        <AlertDialogTitle>Delete "{org.name}"?</AlertDialogTitle>
+                        <AlertDialogDescription>
+                          This will permanently delete this clinic and may affect associated data. This action cannot be undone.
+                        </AlertDialogDescription>
+                      </AlertDialogHeader>
+                      <AlertDialogFooter>
+                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                        <AlertDialogAction
+                          className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                          onClick={() => handleDelete(org.id, org.name)}
+                        >
+                          Delete
+                        </AlertDialogAction>
+                      </AlertDialogFooter>
+                    </AlertDialogContent>
+                  </AlertDialog>
+                </div>
               </div>
             </CardContent>
           </Card>
