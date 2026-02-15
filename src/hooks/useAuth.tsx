@@ -24,6 +24,7 @@ interface AuthContextType {
   orgMemberships: OrgMembership[];
   loading: boolean;
   signOut: () => Promise<void>;
+  refetchUserData: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType>({
@@ -34,6 +35,7 @@ const AuthContext = createContext<AuthContextType>({
   orgMemberships: [],
   loading: true,
   signOut: async () => {},
+  refetchUserData: async () => {},
 });
 
 export function AuthProvider({ children }: { children: ReactNode }) {
@@ -117,6 +119,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return () => subscription.unsubscribe();
   }, []);
 
+  const refetchUserData = async () => {
+    const { data: { session: currentSession } } = await supabase.auth.getSession();
+    if (currentSession?.user) {
+      await fetchUserData(currentSession.user.id);
+    }
+  };
+
   const signOut = async () => {
     await supabase.auth.signOut();
     setUser(null);
@@ -136,6 +145,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         orgMemberships,
         loading,
         signOut,
+        refetchUserData,
       }}
     >
       {children}
