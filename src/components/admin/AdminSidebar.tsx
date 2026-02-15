@@ -1,0 +1,135 @@
+import { useEffect } from "react";
+import { NavLink } from "@/components/NavLink";
+import { useSidebar } from "@/components/ui/sidebar";
+import {
+  Sidebar, SidebarContent, SidebarGroup, SidebarGroupContent,
+  SidebarGroupLabel, SidebarMenu, SidebarMenuButton, SidebarMenuItem, SidebarFooter,
+} from "@/components/ui/sidebar";
+import { LayoutDashboard, Building2, Users, BarChart3, LogOut, Shield } from "lucide-react";
+import { useLocation, useNavigate } from "react-router-dom";
+import logo from "@/assets/logo.jpg";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Badge } from "@/components/ui/badge";
+import { useAuth } from "@/hooks/useAuth";
+import { motion } from "framer-motion";
+
+const adminNav = [
+  { title: "Overview", path: "/admin", icon: LayoutDashboard },
+  { title: "Clinics", path: "/admin/clinics", icon: Building2 },
+  { title: "Users", path: "/admin/users", icon: Users },
+  { title: "Analytics", path: "/admin/analytics", icon: BarChart3 },
+];
+
+export function AdminSidebar() {
+  const { state, setOpenMobile, isMobile } = useSidebar();
+  const collapsed = state === "collapsed";
+  const location = useLocation();
+  const navigate = useNavigate();
+  const { profile, user, signOut } = useAuth();
+
+  useEffect(() => {
+    if (isMobile) setOpenMobile(false);
+  }, [location.pathname, isMobile, setOpenMobile]);
+
+  const displayName = profile?.full_name || user?.email?.split("@")[0] || "Admin";
+  const initials = displayName.split(" ").map((n) => n[0]).join("").toUpperCase().slice(0, 2);
+
+  const handleSignOut = async () => {
+    await signOut();
+    navigate("/");
+  };
+
+  return (
+    <Sidebar collapsible="icon" className="border-r border-sidebar-border bg-sidebar text-sidebar-foreground">
+      {/* Logo */}
+      <div className="flex items-center gap-2.5 px-4 py-4 border-b border-sidebar-border">
+        <div className="relative shrink-0">
+          <img src={logo} alt="Vexus Health" className="h-9 w-9 rounded-xl object-cover ring-2 ring-sidebar-primary/30" />
+          <div className="absolute -bottom-0.5 -right-0.5 h-2.5 w-2.5 rounded-full bg-red-500 ring-2 ring-sidebar" />
+        </div>
+        {!collapsed && (
+          <div className="flex flex-col overflow-hidden">
+            <span className="text-sm font-bold text-sidebar-primary-foreground truncate tracking-tight">
+              Vexus Health
+            </span>
+            <span className="text-[10px] text-sidebar-foreground/60 font-medium flex items-center gap-1">
+              <Shield className="h-2.5 w-2.5" /> Super Admin
+            </span>
+          </div>
+        )}
+      </div>
+
+      <SidebarContent className="pt-2 px-2">
+        <SidebarGroup>
+          <SidebarGroupLabel className="text-[10px] uppercase tracking-[0.15em] text-sidebar-foreground/40 font-semibold px-2 mb-0.5">
+            Platform
+          </SidebarGroupLabel>
+          <SidebarGroupContent>
+            <SidebarMenu>
+              {adminNav.map((item) => {
+                const active = location.pathname === item.path;
+                return (
+                  <SidebarMenuItem key={item.title}>
+                    <SidebarMenuButton asChild isActive={active} tooltip={item.title}>
+                      <NavLink
+                        to={item.path}
+                        className="relative flex items-center gap-3 rounded-lg px-3 py-2 text-sm transition-all duration-200 hover:bg-sidebar-accent group"
+                        activeClassName="bg-sidebar-accent text-sidebar-primary font-medium"
+                      >
+                        {active && (
+                          <motion.div
+                            layoutId="admin-sidebar-active-pill"
+                            className="absolute inset-0 rounded-lg bg-sidebar-primary/10 border border-sidebar-primary/20"
+                            transition={{ type: "spring", bounce: 0.2, duration: 0.5 }}
+                          />
+                        )}
+                        <item.icon className={`h-4 w-4 shrink-0 relative z-10 transition-transform duration-200 group-hover:scale-110 ${active ? "text-sidebar-primary" : "text-sidebar-foreground/70"}`} />
+                        <span className="relative z-10">{item.title}</span>
+                      </NavLink>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                );
+              })}
+            </SidebarMenu>
+          </SidebarGroupContent>
+        </SidebarGroup>
+      </SidebarContent>
+
+      {/* User Footer */}
+      <SidebarFooter className="border-t border-sidebar-border p-3">
+        <div className="flex items-center gap-3">
+          <Avatar className="h-8 w-8 ring-2 ring-sidebar-primary/20 shrink-0">
+            <AvatarImage src={profile?.avatar_url || ""} />
+            <AvatarFallback className="bg-gradient-to-br from-sidebar-primary/30 to-sidebar-primary/10 text-sidebar-primary text-xs font-semibold">{initials}</AvatarFallback>
+          </Avatar>
+          {!collapsed && (
+            <>
+              <div className="flex flex-col overflow-hidden flex-1">
+                <span className="text-sm font-medium truncate text-sidebar-primary-foreground">{displayName}</span>
+                <Badge variant="outline" className="w-fit text-[10px] px-1.5 py-0 mt-0.5 border-red-500/30 text-red-400">
+                  Super Admin
+                </Badge>
+              </div>
+              <div className="flex items-center gap-1">
+                <button
+                  onClick={() => navigate("/select-clinic")}
+                  className="text-muted-foreground hover:text-primary transition-colors p-1.5 rounded-md hover:bg-primary/10"
+                  title="Go to clinics"
+                >
+                  <Building2 className="h-4 w-4" />
+                </button>
+                <button
+                  onClick={handleSignOut}
+                  className="text-muted-foreground hover:text-destructive transition-colors p-1.5 rounded-md hover:bg-destructive/10"
+                  title="Sign out"
+                >
+                  <LogOut className="h-4 w-4" />
+                </button>
+              </div>
+            </>
+          )}
+        </div>
+      </SidebarFooter>
+    </Sidebar>
+  );
+}

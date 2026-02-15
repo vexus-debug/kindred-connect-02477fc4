@@ -4,7 +4,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Building2, LogOut, ChevronRight } from "lucide-react";
+import { Building2, LogOut, ChevronRight, Shield } from "lucide-react";
 import { getRoleLabel } from "@/config/roleAccess";
 import logo from "@/assets/logo.jpg";
 
@@ -19,8 +19,11 @@ export default function SelectClinic() {
       navigate("/", { replace: true });
       return;
     }
-    // Super admin goes to /admin
-    if (roles.includes("super_admin")) return;
+    // Super admin can also access /admin
+    if (roles.includes("super_admin") && orgMemberships.length === 0) {
+      navigate("/admin", { replace: true });
+      return;
+    }
     if (orgMemberships.length === 1) {
       navigate(`/clinic/${orgMemberships[0].org_slug}/dashboard`, { replace: true });
     }
@@ -97,7 +100,12 @@ export default function SelectClinic() {
           ))}
         </div>
 
-        <div className="text-center">
+        <div className="flex items-center justify-center gap-3">
+          {roles.includes("super_admin") && (
+            <Button variant="outline" size="sm" onClick={() => navigate("/admin")} className="text-secondary border-secondary/30 hover:bg-secondary/10">
+              <Shield className="mr-2 h-4 w-4" /> Admin Panel
+            </Button>
+          )}
           <Button variant="ghost" size="sm" onClick={() => { signOut(); navigate("/"); }} className="text-muted-foreground">
             <LogOut className="mr-2 h-4 w-4" /> Sign Out
           </Button>

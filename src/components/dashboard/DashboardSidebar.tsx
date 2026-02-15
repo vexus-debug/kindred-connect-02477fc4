@@ -5,7 +5,7 @@ import {
   Sidebar, SidebarContent, SidebarGroup, SidebarGroupContent,
   SidebarGroupLabel, SidebarMenu, SidebarMenuButton, SidebarMenuItem, SidebarFooter,
 } from "@/components/ui/sidebar";
-import { LogOut, Building2 } from "lucide-react";
+import { LogOut, Building2, Shield } from "lucide-react";
 import { useLocation, useNavigate } from "react-router-dom";
 import logo from "@/assets/logo.jpg";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -23,7 +23,7 @@ export function DashboardSidebar() {
   const collapsed = state === "collapsed";
   const location = useLocation();
   const navigate = useNavigate();
-  const { profile, user, signOut, orgMemberships } = useAuth();
+  const { profile, user, signOut, orgMemberships, roles } = useAuth();
   const { currentOrg, basePath } = useOrg();
   const { data: unreadCount = 0 } = useUnreadCount();
   const { data: unreadMsgCount = 0 } = useUnreadMessageCount();
@@ -175,6 +175,15 @@ export function DashboardSidebar() {
           )}
           {!collapsed && (
             <div className="flex items-center gap-1">
+              {roles.includes("super_admin") && (
+                <button
+                  onClick={() => navigate("/admin")}
+                  className="text-red-400 hover:text-red-300 transition-colors p-1.5 rounded-md hover:bg-red-500/10"
+                  title="Admin Panel"
+                >
+                  <Shield className="h-4 w-4" />
+                </button>
+              )}
               {orgMemberships.length > 1 && (
                 <button
                   onClick={() => navigate("/select-clinic")}
