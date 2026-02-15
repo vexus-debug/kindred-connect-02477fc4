@@ -24,12 +24,12 @@ export function useLabOrders() {
   return useQuery({
     queryKey: ["lab_orders"],
     queryFn: async () => {
-      const { data, error } = await supabase
+      const { data, error } = await (supabase as any)
         .from("lab_orders")
         .select("*, patients(first_name, last_name), staff(full_name), treatments(name)")
         .order("created_at", { ascending: false });
       if (error) throw error;
-      return data as LabOrderRow[];
+      return (data || []) as LabOrderRow[];
     },
   });
 }
@@ -37,25 +37,12 @@ export function useLabOrders() {
 export function useCreateLabOrder() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async (order: {
-      patient_id: string;
-      treatment_id?: string;
-      dentist_id: string;
-      lab_work_type: string;
-      lab_name: string;
-      due_date?: string;
-      notes?: string;
-    }) => {
-      const { data, error } = await supabase.from("lab_orders").insert(order).select().single();
+    mutationFn: async (order: any) => {
+      const { data, error } = await (supabase as any).from("lab_orders").insert(order).select().single();
       if (error) throw error;
       return data;
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["lab_orders"] });
-      toast({ title: "Lab order created" });
-    },
-    onError: (error) => {
-      toast({ title: "Error", description: error.message, variant: "destructive" });
-    },
+    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ["lab_orders"] }); toast({ title: "Lab order created" }); },
+    onError: (error: any) => { toast({ title: "Error", description: error.message, variant: "destructive" }); },
   });
 }

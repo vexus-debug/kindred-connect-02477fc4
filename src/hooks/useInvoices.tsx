@@ -30,7 +30,7 @@ export function useInvoices() {
   return useQuery({
     queryKey: ["invoices"],
     queryFn: async () => {
-      const { data, error } = await supabase
+      const { data, error } = await (supabase as any)
         .from("invoices")
         .select("*, patients(first_name, last_name)")
         .order("invoice_date", { ascending: false });
@@ -60,12 +60,12 @@ export function useInvoiceItems(invoiceId: string | null) {
     queryKey: ["invoice_items", invoiceId],
     enabled: !!invoiceId,
     queryFn: async () => {
-      const { data, error } = await supabase
+      const { data, error } = await (supabase as any)
         .from("invoice_items")
         .select("*")
         .eq("invoice_id", invoiceId!);
       if (error) throw error;
-      return data as InvoiceItem[];
+      return (data || []) as InvoiceItem[];
     },
   });
 }
@@ -75,28 +75,24 @@ export function useBillingStats() {
     queryKey: ["billing_stats"],
     queryFn: async () => {
       const today = new Date().toISOString().split("T")[0];
-
-      // Collected today - sum of payments made today
-      const { data: todayPayments } = await supabase
+      const { data: todayPayments } = await (supabase as any)
         .from("payments")
         .select("amount")
         .eq("payment_date", today);
-      const collectedToday = (todayPayments || []).reduce((s, p) => s + Number(p.amount), 0);
+      const collectedToday = (todayPayments || []).reduce((s: number, p: any) => s + Number(p.amount), 0);
 
-      // Outstanding - sum of (total - paid) for non-paid invoices
-      const { data: outstanding } = await supabase
+      const { data: outstanding } = await (supabase as any)
         .from("invoices")
         .select("total_amount, amount_paid")
         .neq("status", "paid");
       const totalOutstanding = (outstanding || []).reduce(
-        (s, i) => s + (Number(i.total_amount) - Number(i.amount_paid)),
+        (s: number, i: any) => s + (Number(i.total_amount) - Number(i.amount_paid)),
         0
       );
 
-      // Overdue - pending invoices older than 30 days
       const thirtyDaysAgo = new Date();
       thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
-      const { count } = await supabase
+      const { count } = await (supabase as any)
         .from("invoices")
         .select("id", { count: "exact", head: true })
         .eq("status", "pending")
@@ -123,7 +119,6 @@ interface CreateInvoiceInput {
 
 export function useCreateInvoice() {
   const queryClient = useQueryClient();
-
   return useMutation({
     mutationFn: async (input: CreateInvoiceInput) => {
       const subtotal = input.line_items.reduce((s, i) => s + i.line_total, 0);
@@ -132,7 +127,7 @@ export function useCreateInvoice() {
       const paid = Math.min(input.amount_paid, total);
       const status = paid >= total ? "paid" : paid > 0 ? "partial" : "pending";
 
-      const { data: invoice, error: invError } = await supabase
+      const { data: invoice, error: invError } = await (supabase as any)
         .from("invoices")
         .insert({
           invoice_number: "TEMP",
@@ -155,11 +150,11 @@ export function useCreateInvoice() {
         unit_price: li.unit_price,
         line_total: li.line_total,
       }));
-      const { error: itemsError } = await supabase.from("invoice_items").insert(items);
+      const { error: itemsError } = await (supabase as any).from("invoice_items").insert(items);
       if (itemsError) throw itemsError;
 
       if (paid > 0) {
-        const { error: payError } = await supabase.from("payments").insert({
+        const { error: payError } = await (supabase as any).from("payments").insert({
           invoice_id: invoice.id,
           amount: paid,
           payment_method: input.payment_method,
@@ -178,7 +173,6 @@ export function useCreateInvoice() {
 
 export function useUpdateInvoice() {
   const queryClient = useQueryClient();
-
   return useMutation({
     mutationFn: async ({
       id,
@@ -202,8 +196,7 @@ export function useUpdateInvoice() {
       const discountAmount = (subtotal * discount_percent) / 100;
       const total = subtotal - discountAmount;
 
-      // Get current amount_paid
-      const { data: current } = await supabase
+      const { data: current } = await (supabase as any)
         .from("invoices")
         .select("amount_paid")
         .eq("id", id)
@@ -211,15 +204,13 @@ export function useUpdateInvoice() {
       const paid = current?.amount_paid ?? 0;
       const status = paid >= total ? "paid" : paid > 0 ? "partial" : "pending";
 
-      // Update invoice
-      const { error: invError } = await supabase
+      const { error: invError } = await (supabase as any)
         .from("invoices")
         .update({ discount_percent, notes, total_amount: total, status })
         .eq("id", id);
       if (invError) throw invError;
 
-      // Delete old line items and re-insert
-      await supabase.from("invoice_items").delete().eq("invoice_id", id);
+      await (supabase as any).from("invoice_items").delete().eq("invoice_id", id);
       const items = line_items.map((li) => ({
         invoice_id: id,
         treatment_id: li.treatment_id,
@@ -228,7 +219,7 @@ export function useUpdateInvoice() {
         unit_price: li.unit_price,
         line_total: li.line_total,
       }));
-      const { error: itemsError } = await supabase.from("invoice_items").insert(items);
+      const { error: itemsError } = await (supabase as any).from("invoice_items").insert(items);
       if (itemsError) throw itemsError;
     },
     onSuccess: () => {

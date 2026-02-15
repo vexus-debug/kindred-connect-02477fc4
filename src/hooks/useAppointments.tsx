@@ -26,13 +26,13 @@ export function useAppointmentsByDate(date: Date) {
   return useQuery({
     queryKey: ["appointments", dateStr],
     queryFn: async () => {
-      const { data, error } = await supabase
+      const { data, error } = await (supabase as any)
         .from("appointments")
         .select("*, patients(first_name, last_name), staff(full_name), treatments(name)")
         .eq("appointment_date", dateStr)
         .order("appointment_time");
       if (error) throw error;
-      return data as AppointmentRow[];
+      return (data || []) as AppointmentRow[];
     },
   });
 }
@@ -50,7 +50,7 @@ export function useCreateAppointment() {
       is_walk_in: boolean;
       notes?: string;
     }) => {
-      const { data, error } = await supabase.from("appointments").insert(appointment).select().single();
+      const { data, error } = await (supabase as any).from("appointments").insert(appointment).select().single();
       if (error) throw error;
       return data;
     },
@@ -58,7 +58,7 @@ export function useCreateAppointment() {
       queryClient.invalidateQueries({ queryKey: ["appointments"] });
       toast({ title: "Appointment booked" });
     },
-    onError: (error) => {
+    onError: (error: any) => {
       toast({ title: "Error", description: error.message, variant: "destructive" });
     },
   });
@@ -68,7 +68,7 @@ export function useUpdateAppointment() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async ({ id, ...updates }: { id: string; status?: string; appointment_time?: string; appointment_date?: string; chair?: string; staff_id?: string; notes?: string }) => {
-      const { data, error } = await supabase.from("appointments").update(updates).eq("id", id).select().single();
+      const { data, error } = await (supabase as any).from("appointments").update(updates).eq("id", id).select().single();
       if (error) throw error;
       return data;
     },
@@ -76,7 +76,7 @@ export function useUpdateAppointment() {
       queryClient.invalidateQueries({ queryKey: ["appointments"] });
       toast({ title: "Appointment updated" });
     },
-    onError: (error) => {
+    onError: (error: any) => {
       toast({ title: "Error", description: error.message, variant: "destructive" });
     },
   });

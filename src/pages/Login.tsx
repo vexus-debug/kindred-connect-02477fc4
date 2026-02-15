@@ -6,6 +6,7 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
 import { Eye, EyeOff } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
 import logo from "@/assets/logo.jpg";
 
 export default function Login() {
@@ -13,6 +14,8 @@ export default function Login() {
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [isSignUp, setIsSignUp] = useState(false);
+  const [fullName, setFullName] = useState("");
   const navigate = useNavigate();
   const { toast } = useToast();
 
@@ -20,14 +23,29 @@ export default function Login() {
     e.preventDefault();
     setLoading(true);
 
-    // Simple localStorage-based auth (no Supabase)
-    if (email && password) {
-      localStorage.setItem("auth_user", JSON.stringify({ email, loggedIn: true }));
-      navigate("/dashboard");
-    } else {
-      toast({ title: "Login failed", description: "Please enter email and password.", variant: "destructive" });
+    try {
+      if (isSignUp) {
+        const { error } = await supabase.auth.signUp({
+          email,
+          password,
+          options: {
+            data: { full_name: fullName },
+            emailRedirectTo: window.location.origin,
+          },
+        });
+        if (error) throw error;
+        toast({ title: "Account created!", description: "Check your email to confirm, or sign in if email confirmation is disabled." });
+        setIsSignUp(false);
+      } else {
+        const { error } = await supabase.auth.signInWithPassword({ email, password });
+        if (error) throw error;
+        navigate("/dashboard");
+      }
+    } catch (error: any) {
+      toast({ title: isSignUp ? "Sign up failed" : "Login failed", description: error.message, variant: "destructive" });
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   };
 
   return (
@@ -35,19 +53,32 @@ export default function Login() {
       <Card className="w-full max-w-md">
         <CardHeader className="text-center space-y-3">
           <div className="mx-auto">
-            <img src={logo} alt="Vista Dental" className="h-16 w-16 rounded-full object-cover mx-auto" />
+            <img src={logo} alt="Vexus Health" className="h-16 w-16 rounded-full object-cover mx-auto" />
           </div>
-          <CardTitle className="text-2xl text-primary">Welcome Back</CardTitle>
-          <CardDescription>Sign in to Vista Dental Clinic Management</CardDescription>
+          <CardTitle className="text-2xl text-primary">{isSignUp ? "Create Account" : "Welcome Back"}</CardTitle>
+          <CardDescription>{isSignUp ? "Sign up for Vexus Health" : "Sign in to Vexus Health Platform"}</CardDescription>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleLogin} className="space-y-4">
+            {isSignUp && (
+              <div className="space-y-2">
+                <Label htmlFor="fullName">Full Name</Label>
+                <Input
+                  id="fullName"
+                  type="text"
+                  placeholder="Dr. John Doe"
+                  value={fullName}
+                  onChange={(e) => setFullName(e.target.value)}
+                  required
+                />
+              </div>
+            )}
             <div className="space-y-2">
               <Label htmlFor="email">Email</Label>
               <Input
                 id="email"
                 type="email"
-                placeholder="you@vistadentalcare.com"
+                placeholder="you@clinic.com"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required
@@ -63,6 +94,7 @@ export default function Login() {
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   required
+                  minLength={6}
                 />
                 <button
                   type="button"
@@ -74,11 +106,19 @@ export default function Login() {
               </div>
             </div>
             <Button type="submit" className="w-full" disabled={loading}>
-              {loading ? "Signing in..." : "Sign In"}
+              {loading ? (isSignUp ? "Creating account..." : "Signing in...") : (isSignUp ? "Create Account" : "Sign In")}
             </Button>
           </form>
           <div className="mt-4 text-center text-sm text-muted-foreground">
-            Staff accounts are created by your administrator.
+            {isSignUp ? (
+              <>Already have an account?{" "}
+                <button onClick={() => setIsSignUp(false)} className="text-primary hover:underline">Sign in</button>
+              </>
+            ) : (
+              <>Don't have an account?{" "}
+                <button onClick={() => setIsSignUp(true)} className="text-primary hover:underline">Sign up</button>
+              </>
+            )}
           </div>
         </CardContent>
       </Card>

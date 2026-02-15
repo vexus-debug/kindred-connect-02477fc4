@@ -147,30 +147,30 @@ export default function MessagesPage() {
     if (query.length < 2) { setAttachmentResults([]); return; }
     const results: typeof attachmentResults = [];
 
-    const { data: patients } = await supabase
+    const { data: patients } = await (supabase as any)
       .from("patients")
       .select("id, first_name, last_name")
       .or(`first_name.ilike.%${query}%,last_name.ilike.%${query}%`)
       .limit(5);
-    (patients || []).forEach((p) =>
+    (patients || []).forEach((p: any) =>
       results.push({ entity_type: "patient", entity_id: p.id, entity_label: `Patient: ${p.first_name} ${p.last_name}` })
     );
 
-    const { data: invoices } = await supabase
+    const { data: invoices } = await (supabase as any)
       .from("invoices")
       .select("id, invoice_number")
       .ilike("invoice_number", `%${query}%`)
       .limit(5);
-    (invoices || []).forEach((i) =>
+    (invoices || []).forEach((i: any) =>
       results.push({ entity_type: "invoice", entity_id: i.id, entity_label: `Invoice: ${i.invoice_number}` })
     );
 
-    const { data: treatments } = await supabase
+    const { data: treatments } = await (supabase as any)
       .from("treatments")
       .select("id, name")
       .ilike("name", `%${query}%`)
       .limit(5);
-    (treatments || []).forEach((t) =>
+    (treatments || []).forEach((t: any) =>
       results.push({ entity_type: "treatment", entity_id: t.id, entity_label: `Treatment: ${t.name}` })
     );
 

@@ -16,7 +16,7 @@ export function useClinicSettings() {
   return useQuery({
     queryKey: ["clinic-settings"],
     queryFn: async () => {
-      const { data, error } = await supabase
+      const { data, error } = await (supabase as any)
         .from("clinic_settings")
         .select("*")
         .limit(1)
@@ -32,14 +32,14 @@ export function useUpdateClinicSettings() {
   return useMutation({
     mutationFn: async (updates: Partial<ClinicSettings> & { id: string }) => {
       const { id, ...rest } = updates;
-      const { error } = await supabase.from("clinic_settings").update(rest).eq("id", id);
+      const { error } = await (supabase as any).from("clinic_settings").update(rest).eq("id", id);
       if (error) throw error;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["clinic-settings"] });
       toast({ title: "Clinic settings saved" });
     },
-    onError: (error) => {
+    onError: (error: any) => {
       toast({ title: "Error", description: error.message, variant: "destructive" });
     },
   });
