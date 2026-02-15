@@ -56,26 +56,20 @@ export default function Login() {
           return;
         }
 
-        // 2. Create the organization
+        // 2. Create org + membership via secure RPC (bypasses RLS for new users)
         const slug = clinicName
           .toLowerCase()
           .replace(/[^a-z0-9]+/g, "-")
           .replace(/(^-|-$)/g, "") || `clinic-${Date.now()}`;
 
-        const { data: orgData, error: orgError } = await supabase
-          .from("organizations")
-          .insert([{ name: clinicName.trim(), slug, clinic_type: clinicType as any }])
-          .select("id")
-          .single();
+        const { error: orgError } = await supabase.rpc("create_org_for_new_user" as any, {
+          p_user_id: userId,
+          p_clinic_name: clinicName.trim(),
+          p_slug: slug,
+          p_clinic_type: clinicType,
+        });
 
         if (orgError) throw orgError;
-
-        // 3. Add user as owner of the org
-        const { error: memberError } = await supabase
-          .from("org_members")
-          .insert([{ org_id: orgData.id, user_id: userId, role: "owner" }]);
-
-        if (memberError) throw memberError;
 
         toast({ title: "Account & clinic created!", description: "You can now sign in." });
         setIsSignUp(false);

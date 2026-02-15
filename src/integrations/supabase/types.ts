@@ -2010,6 +2010,15 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      create_org_for_new_user: {
+        Args: {
+          p_clinic_name: string
+          p_clinic_type: Database["public"]["Enums"]["clinic_type"]
+          p_slug: string
+          p_user_id: string
+        }
+        Returns: string
+      }
       get_org_role: {
         Args: { _org_id: string; _user_id: string }
         Returns: Database["public"]["Enums"]["org_role"]
