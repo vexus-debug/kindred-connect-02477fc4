@@ -1,110 +1,172 @@
 
+# Multi-Tenant Healthcare SaaS Architecture Plan
 
-## Vista Dental Clinic — Full Feature Expansion
+## Overview
 
-### 1. 📋 Treatment Plans
-- New **Treatment Plans** page under Clinical in the sidebar (visible to Admin, Dentist)
-- Create multi-step treatment plans for a patient with:
-  - Plan name, phases/steps (each with procedure, tooth, estimated cost, status)
-  - Total cost estimate auto-calculated from steps
-  - Patient consent tracking (pending → consented → declined) with consent date
-  - Progress tracking as individual steps are completed
-  - Link treatment plan steps to actual treatments when performed
-- Viewable from patient profile page as a dedicated tab
-- **Database**: `treatment_plans` table + `treatment_plan_steps` table
+Transform the current single-clinic dental app into a multi-tenant healthcare SaaS platform where:
+- Each **clinic** (tenant) gets its own isolated dashboard and data
+- Different **clinic types** (dental, general, etc.) get different dashboard layouts
+- A **super admin** dashboard oversees all clinics on the platform
 
-### 2. 📸 X-Ray / Image Management
-- New **Patient Images** tab on the patient profile page (visible to Admin, Dentist, Hygienist)
-- Upload dental X-rays and intra-oral photos to Supabase Storage (`patient-images` bucket)
-- Each image record stores: patient_id, image URL, image type (x-ray, intra-oral, other), tooth number (optional), description, date taken, uploaded by
-- Gallery view with lightbox for viewing full-size images
-- Filter by image type and date
-- **Database**: `patient_images` table + new storage bucket
+## Architecture
 
-### 3. 📝 Clinical Notes / SOAP Notes
-- New **Clinical Notes** section within appointment details and patient profile
-- Structured SOAP format: Subjective, Objective, Assessment, Plan
-- Each note linked to an appointment and patient
-- Only Dentists and Hygienists can create/edit notes; Admin can view
-- Notes appear chronologically in patient profile under a "Clinical Notes" tab
-- **Database**: `clinical_notes` table (patient_id, appointment_id, subjective, objective, assessment, plan, created_by, created_at)
+### 1. Database Foundation (Supabase)
 
-### 4. ⭐ Patient Reviews / Feedback
-- New **Reviews** page in the dashboard sidebar under General (visible to Admin, Receptionist)
-- After appointment completion, staff can record patient feedback: rating (1-5 stars), comments, service quality categories
-- Dashboard summary showing average rating, recent reviews, trends
-- Optional: link feedback to specific appointment and dentist
-- **Database**: `patient_reviews` table
+We need to build the database from scratch since no tables exist yet. The core multi-tenancy model:
 
-### 5. 🪑 Chair / Operatory Management
-- New **Chairs** management section in Settings (Admin only can configure)
-- Define clinic chairs/operatories with name, status (active/inactive), and room/location
-- Enhanced **Appointments** page with a visual "Chair View" toggle:
-  - Timeline/grid view showing daily schedule by chair (rows = chairs, columns = time slots)
-  - Color-coded by appointment status
-  - Drag-friendly visual layout
-- Appointments already have a `chair` field — this will be connected to the new chairs table
-- **Database**: `clinic_chairs` table
+```text
++------------------+       +------------------+       +------------------+
+|   organizations  |       |   org_members    |       |    profiles      |
+|------------------|       |------------------|       |------------------|
+| id (PK)          |<------| org_id (FK)      |       | user_id (PK/FK)  |
+| name             |       | user_id (FK)     |------>| full_name        |
+| clinic_type      |       | role (enum)      |       | phone            |
+| slug (unique)    |       +------------------+       | avatar_url       |
+| address, phone   |                                  +------------------+
+| logo_url         |       +------------------+
+| settings (jsonb) |       |   user_roles     |
++------------------+       |------------------|
+                           | user_id (FK)     |
+                           | role (platform)  |
+                           +------------------+
+```
 
-### 6. 🔁 Recurring Appointments
-- New option when booking appointments: "Make recurring"
-- Configure recurrence: frequency (weekly, bi-weekly, monthly, every 3/6 months), number of occurrences or end date
-- Auto-generates future appointment slots based on recurrence rules
-- Recurring series linked together so editing/canceling can affect one or all
-- Visual indicator on recurring appointments in the calendar
-- **Database**: `recurring_appointment_rules` table + `series_id` field on appointments
+**Key tables to create in Phase 1:**
 
-### 7. 🧾 Expense Tracking
-- New **Expenses** page in Finance section (visible to Admin, Accountant)
-- Track clinic expenses: vendor, category (supplies, rent, utilities, equipment, salaries, other), amount, date, payment method, receipt reference
-- Monthly expense summary with charts
-- Compare revenue vs expenses for profitability overview in Reports
-- **Database**: `expenses` table
+- **`profiles`** -- one row per auth user (auto-created on signup via trigger)
+- **`user_roles`** -- platform-level roles (`super_admin`, `user`)
+- **`organizations`** -- each clinic is an organization with a `clinic_type` enum (starting with `dental`)
+- **`org_members`** -- links users to organizations with a clinic-level role (`owner`, `admin`, `dentist`, `receptionist`, `hygienist`, `assistant`, `accountant`, `lab_technician`)
 
-### 8. 📜 Consent Forms
-- New **Consent Forms** section accessible from patient profile and treatment plans
-- Pre-defined consent form templates (Admin can create/edit templates): general treatment consent, anesthesia consent, surgical consent, etc.
-- Generate consent form for a patient with auto-filled details
-- Track consent status: pending → signed → expired
-- Digital signature capture (name + date + checkbox acknowledgment)
-- Signed forms stored as records with timestamp and who witnessed
-- **Database**: `consent_form_templates` table + `patient_consent_forms` table
+Then **all existing data tables** (patients, appointments, treatments, etc.) get an `org_id` column so data is fully isolated per clinic.
 
-### 9. 🔐 Enhanced Audit Logs
-- Existing `activity_log` table already captures some events
-- Expand audit logging to cover:
-  - Patient record views and edits
-  - Invoice modifications
-  - Treatment updates
-  - Staff changes
-  - Settings changes
-- New **Audit Log** page in Compliance section (Admin only)
-- Searchable and filterable by event type, user, date range, entity
-- Shows who did what, when, and to which record
+### 2. Authentication (Real Supabase Auth)
 
-### 10. 🗂️ Document Management
-- New **Documents** page in the sidebar under Compliance & Admin (visible to Admin)
-- Upload and manage clinic-wide documents: licenses, certificates, contracts, policies
-- Also per-patient documents accessible from patient profile (visible to Admin, Dentist, Receptionist)
-- Document categories: license, certificate, contract, policy, insurance, other
-- Files stored in Supabase Storage (`clinic-documents` bucket)
-- Track expiry dates for licenses/certificates with notifications when approaching expiry
-- **Database**: `clinic_documents` table + `patient_documents` table + new storage bucket
+Replace the current localStorage-based login with proper Supabase Auth:
+- Email/password signup and login
+- `profiles` table auto-populated via database trigger on signup
+- Session managed via `onAuthStateChange`
 
-### 11. Sidebar & Role Access Updates
-- **Clinical** section: Add "Treatment Plans" (Admin, Dentist)
-- **General** section: Add "Reviews" (Admin, Receptionist)
-- **Finance** section: Add "Expenses" (Admin, Accountant)
-- **Compliance** section (new group): Add "Audit Log" (Admin), "Documents" (Admin), "Consent Forms" (Admin, Dentist)
-- Chair management integrated into Settings
-- All existing role-based visibility rules preserved
+### 3. Clinic Type Routing
 
-### 12. Patient Profile Enhancement
-- Add tabs to the patient profile page for:
-  - Treatment Plans
-  - X-Rays & Images
-  - Clinical Notes
-  - Consent Forms
-  - Documents
-- Each tab respects role-based access
+```text
+/login                    -- Universal login
+/select-clinic            -- User picks which clinic to enter (if member of multiple)
+/clinic/:slug/dashboard   -- Clinic dashboard (layout varies by clinic_type)
+/admin                    -- Super admin dashboard (only for super_admin role)
+```
 
+The current dental pages move under `/clinic/:slug/...` and the sidebar/layout dynamically loads based on `clinic_type`.
+
+### 4. Row-Level Security (RLS)
+
+Every clinic data table gets RLS policies using a helper function:
+
+```text
+has_org_access(org_id, user_id) --> checks org_members table
+is_super_admin(user_id)         --> checks user_roles table
+```
+
+This ensures Clinic A can never see Clinic B's data.
+
+### 5. Super Admin Dashboard
+
+A separate set of pages at `/admin/...` that shows:
+- All registered clinics
+- User management across the platform
+- Platform analytics
+- Ability to create new clinics
+
+---
+
+## Implementation Phases
+
+### Phase 1: Foundation (start here)
+1. Create the core database tables: `profiles`, `user_roles`, `organizations`, `org_members`
+2. Create enums: `clinic_type` (dental), `platform_role` (super_admin, user), `org_role` (owner, admin, dentist, etc.)
+3. Create helper functions: `has_role()`, `has_org_access()`, `is_super_admin()`
+4. Set up RLS on all new tables
+5. Create profile auto-creation trigger
+6. Replace localStorage auth with real Supabase Auth (login, signup, session)
+7. Update `useAuth` hook to fetch profile, platform role, and org memberships
+
+### Phase 2: Multi-Tenant Routing
+1. Add a "Select Clinic" page for users who belong to multiple orgs
+2. Create an `OrgProvider` context that holds the current org and clinic type
+3. Update routing: `/clinic/:slug/dashboard`, `/clinic/:slug/patients`, etc.
+4. Update `DashboardLayout` and `DashboardSidebar` to be dynamic based on `clinic_type`
+5. Move current dental pages under the new route structure
+
+### Phase 3: Dental Clinic Tables
+1. Create all the dental-specific tables (patients, appointments, treatments, billing, etc.) -- all with `org_id`
+2. Apply RLS policies using `has_org_access()`
+3. Fix all existing hooks to pass `org_id` from context
+4. Resolve all current build errors (the "never" type errors are because the DB has no tables)
+
+### Phase 4: Super Admin
+1. Create `/admin` routes and layout
+2. Build pages: clinic list, user management, platform stats
+3. Protect with `is_super_admin()` checks
+
+---
+
+## Technical Details
+
+### Database Migration (Phase 1 SQL)
+
+Creates these objects:
+- Enums: `platform_role`, `clinic_type`, `org_role`
+- Tables: `profiles`, `user_roles`, `organizations`, `org_members`
+- Functions: `handle_new_user()`, `has_role()`, `has_org_access()`, `is_super_admin()`
+- Trigger: auto-create profile on signup
+- RLS policies on all tables
+
+### Key Frontend Changes
+
+| Current | New |
+|---------|-----|
+| `useAuth` with localStorage | `useAuth` with Supabase Auth + profile/roles/orgs |
+| `roleAccess.ts` with hardcoded roles | Dynamic roles from `org_members` per clinic |
+| `/dashboard/*` routes | `/clinic/:slug/*` routes (clinic) + `/admin/*` (super admin) |
+| Single `DashboardSidebar` | Sidebar config driven by `clinic_type` |
+| All hooks reference non-existent tables | Hooks scoped by `org_id` from context |
+
+### New Contexts
+
+- **`AuthContext`** -- user, profile, platform role, org memberships
+- **`OrgContext`** -- current organization, clinic type, user's role within that org
+
+### How Different Clinic Types Work
+
+The sidebar navigation, available pages, and features are defined per `clinic_type`:
+
+```text
+clinicTypeConfig = {
+  dental: {
+    label: "Dental Clinic",
+    navGroups: [General, Clinical (dental charts, treatments), Finance, Lab, ...],
+    features: ["dental_charts", "prescriptions", "lab_work", ...]
+  },
+  general: {  // future
+    label: "General Clinic",
+    navGroups: [General, Clinical (consultations, vitals), Finance, ...],
+    features: ["vitals", "consultations", ...]
+  }
+}
+```
+
+This way, adding a new clinic type later means adding a config object and its specific pages -- the core multi-tenant infrastructure stays the same.
+
+---
+
+## What This Achieves
+
+- Each clinic's data is completely isolated via RLS
+- Users can belong to multiple clinics
+- The platform scales to support any number of clinics and clinic types
+- Super admin has full visibility across the platform
+- Adding new clinic types (general, dermatology, etc.) requires only new config + pages, not architectural changes
+
+## Starting Point
+
+We will begin with **Phase 1** -- setting up the database foundation and real authentication. This unblocks everything else and also fixes all current build errors (which stem from the empty database).
