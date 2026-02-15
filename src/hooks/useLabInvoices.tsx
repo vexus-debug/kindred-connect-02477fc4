@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
+import { useOrg } from "@/hooks/useOrg";
 
 export interface LabInvoiceRow {
   id: string;
@@ -12,6 +13,7 @@ export interface LabInvoiceRow {
   invoice_date: string;
   subtotal: number;
   discount: number;
+  total: number;
   total_amount: number;
   amount_paid: number;
   status: string;
@@ -21,15 +23,24 @@ export interface LabInvoiceRow {
 }
 
 export function useLabInvoices() {
+  const { currentOrg } = useOrg();
+  const orgId = currentOrg?.org_id;
   return useQuery({
-    queryKey: ["lab_invoices"],
+    queryKey: ["lab_invoices", orgId],
+    enabled: !!orgId,
     queryFn: async () => {
       const { data, error } = await (supabase as any)
         .from("lab_invoices")
         .select("*")
+        .eq("org_id", orgId)
         .order("created_at", { ascending: false });
       if (error) throw error;
-      return (data || []) as unknown as LabInvoiceRow[];
+      return (data || []).map((inv: any) => ({
+        ...inv,
+        total_amount: inv.total || 0,
+        amount_paid: 0,
+        clinic_doctor_name: inv.clinic_code || "",
+      })) as unknown as LabInvoiceRow[];
     },
   });
 }
@@ -45,18 +56,19 @@ export function useLabInvoiceStats() {
 
 export function useCreateLabInvoice() {
   const qc = useQueryClient();
+  const { currentOrg } = useOrg();
   return useMutation({
     mutationFn: async (invoice: any) => {
       const disc = invoice.discount || 0;
       const total = Math.max(invoice.subtotal - disc, 0);
-      const paid = Math.min(invoice.amount_paid || 0, total);
-      const status = paid >= total ? "paid" : paid > 0 ? "partial" : "unpaid";
+      const status = "unpaid";
       const { data, error } = await (supabase as any)
         .from("lab_invoices")
         .insert({
-          invoice_number: "", clinic_code: invoice.clinic_code || "", clinic_doctor_name: invoice.clinic_doctor_name || "",
+          invoice_number: `LAB-${Date.now()}`, clinic_code: invoice.clinic_code || "",
           patient_name: invoice.patient_name || "", lab_case_id: invoice.lab_case_id || null,
-          subtotal: invoice.subtotal, discount: disc, total_amount: total, amount_paid: paid, status, notes: invoice.notes || "",
+          subtotal: invoice.subtotal, discount: disc, total, status, notes: invoice.notes || "",
+          org_id: currentOrg?.org_id,
         })
         .select().single();
       if (error) throw error;

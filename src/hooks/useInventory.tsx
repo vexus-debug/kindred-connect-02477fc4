@@ -1,5 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { useOrg } from "@/hooks/useOrg";
 
 export interface InventoryItem {
   id: string;
@@ -16,12 +17,16 @@ export interface InventoryItem {
 }
 
 export function useInventory() {
+  const { currentOrg } = useOrg();
+  const orgId = currentOrg?.org_id;
   return useQuery({
-    queryKey: ["inventory"],
+    queryKey: ["inventory", orgId],
+    enabled: !!orgId,
     queryFn: async () => {
       const { data, error } = await (supabase as any)
         .from("inventory")
         .select("*")
+        .eq("org_id", orgId)
         .order("name");
       if (error) throw error;
       return (data || []) as InventoryItem[];
@@ -31,9 +36,10 @@ export function useInventory() {
 
 export function useAddInventoryItem() {
   const queryClient = useQueryClient();
+  const { currentOrg } = useOrg();
   return useMutation({
     mutationFn: async (item: Omit<InventoryItem, "id" | "created_at" | "updated_at">) => {
-      const { error } = await (supabase as any).from("inventory").insert(item);
+      const { error } = await (supabase as any).from("inventory").insert({ ...item, org_id: currentOrg?.org_id });
       if (error) throw error;
     },
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ["inventory"] }),

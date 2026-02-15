@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
+import { useOrg } from "@/hooks/useOrg";
 
 export interface LabOrderRow {
   id: string;
@@ -21,12 +22,16 @@ export interface LabOrderRow {
 }
 
 export function useLabOrders() {
+  const { currentOrg } = useOrg();
+  const orgId = currentOrg?.org_id;
   return useQuery({
-    queryKey: ["lab_orders"],
+    queryKey: ["lab_orders", orgId],
+    enabled: !!orgId,
     queryFn: async () => {
       const { data, error } = await (supabase as any)
         .from("lab_orders")
         .select("*, patients(first_name, last_name), staff(full_name), treatments(name)")
+        .eq("org_id", orgId)
         .order("created_at", { ascending: false });
       if (error) throw error;
       return (data || []) as LabOrderRow[];
@@ -36,9 +41,10 @@ export function useLabOrders() {
 
 export function useCreateLabOrder() {
   const queryClient = useQueryClient();
+  const { currentOrg } = useOrg();
   return useMutation({
     mutationFn: async (order: any) => {
-      const { data, error } = await (supabase as any).from("lab_orders").insert(order).select().single();
+      const { data, error } = await (supabase as any).from("lab_orders").insert({ ...order, org_id: currentOrg?.org_id }).select().single();
       if (error) throw error;
       return data;
     },

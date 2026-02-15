@@ -1,14 +1,19 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
+import { useOrg } from "@/hooks/useOrg";
 
 export function useClinicDocuments() {
+  const { currentOrg } = useOrg();
+  const orgId = currentOrg?.org_id;
   return useQuery({
-    queryKey: ["clinic_documents"],
+    queryKey: ["clinic_documents", orgId],
+    enabled: !!orgId,
     queryFn: async () => {
       const { data, error } = await (supabase as any)
         .from("clinic_documents")
         .select("*")
+        .eq("org_id", orgId)
         .order("created_at", { ascending: false });
       if (error) throw error;
       return data || [];
@@ -18,16 +23,16 @@ export function useClinicDocuments() {
 
 export function useUploadClinicDocument() {
   const qc = useQueryClient();
+  const { currentOrg } = useOrg();
   return useMutation({
-    mutationFn: async ({ file, title, category, expiryDate, notes, userId }: {
-      file: File; title: string; category: string; expiryDate?: string; notes?: string; userId?: string;
+    mutationFn: async ({ file, title, category, expiryDate, userId, notes }: {
+      file: File; title: string; category: string; expiryDate?: string; userId?: string; notes?: string;
     }) => {
-      const path = `clinic/${Date.now()}-${file.name}`;
+      const path = `clinic/${currentOrg?.org_id}/${Date.now()}-${file.name}`;
       const { error: uploadError } = await supabase.storage.from("clinic-documents").upload(path, file);
       if (uploadError) throw uploadError;
-      const file_url = path;
       const { data, error } = await (supabase as any).from("clinic_documents").insert({
-        title, category, file_url, expiry_date: expiryDate || null, notes: notes || "", uploaded_by: userId || null,
+        title, category, file_url: path, expiry_date: expiryDate || null, uploaded_by: userId || null, org_id: currentOrg?.org_id,
       }).select().single();
       if (error) throw error;
       return data;
@@ -50,13 +55,16 @@ export function useDeleteClinicDocument() {
 }
 
 export function usePatientDocuments(patientId?: string) {
+  const { currentOrg } = useOrg();
+  const orgId = currentOrg?.org_id;
   return useQuery({
-    queryKey: ["patient_documents", patientId],
-    enabled: !!patientId,
+    queryKey: ["patient_documents", patientId, orgId],
+    enabled: !!patientId && !!orgId,
     queryFn: async () => {
       const { data, error } = await (supabase as any)
         .from("patient_documents")
         .select("*")
+        .eq("org_id", orgId)
         .eq("patient_id", patientId!)
         .order("created_at", { ascending: false });
       if (error) throw error;
@@ -67,16 +75,16 @@ export function usePatientDocuments(patientId?: string) {
 
 export function useUploadPatientDocument() {
   const qc = useQueryClient();
+  const { currentOrg } = useOrg();
   return useMutation({
-    mutationFn: async ({ file, patientId, title, category, notes, userId }: {
-      file: File; patientId: string; title: string; category: string; notes?: string; userId?: string;
+    mutationFn: async ({ file, patientId, title, category, userId, notes }: {
+      file: File; patientId: string; title: string; category: string; userId?: string; notes?: string;
     }) => {
-      const path = `patients/${patientId}/${Date.now()}-${file.name}`;
+      const path = `patients/${currentOrg?.org_id}/${patientId}/${Date.now()}-${file.name}`;
       const { error: uploadError } = await supabase.storage.from("clinic-documents").upload(path, file);
       if (uploadError) throw uploadError;
-      const file_url = path;
       const { data, error } = await (supabase as any).from("patient_documents").insert({
-        patient_id: patientId, title, category, file_url, notes: notes || "", uploaded_by: userId || null,
+        patient_id: patientId, title, category, file_url: path, uploaded_by: userId || null, org_id: currentOrg?.org_id,
       }).select().single();
       if (error) throw error;
       return data;

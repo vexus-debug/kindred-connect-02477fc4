@@ -1,15 +1,19 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
+import { useOrg } from "@/hooks/useOrg";
 
 export function useClinicalNotes(patientId?: string) {
+  const { currentOrg } = useOrg();
+  const orgId = currentOrg?.org_id;
   return useQuery({
-    queryKey: ["clinical_notes", patientId],
-    enabled: !!patientId,
+    queryKey: ["clinical_notes", patientId, orgId],
+    enabled: !!patientId && !!orgId,
     queryFn: async () => {
       const { data, error } = await (supabase as any)
         .from("clinical_notes")
         .select("*, appointments(appointment_date, appointment_time)")
+        .eq("org_id", orgId)
         .eq("patient_id", patientId!)
         .order("created_at", { ascending: false });
       if (error) throw error;
@@ -19,13 +23,16 @@ export function useClinicalNotes(patientId?: string) {
 }
 
 export function useClinicalNotesByAppointment(appointmentId?: string) {
+  const { currentOrg } = useOrg();
+  const orgId = currentOrg?.org_id;
   return useQuery({
-    queryKey: ["clinical_notes", "appointment", appointmentId],
-    enabled: !!appointmentId,
+    queryKey: ["clinical_notes", "appointment", appointmentId, orgId],
+    enabled: !!appointmentId && !!orgId,
     queryFn: async () => {
       const { data, error } = await (supabase as any)
         .from("clinical_notes")
         .select("*")
+        .eq("org_id", orgId)
         .eq("appointment_id", appointmentId!)
         .order("created_at", { ascending: false });
       if (error) throw error;
@@ -36,6 +43,7 @@ export function useClinicalNotesByAppointment(appointmentId?: string) {
 
 export function useCreateClinicalNote() {
   const qc = useQueryClient();
+  const { currentOrg } = useOrg();
   return useMutation({
     mutationFn: async (note: {
       patient_id: string;
@@ -46,7 +54,7 @@ export function useCreateClinicalNote() {
       plan?: string;
       created_by?: string;
     }) => {
-      const { data, error } = await (supabase as any).from("clinical_notes").insert(note).select().single();
+      const { data, error } = await (supabase as any).from("clinical_notes").insert({ ...note, org_id: currentOrg?.org_id }).select().single();
       if (error) throw error;
       return data;
     },

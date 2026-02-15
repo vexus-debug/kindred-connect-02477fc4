@@ -1,13 +1,18 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { useOrg } from "@/hooks/useOrg";
 
 export function useAuditLog(filters?: { eventType?: string; dateFrom?: string; dateTo?: string }) {
+  const { currentOrg } = useOrg();
+  const orgId = currentOrg?.org_id;
   return useQuery({
-    queryKey: ["audit_log", filters],
+    queryKey: ["audit_log", orgId, filters],
+    enabled: !!orgId,
     queryFn: async () => {
       let query = (supabase as any)
         .from("activity_log")
         .select("*")
+        .eq("org_id", orgId)
         .order("created_at", { ascending: false })
         .limit(200);
 

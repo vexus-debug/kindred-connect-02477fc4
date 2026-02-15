@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
+import { useOrg } from "@/hooks/useOrg";
 
 export interface RegistrationFeeRow {
   id: string;
@@ -8,19 +9,23 @@ export interface RegistrationFeeRow {
   amount: number;
   payment_method: string;
   payment_date: string;
-  recorded_by: string | null;
+  receipt_number: string | null;
   notes: string;
   created_at: string;
   patients?: { first_name: string; last_name: string } | null;
 }
 
 export function useRegistrationFees() {
+  const { currentOrg } = useOrg();
+  const orgId = currentOrg?.org_id;
   return useQuery({
-    queryKey: ["registration_fees"],
+    queryKey: ["registration_fees", orgId],
+    enabled: !!orgId,
     queryFn: async () => {
       const { data, error } = await (supabase as any)
         .from("registration_fees")
         .select("*, patients(first_name, last_name)")
+        .eq("org_id", orgId)
         .order("created_at", { ascending: false });
       if (error) throw error;
       return (data || []) as unknown as RegistrationFeeRow[];
@@ -42,11 +47,12 @@ export function useRegistrationFeeStats() {
 
 export function useCreateRegistrationFee() {
   const qc = useQueryClient();
+  const { currentOrg } = useOrg();
   return useMutation({
     mutationFn: async (fee: any) => {
       const { data, error } = await (supabase as any)
         .from("registration_fees")
-        .insert(fee)
+        .insert({ ...fee, org_id: currentOrg?.org_id })
         .select()
         .single();
       if (error) throw error;

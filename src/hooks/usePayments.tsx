@@ -1,5 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { useOrg } from "@/hooks/useOrg";
 
 export interface Payment {
   id: string;
@@ -29,22 +30,23 @@ export function usePayments(invoiceId: string | null) {
 
 export function useRecordPayment() {
   const queryClient = useQueryClient();
+  const { currentOrg } = useOrg();
   return useMutation({
     mutationFn: async (input: { invoice_id: string; amount: number; payment_method: string; reference?: string }) => {
       const { error: payError } = await (supabase as any).from("payments").insert({
-        invoice_id: input.invoice_id, amount: input.amount, payment_method: input.payment_method, reference: input.reference || "",
+        invoice_id: input.invoice_id, amount: input.amount, payment_method: input.payment_method, reference: input.reference || "", org_id: currentOrg?.org_id,
       });
       if (payError) throw payError;
 
-      const { data: invoice, error: fetchError } = await (supabase as any)
-        .from("invoices").select("total_amount, amount_paid").eq("id", input.invoice_id).single();
-      if (fetchError) throw fetchError;
+      // Update invoice status based on total payments
+      const { data: payments } = await (supabase as any)
+        .from("payments").select("amount").eq("invoice_id", input.invoice_id);
+      const totalPaid = (payments || []).reduce((s: number, p: any) => s + Number(p.amount), 0);
 
-      const newPaid = Number(invoice.amount_paid) + input.amount;
-      const newStatus = newPaid >= Number(invoice.total_amount) ? "paid" : "partial";
-      const { error: updError } = await (supabase as any)
-        .from("invoices").update({ amount_paid: newPaid, status: newStatus }).eq("id", input.invoice_id);
-      if (updError) throw updError;
+      const { data: invoice } = await (supabase as any)
+        .from("invoices").select("total").eq("id", input.invoice_id).single();
+      const newStatus = totalPaid >= Number(invoice?.total || 0) ? "paid" : "partial";
+      await (supabase as any).from("invoices").update({ status: newStatus }).eq("id", input.invoice_id);
     },
     onSuccess: (_data, variables) => {
       queryClient.invalidateQueries({ queryKey: ["invoices"] });
