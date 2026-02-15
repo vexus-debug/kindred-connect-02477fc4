@@ -9,7 +9,7 @@ import { AlertTriangle, Plus, Pencil, Trash2, Package } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import { useInventory, useAddInventoryItem, useUpdateInventoryStock, useDeleteInventoryItem } from "@/hooks/useInventory";
 import { EditInventoryDialog } from "@/components/dashboard/EditInventoryDialog";
-import { useAuth } from "@/hooks/useAuth";
+import { useOrg } from "@/hooks/useOrg";
 import type { InventoryItem } from "@/hooks/useInventory";
 import { PageHeader } from "@/components/dashboard/PageHeader";
 import { TableSkeleton } from "@/components/dashboard/TableSkeleton";
@@ -24,8 +24,9 @@ export default function InventoryPage() {
   const addItem = useAddInventoryItem();
   const updateStock = useUpdateInventoryStock();
   const deleteItem = useDeleteInventoryItem();
-  const { roles } = useAuth();
-  const isAdmin = roles.includes("admin");
+  const { currentOrg } = useOrg();
+  const orgRole = currentOrg?.role || "";
+  const isAdmin = orgRole === "owner" || orgRole === "admin";
 
   const [addOpen, setAddOpen] = useState(false);
   const [restockId, setRestockId] = useState<string | null>(null);
