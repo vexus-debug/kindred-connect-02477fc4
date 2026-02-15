@@ -5,8 +5,10 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider } from "@/hooks/useAuth";
 import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
+import { ProtectedAdminRoute } from "@/components/admin/ProtectedAdminRoute";
 import { OrgProvider } from "@/hooks/useOrg";
 import { DashboardLayout } from "@/components/dashboard/DashboardLayout";
+import { AdminLayout } from "@/components/admin/AdminLayout";
 import Login from "./pages/Login";
 import SelectClinic from "./pages/SelectClinic";
 import NotFound from "./pages/NotFound";
@@ -41,6 +43,12 @@ import LabTechniciansPage from "./pages/dashboard/LabTechniciansPage";
 import LabBillingPage from "./pages/dashboard/LabBillingPage";
 import LabSettingsPage from "./pages/dashboard/LabSettingsPage";
 
+// Admin pages
+import AdminOverview from "./pages/admin/AdminOverview";
+import AdminClinics from "./pages/admin/AdminClinics";
+import AdminUsers from "./pages/admin/AdminUsers";
+import AdminAnalytics from "./pages/admin/AdminAnalytics";
+
 const queryClient = new QueryClient();
 
 function ClinicRoute({ children }: { children: React.ReactNode }) {
@@ -50,6 +58,14 @@ function ClinicRoute({ children }: { children: React.ReactNode }) {
         <DashboardLayout>{children}</DashboardLayout>
       </OrgProvider>
     </ProtectedRoute>
+  );
+}
+
+function AdminRoute({ children }: { children: React.ReactNode }) {
+  return (
+    <ProtectedAdminRoute>
+      <AdminLayout>{children}</AdminLayout>
+    </ProtectedAdminRoute>
   );
 }
 
@@ -67,6 +83,12 @@ const App = () => (
             {/* Legacy redirect */}
             <Route path="/dashboard" element={<Navigate to="/select-clinic" replace />} />
             <Route path="/dashboard/*" element={<Navigate to="/select-clinic" replace />} />
+
+            {/* Admin routes */}
+            <Route path="/admin" element={<AdminRoute><AdminOverview /></AdminRoute>} />
+            <Route path="/admin/clinics" element={<AdminRoute><AdminClinics /></AdminRoute>} />
+            <Route path="/admin/users" element={<AdminRoute><AdminUsers /></AdminRoute>} />
+            <Route path="/admin/analytics" element={<AdminRoute><AdminAnalytics /></AdminRoute>} />
 
             {/* Clinic routes */}
             <Route path="/clinic/:slug/dashboard" element={<ClinicRoute><DashboardHome /></ClinicRoute>} />
