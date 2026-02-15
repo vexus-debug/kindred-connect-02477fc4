@@ -6,7 +6,7 @@ export function usePatientDetail(patientId: string | undefined) {
     queryKey: ["patient-detail", patientId],
     enabled: !!patientId,
     queryFn: async () => {
-      const { data, error } = await supabase
+      const { data, error } = await (supabase as any)
         .from("patients")
         .select("*")
         .eq("id", patientId!)
@@ -22,7 +22,7 @@ export function usePatientVisits(patientId: string | undefined) {
     queryKey: ["patient-visits", patientId],
     enabled: !!patientId,
     queryFn: async () => {
-      const { data, error } = await supabase
+      const { data, error } = await (supabase as any)
         .from("appointments")
         .select("*, staff(full_name), treatments(name, price)")
         .eq("patient_id", patientId!)
@@ -46,7 +46,7 @@ export function usePatientTreatmentPlans(patientId: string | undefined) {
     queryKey: ["patient-treatment-plans", patientId],
     enabled: !!patientId,
     queryFn: async () => {
-      const { data, error } = await supabase
+      const { data, error } = await (supabase as any)
         .from("treatment_plans")
         .select("*, treatment_plan_procedures(*)")
         .eq("patient_id", patientId!)
@@ -62,7 +62,7 @@ export function usePatientInvoices(patientId: string | undefined) {
     queryKey: ["patient-invoices", patientId],
     enabled: !!patientId,
     queryFn: async () => {
-      const { data, error } = await supabase
+      const { data, error } = await (supabase as any)
         .from("invoices")
         .select("*")
         .eq("patient_id", patientId!)
@@ -78,7 +78,7 @@ export function usePatientPrescriptions(patientId: string | undefined) {
     queryKey: ["patient-prescriptions", patientId],
     enabled: !!patientId,
     queryFn: async () => {
-      const { data, error } = await supabase
+      const { data, error } = await (supabase as any)
         .from("prescriptions")
         .select("*, staff:dentist_id(full_name), prescription_medications(*)")
         .eq("patient_id", patientId!)

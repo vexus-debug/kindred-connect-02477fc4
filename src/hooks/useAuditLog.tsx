@@ -5,7 +5,7 @@ export function useAuditLog(filters?: { eventType?: string; dateFrom?: string; d
   return useQuery({
     queryKey: ["audit_log", filters],
     queryFn: async () => {
-      let query = supabase
+      let query = (supabase as any)
         .from("activity_log")
         .select("*")
         .order("created_at", { ascending: false })

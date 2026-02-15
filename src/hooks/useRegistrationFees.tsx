@@ -18,54 +18,41 @@ export function useRegistrationFees() {
   return useQuery({
     queryKey: ["registration_fees"],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from("registration_fees" as any)
+      const { data, error } = await (supabase as any)
+        .from("registration_fees")
         .select("*, patients(first_name, last_name)")
         .order("created_at", { ascending: false });
       if (error) throw error;
-      return data as unknown as RegistrationFeeRow[];
+      return (data || []) as unknown as RegistrationFeeRow[];
     },
   });
 }
 
 export function useRegistrationFeeStats() {
   const { data: fees = [], isLoading } = useRegistrationFees();
-  
   const totalCollected = fees.reduce((s, f) => s + Number(f.amount), 0);
-  
   const startOfMonth = new Date();
   startOfMonth.setDate(1);
   startOfMonth.setHours(0, 0, 0, 0);
   const monthCollected = fees
     .filter((f) => new Date(f.payment_date) >= startOfMonth)
     .reduce((s, f) => s + Number(f.amount), 0);
-
   return { fees, totalCollected, monthCollected, isLoading };
 }
 
 export function useCreateRegistrationFee() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: async (fee: {
-      patient_id: string;
-      amount: number;
-      payment_method?: string;
-      notes?: string;
-    }) => {
-      const { data, error } = await supabase
-        .from("registration_fees" as any)
+    mutationFn: async (fee: any) => {
+      const { data, error } = await (supabase as any)
+        .from("registration_fees")
         .insert(fee)
         .select()
         .single();
       if (error) throw error;
       return data;
     },
-    onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ["registration_fees"] });
-      toast({ title: "Registration fee recorded" });
-    },
-    onError: (e) => {
-      toast({ title: "Error", description: e.message, variant: "destructive" });
-    },
+    onSuccess: () => { qc.invalidateQueries({ queryKey: ["registration_fees"] }); toast({ title: "Registration fee recorded" }); },
+    onError: (e: any) => { toast({ title: "Error", description: e.message, variant: "destructive" }); },
   });
 }

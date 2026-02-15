@@ -55,7 +55,7 @@ export function GenerateClientInvoiceDialog({ open, onOpenChange }: GenerateClie
       const fromStr = format(dateFrom, "yyyy-MM-dd");
       const toStr = format(dateTo, "yyyy-MM-dd");
 
-      const { data, error } = await supabase
+      const { data, error } = await (supabase as any)
         .from("invoices")
         .select("id, invoice_number, invoice_date, total_amount, amount_paid, status")
         .eq("patient_id", patientId)
@@ -64,7 +64,7 @@ export function GenerateClientInvoiceDialog({ open, onOpenChange }: GenerateClie
         .order("invoice_date", { ascending: true });
 
       if (error) throw error;
-      setResults(data as FetchedInvoice[]);
+      setResults((data || []) as FetchedInvoice[]);
     } catch (err: any) {
       toast({ title: "Error fetching invoices", description: err.message, variant: "destructive" });
     } finally {

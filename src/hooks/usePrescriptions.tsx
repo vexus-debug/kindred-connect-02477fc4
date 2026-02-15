@@ -19,12 +19,12 @@ export function usePrescriptions() {
   return useQuery({
     queryKey: ["prescriptions"],
     queryFn: async () => {
-      const { data, error } = await supabase
+      const { data, error } = await (supabase as any)
         .from("prescriptions")
         .select("*, patients(first_name, last_name), staff(full_name), prescription_medications(*)")
         .order("prescription_date", { ascending: false });
       if (error) throw error;
-      return data as PrescriptionRow[];
+      return (data || []) as PrescriptionRow[];
     },
   });
 }
@@ -37,7 +37,7 @@ export function useCreatePrescription() {
       dentist_id: string;
       medications: { name: string; dosage: string; frequency: string; duration: string }[];
     }) => {
-      const { data: rx, error: rxErr } = await supabase
+      const { data: rx, error: rxErr } = await (supabase as any)
         .from("prescriptions")
         .insert({ patient_id: input.patient_id, dentist_id: input.dentist_id })
         .select()
@@ -45,7 +45,7 @@ export function useCreatePrescription() {
       if (rxErr) throw rxErr;
 
       const meds = input.medications.map((m) => ({ ...m, prescription_id: rx.id }));
-      const { error: medErr } = await supabase.from("prescription_medications").insert(meds);
+      const { error: medErr } = await (supabase as any).from("prescription_medications").insert(meds);
       if (medErr) throw medErr;
 
       return rx;
@@ -54,7 +54,7 @@ export function useCreatePrescription() {
       queryClient.invalidateQueries({ queryKey: ["prescriptions"] });
       toast({ title: "Prescription created" });
     },
-    onError: (error) => {
+    onError: (error: any) => {
       toast({ title: "Error", description: error.message, variant: "destructive" });
     },
   });

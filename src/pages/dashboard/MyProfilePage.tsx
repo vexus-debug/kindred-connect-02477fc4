@@ -40,7 +40,7 @@ export default function MyProfilePage() {
     const { error } = await supabase
       .from("profiles")
       .update({ full_name: fullName, phone })
-      .eq("user_id", user.id);
+      .eq("id", user.id);
     setSaving(false);
     if (error) {
       toast({ title: "Error", description: error.message, variant: "destructive" });

@@ -18,7 +18,7 @@ export function useNotificationPreferences() {
     queryKey: ["notification-preferences", user?.id],
     enabled: !!user,
     queryFn: async () => {
-      const { data, error } = await supabase
+      const { data, error } = await (supabase as any)
         .from("notification_preferences")
         .select("*")
         .eq("user_id", user!.id)
@@ -35,33 +35,20 @@ export function useUpsertNotificationPreferences() {
   return useMutation({
     mutationFn: async (prefs: Partial<Omit<NotificationPreferences, "id" | "user_id">>) => {
       if (!user) throw new Error("Not authenticated");
-      
-      // Check if exists
-      const { data: existing } = await supabase
+      const { data: existing } = await (supabase as any)
         .from("notification_preferences")
         .select("id")
         .eq("user_id", user.id)
         .maybeSingle();
-
       if (existing) {
-        const { error } = await supabase
-          .from("notification_preferences")
-          .update(prefs)
-          .eq("user_id", user.id);
+        const { error } = await (supabase as any).from("notification_preferences").update(prefs).eq("user_id", user.id);
         if (error) throw error;
       } else {
-        const { error } = await supabase
-          .from("notification_preferences")
-          .insert({ user_id: user.id, ...prefs });
+        const { error } = await (supabase as any).from("notification_preferences").insert({ user_id: user.id, ...prefs });
         if (error) throw error;
       }
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["notification-preferences"] });
-      toast({ title: "Preferences saved" });
-    },
-    onError: (error) => {
-      toast({ title: "Error", description: error.message, variant: "destructive" });
-    },
+    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ["notification-preferences"] }); toast({ title: "Preferences saved" }); },
+    onError: (error: any) => { toast({ title: "Error", description: error.message, variant: "destructive" }); },
   });
 }

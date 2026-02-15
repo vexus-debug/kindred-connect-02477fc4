@@ -16,51 +16,34 @@ export function usePayments(invoiceId: string | null) {
     queryKey: ["payments", invoiceId],
     enabled: !!invoiceId,
     queryFn: async () => {
-      const { data, error } = await supabase
+      const { data, error } = await (supabase as any)
         .from("payments")
         .select("*")
         .eq("invoice_id", invoiceId!)
         .order("payment_date", { ascending: true });
       if (error) throw error;
-      return data as Payment[];
+      return (data || []) as Payment[];
     },
   });
 }
 
 export function useRecordPayment() {
   const queryClient = useQueryClient();
-
   return useMutation({
-    mutationFn: async (input: {
-      invoice_id: string;
-      amount: number;
-      payment_method: string;
-      reference?: string;
-    }) => {
-      // Insert payment
-      const { error: payError } = await supabase.from("payments").insert({
-        invoice_id: input.invoice_id,
-        amount: input.amount,
-        payment_method: input.payment_method,
-        reference: input.reference || "",
+    mutationFn: async (input: { invoice_id: string; amount: number; payment_method: string; reference?: string }) => {
+      const { error: payError } = await (supabase as any).from("payments").insert({
+        invoice_id: input.invoice_id, amount: input.amount, payment_method: input.payment_method, reference: input.reference || "",
       });
       if (payError) throw payError;
 
-      // Update invoice amount_paid and status
-      const { data: invoice, error: fetchError } = await supabase
-        .from("invoices")
-        .select("total_amount, amount_paid")
-        .eq("id", input.invoice_id)
-        .single();
+      const { data: invoice, error: fetchError } = await (supabase as any)
+        .from("invoices").select("total_amount, amount_paid").eq("id", input.invoice_id).single();
       if (fetchError) throw fetchError;
 
       const newPaid = Number(invoice.amount_paid) + input.amount;
       const newStatus = newPaid >= Number(invoice.total_amount) ? "paid" : "partial";
-
-      const { error: updError } = await supabase
-        .from("invoices")
-        .update({ amount_paid: newPaid, status: newStatus })
-        .eq("id", input.invoice_id);
+      const { error: updError } = await (supabase as any)
+        .from("invoices").update({ amount_paid: newPaid, status: newStatus }).eq("id", input.invoice_id);
       if (updError) throw updError;
     },
     onSuccess: (_data, variables) => {
