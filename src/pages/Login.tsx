@@ -193,6 +193,11 @@ export default function Login() {
             <Button type="submit" className="w-full" disabled={loading}>
               {loading ? (isSignUp ? "Creating account..." : "Signing in...") : (isSignUp ? "Create Account" : "Sign In")}
             </Button>
+            {isSignUp && (
+              <p className="text-center text-xs text-muted-foreground mt-2">
+                🎉 3-day free trial · No credit card required · Cancel anytime
+              </p>
+            )}
           </form>
           <div className="mt-4 text-center text-sm text-muted-foreground">
             {isSignUp ? (
@@ -201,7 +206,7 @@ export default function Login() {
               </>
             ) : (
               <>Don't have an account?{" "}
-                <button onClick={() => setIsSignUp(true)} className="text-primary hover:underline">Sign up</button>
+                <button onClick={() => setIsSignUp(true)} className="text-primary hover:underline">Sign up — 3 days free trial!</button>
               </>
             )}
           </div>
