@@ -1,7 +1,5 @@
 import { Navigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
-import { hasPageAccess } from "@/config/roleAccess";
-import { toast } from "sonner";
 import { useEffect, useRef } from "react";
 import { useLocation } from "react-router-dom";
 
@@ -10,18 +8,8 @@ interface ProtectedRouteProps {
 }
 
 export function ProtectedRoute({ children }: ProtectedRouteProps) {
-  const { session, roles, loading } = useAuth();
+  const { session, loading } = useAuth();
   const location = useLocation();
-  const toastShown = useRef(false);
-
-  const hasAccess = roles.length === 0 ? true : hasPageAccess(roles, location.pathname);
-
-  useEffect(() => {
-    if (!loading && session && !hasAccess && !toastShown.current) {
-      toastShown.current = true;
-      toast.error("You don't have access to that page.");
-    }
-  }, [loading, session, hasAccess]);
 
   if (loading) {
     return (
@@ -38,9 +26,6 @@ export function ProtectedRoute({ children }: ProtectedRouteProps) {
     return <Navigate to="/" replace />;
   }
 
-  if (!hasAccess) {
-    return <Navigate to="/dashboard" replace />;
-  }
-
+  // Role-based access is now handled by OrgProvider + sidebar visibility
   return <>{children}</>;
 }

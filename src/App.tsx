@@ -2,11 +2,13 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider } from "@/hooks/useAuth";
 import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
+import { OrgProvider } from "@/hooks/useOrg";
 import { DashboardLayout } from "@/components/dashboard/DashboardLayout";
 import Login from "./pages/Login";
+import SelectClinic from "./pages/SelectClinic";
 import NotFound from "./pages/NotFound";
 
 // Dashboard pages
@@ -41,10 +43,12 @@ import LabSettingsPage from "./pages/dashboard/LabSettingsPage";
 
 const queryClient = new QueryClient();
 
-function DashboardRoute({ children }: { children: React.ReactNode }) {
+function ClinicRoute({ children }: { children: React.ReactNode }) {
   return (
     <ProtectedRoute>
-      <DashboardLayout>{children}</DashboardLayout>
+      <OrgProvider>
+        <DashboardLayout>{children}</DashboardLayout>
+      </OrgProvider>
     </ProtectedRoute>
   );
 }
@@ -58,36 +62,41 @@ const App = () => (
         <AuthProvider>
           <Routes>
             <Route path="/" element={<Login />} />
+            <Route path="/select-clinic" element={<SelectClinic />} />
 
-            {/* Dashboard routes */}
-            <Route path="/dashboard" element={<DashboardRoute><DashboardHome /></DashboardRoute>} />
-            <Route path="/dashboard/patients" element={<DashboardRoute><PatientsPage /></DashboardRoute>} />
-            <Route path="/dashboard/patients/:id" element={<DashboardRoute><PatientProfilePage /></DashboardRoute>} />
-            <Route path="/dashboard/appointments" element={<DashboardRoute><AppointmentsPage /></DashboardRoute>} />
-            <Route path="/dashboard/dental-charts" element={<DashboardRoute><DentalChartsPage /></DashboardRoute>} />
-            <Route path="/dashboard/treatments" element={<DashboardRoute><TreatmentsPage /></DashboardRoute>} />
-            <Route path="/dashboard/prescriptions" element={<DashboardRoute><PrescriptionsPage /></DashboardRoute>} />
-            <Route path="/dashboard/billing" element={<DashboardRoute><BillingPage /></DashboardRoute>} />
-            <Route path="/dashboard/reports" element={<DashboardRoute><ReportsPage /></DashboardRoute>} />
-            <Route path="/dashboard/revenue-allocation" element={<DashboardRoute><RevenueAllocationPage /></DashboardRoute>} />
-            <Route path="/dashboard/lab-work" element={<DashboardRoute><LabWorkPage /></DashboardRoute>} />
-            <Route path="/dashboard/staff" element={<DashboardRoute><StaffPage /></DashboardRoute>} />
-            <Route path="/dashboard/inventory" element={<DashboardRoute><InventoryPage /></DashboardRoute>} />
-            <Route path="/dashboard/notifications" element={<DashboardRoute><NotificationsPage /></DashboardRoute>} />
-            <Route path="/dashboard/settings" element={<DashboardRoute><SettingsPage /></DashboardRoute>} />
-            <Route path="/dashboard/profile" element={<DashboardRoute><MyProfilePage /></DashboardRoute>} />
-            <Route path="/dashboard/tutorials" element={<DashboardRoute><TutorialsPage /></DashboardRoute>} />
-            <Route path="/dashboard/messages" element={<DashboardRoute><MessagesPage /></DashboardRoute>} />
-            <Route path="/dashboard/reviews" element={<DashboardRoute><ReviewsPage /></DashboardRoute>} />
-            <Route path="/dashboard/expenses" element={<DashboardRoute><ExpensesPage /></DashboardRoute>} />
-            <Route path="/dashboard/audit-log" element={<DashboardRoute><AuditLogPage /></DashboardRoute>} />
-            <Route path="/dashboard/consent-forms" element={<DashboardRoute><ConsentFormsPage /></DashboardRoute>} />
-            <Route path="/dashboard/documents" element={<DashboardRoute><DocumentsPage /></DashboardRoute>} />
-            <Route path="/dashboard/lab" element={<DashboardRoute><LabDashboardPage /></DashboardRoute>} />
-            <Route path="/dashboard/lab/cases" element={<DashboardRoute><LabCasesPage /></DashboardRoute>} />
-            <Route path="/dashboard/lab/technicians" element={<DashboardRoute><LabTechniciansPage /></DashboardRoute>} />
-            <Route path="/dashboard/lab/billing" element={<DashboardRoute><LabBillingPage /></DashboardRoute>} />
-            <Route path="/dashboard/lab/settings" element={<DashboardRoute><LabSettingsPage /></DashboardRoute>} />
+            {/* Legacy redirect */}
+            <Route path="/dashboard" element={<Navigate to="/select-clinic" replace />} />
+            <Route path="/dashboard/*" element={<Navigate to="/select-clinic" replace />} />
+
+            {/* Clinic routes */}
+            <Route path="/clinic/:slug/dashboard" element={<ClinicRoute><DashboardHome /></ClinicRoute>} />
+            <Route path="/clinic/:slug/patients" element={<ClinicRoute><PatientsPage /></ClinicRoute>} />
+            <Route path="/clinic/:slug/patients/:id" element={<ClinicRoute><PatientProfilePage /></ClinicRoute>} />
+            <Route path="/clinic/:slug/appointments" element={<ClinicRoute><AppointmentsPage /></ClinicRoute>} />
+            <Route path="/clinic/:slug/dental-charts" element={<ClinicRoute><DentalChartsPage /></ClinicRoute>} />
+            <Route path="/clinic/:slug/treatments" element={<ClinicRoute><TreatmentsPage /></ClinicRoute>} />
+            <Route path="/clinic/:slug/prescriptions" element={<ClinicRoute><PrescriptionsPage /></ClinicRoute>} />
+            <Route path="/clinic/:slug/billing" element={<ClinicRoute><BillingPage /></ClinicRoute>} />
+            <Route path="/clinic/:slug/reports" element={<ClinicRoute><ReportsPage /></ClinicRoute>} />
+            <Route path="/clinic/:slug/revenue-allocation" element={<ClinicRoute><RevenueAllocationPage /></ClinicRoute>} />
+            <Route path="/clinic/:slug/lab-work" element={<ClinicRoute><LabWorkPage /></ClinicRoute>} />
+            <Route path="/clinic/:slug/staff" element={<ClinicRoute><StaffPage /></ClinicRoute>} />
+            <Route path="/clinic/:slug/inventory" element={<ClinicRoute><InventoryPage /></ClinicRoute>} />
+            <Route path="/clinic/:slug/notifications" element={<ClinicRoute><NotificationsPage /></ClinicRoute>} />
+            <Route path="/clinic/:slug/settings" element={<ClinicRoute><SettingsPage /></ClinicRoute>} />
+            <Route path="/clinic/:slug/profile" element={<ClinicRoute><MyProfilePage /></ClinicRoute>} />
+            <Route path="/clinic/:slug/tutorials" element={<ClinicRoute><TutorialsPage /></ClinicRoute>} />
+            <Route path="/clinic/:slug/messages" element={<ClinicRoute><MessagesPage /></ClinicRoute>} />
+            <Route path="/clinic/:slug/reviews" element={<ClinicRoute><ReviewsPage /></ClinicRoute>} />
+            <Route path="/clinic/:slug/expenses" element={<ClinicRoute><ExpensesPage /></ClinicRoute>} />
+            <Route path="/clinic/:slug/audit-log" element={<ClinicRoute><AuditLogPage /></ClinicRoute>} />
+            <Route path="/clinic/:slug/consent-forms" element={<ClinicRoute><ConsentFormsPage /></ClinicRoute>} />
+            <Route path="/clinic/:slug/documents" element={<ClinicRoute><DocumentsPage /></ClinicRoute>} />
+            <Route path="/clinic/:slug/lab" element={<ClinicRoute><LabDashboardPage /></ClinicRoute>} />
+            <Route path="/clinic/:slug/lab/cases" element={<ClinicRoute><LabCasesPage /></ClinicRoute>} />
+            <Route path="/clinic/:slug/lab/technicians" element={<ClinicRoute><LabTechniciansPage /></ClinicRoute>} />
+            <Route path="/clinic/:slug/lab/billing" element={<ClinicRoute><LabBillingPage /></ClinicRoute>} />
+            <Route path="/clinic/:slug/lab/settings" element={<ClinicRoute><LabSettingsPage /></ClinicRoute>} />
 
             <Route path="*" element={<NotFound />} />
           </Routes>
