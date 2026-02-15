@@ -50,8 +50,7 @@ export default function Login() {
 
         const userId = signUpData.user?.id;
         if (!userId) {
-          toast({ title: "Account created!", description: "Check your email to confirm your account, then sign in." });
-          setIsSignUp(false);
+          toast({ title: "Sign up failed", description: "Could not create account. Please try again.", variant: "destructive" });
           setLoading(false);
           return;
         }
@@ -71,8 +70,8 @@ export default function Login() {
 
         if (orgError) throw orgError;
 
-        toast({ title: "Account & clinic created!", description: "You can now sign in." });
-        setIsSignUp(false);
+        toast({ title: "Account & clinic created!", description: "Welcome to Vexus Health!" });
+        navigate("/select-clinic");
       } else {
         const { error } = await supabase.auth.signInWithPassword({ email, password });
         if (error) throw error;
