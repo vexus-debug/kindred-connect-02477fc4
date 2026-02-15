@@ -2,64 +2,65 @@ import { SidebarTrigger } from "@/components/ui/sidebar";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Badge } from "@/components/ui/badge";
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
+  DropdownMenu, DropdownMenuContent, DropdownMenuItem,
+  DropdownMenuSeparator, DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Search, Bell, User, Settings, LogOut, ChevronDown, Command } from "lucide-react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
+import { useOrg } from "@/hooks/useOrg";
 import { useUnreadCount } from "@/hooks/useNotifications";
+import { extractRelativePath } from "@/config/roleAccess";
 import { motion } from "framer-motion";
 
-const breadcrumbMap: Record<string, string> = {
-  "/dashboard": "Dashboard",
-  "/dashboard/patients": "Patients",
-  "/dashboard/appointments": "Appointments",
-  "/dashboard/dental-charts": "Dental Charts",
-  "/dashboard/treatments": "Treatments",
-  "/dashboard/prescriptions": "Prescriptions",
-  "/dashboard/billing": "Billing",
-  "/dashboard/reports": "Reports",
-  "/dashboard/lab-work": "Lab Work",
-  "/dashboard/staff": "Staff",
-  "/dashboard/inventory": "Inventory",
-  "/dashboard/notifications": "Notifications",
-  "/dashboard/tutorials": "Tutorials",
-  "/dashboard/settings": "Settings",
-  "/dashboard/profile": "My Profile",
-  "/dashboard/lab": "Lab Dashboard",
-  "/dashboard/lab/cases": "Lab Cases",
-  "/dashboard/lab/technicians": "Technicians",
-  "/dashboard/lab/billing": "Lab Billing",
-  "/dashboard/lab/settings": "Lab Settings",
-  "/dashboard/messages": "Messages",
+const breadcrumbLabels: Record<string, string> = {
+  "dashboard": "Dashboard",
+  "patients": "Patients",
+  "appointments": "Appointments",
+  "dental-charts": "Dental Charts",
+  "treatments": "Treatments",
+  "prescriptions": "Prescriptions",
+  "billing": "Billing",
+  "reports": "Reports",
+  "lab-work": "Lab Work",
+  "staff": "Staff",
+  "inventory": "Inventory",
+  "notifications": "Notifications",
+  "tutorials": "Tutorials",
+  "settings": "Settings",
+  "profile": "My Profile",
+  "lab": "Lab Dashboard",
+  "lab/cases": "Lab Cases",
+  "lab/technicians": "Technicians",
+  "lab/billing": "Lab Billing",
+  "lab/settings": "Lab Settings",
+  "messages": "Messages",
+  "reviews": "Reviews",
+  "expenses": "Expenses",
+  "audit-log": "Audit Log",
+  "consent-forms": "Consent Forms",
+  "documents": "Documents",
+  "revenue-allocation": "Revenue Allocation",
 };
 
 export function DashboardHeader() {
   const { profile, user, signOut } = useAuth();
+  const { basePath, currentOrg } = useOrg();
   const { data: unreadCount = 0 } = useUnreadCount();
   const navigate = useNavigate();
   const location = useLocation();
 
   const displayName = profile?.full_name || user?.email?.split("@")[0] || "Staff";
-  const initials = displayName
-    .split(" ")
-    .map((n) => n[0])
-    .join("")
-    .toUpperCase()
-    .slice(0, 2);
+  const initials = displayName.split(" ").map((n) => n[0]).join("").toUpperCase().slice(0, 2);
 
   const handleSignOut = async () => {
     await signOut();
     navigate("/");
   };
 
-  const currentPage = breadcrumbMap[location.pathname] || "Dashboard";
+  const relativePath = extractRelativePath(location.pathname);
+  const currentPage = breadcrumbLabels[relativePath] || "Dashboard";
 
   return (
     <header className="sticky top-0 z-40 flex h-14 items-center gap-4 border-b border-border/50 bg-card/80 backdrop-blur-xl px-4 lg:px-6 shadow-sm">
@@ -67,7 +68,7 @@ export function DashboardHeader() {
 
       {/* Breadcrumb */}
       <div className="hidden md:flex items-center gap-1.5 text-sm">
-        <span className="text-muted-foreground">Dashboard</span>
+        <span className="text-muted-foreground">{currentOrg?.org_name || "Dashboard"}</span>
         {currentPage !== "Dashboard" && (
           <>
             <span className="text-muted-foreground/50">/</span>
@@ -89,10 +90,8 @@ export function DashboardHeader() {
       </div>
 
       <div className="flex items-center gap-1.5">
-
-        {/* Notifications */}
         <Button variant="ghost" size="icon" className="relative" asChild>
-          <Link to="/dashboard/notifications">
+          <Link to={`${basePath}/notifications`}>
             <Bell className="h-4 w-4" />
             {unreadCount > 0 && (
               <motion.span
@@ -106,7 +105,6 @@ export function DashboardHeader() {
           </Link>
         </Button>
 
-        {/* User menu */}
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button variant="ghost" className="flex items-center gap-2 px-2 hover:bg-accent/50">
@@ -119,20 +117,15 @@ export function DashboardHeader() {
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="w-48 backdrop-blur-xl bg-popover/95 border-border/50">
-            <DropdownMenuItem onClick={() => navigate("/dashboard/profile")}>
-              <User className="mr-2 h-4 w-4" />
-              Profile
+            <DropdownMenuItem onClick={() => navigate(`${basePath}/profile`)}>
+              <User className="mr-2 h-4 w-4" />Profile
             </DropdownMenuItem>
-            <DropdownMenuItem asChild>
-              <Link to="/dashboard/settings" className="flex items-center">
-                <Settings className="mr-2 h-4 w-4" />
-                Settings
-              </Link>
+            <DropdownMenuItem onClick={() => navigate(`${basePath}/settings`)}>
+              <Settings className="mr-2 h-4 w-4" />Settings
             </DropdownMenuItem>
             <DropdownMenuSeparator />
             <DropdownMenuItem onClick={handleSignOut} className="text-destructive focus:text-destructive">
-              <LogOut className="mr-2 h-4 w-4" />
-              Sign Out
+              <LogOut className="mr-2 h-4 w-4" />Sign Out
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>

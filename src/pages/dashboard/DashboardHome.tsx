@@ -10,7 +10,7 @@ import {
   useDashboardStats, useWeeklyAppointments, useRevenueData, useTodaySchedule, useRecentActivity, useCurrentUserName,
 } from "@/hooks/useDashboardData";
 import { format } from "date-fns";
-import { useAuth } from "@/hooks/useAuth";
+import { useOrg } from "@/hooks/useOrg";
 import { hasPageAccess } from "@/config/roleAccess";
 import { AnimatedCounter } from "@/components/dashboard/AnimatedCounter";
 import type { Easing } from "framer-motion";
@@ -81,21 +81,22 @@ export default function DashboardHome() {
   const { data: todayAppointments } = useTodaySchedule();
   const { data: activities } = useRecentActivity();
   const { data: userName } = useCurrentUserName();
-  const { roles } = useAuth();
+  const { currentOrg, basePath } = useOrg();
+  const orgRole = currentOrg?.role || "receptionist";
 
   const s = stats || { totalPatients: 0, todayAppointments: 0, pendingPayments: 0, monthlyRevenue: 0 };
   const schedule = todayAppointments || [];
   const recentActivities = activities || [];
   const currentMonth = format(new Date(), "MMM");
 
-  const canSeePatients = hasPageAccess(roles, "/dashboard/patients");
-  const canSeeBilling = hasPageAccess(roles, "/dashboard/billing");
-  const canSeeAppointments = hasPageAccess(roles, "/dashboard/appointments");
+  const canSeePatients = hasPageAccess(orgRole, "patients");
+  const canSeeBilling = hasPageAccess(orgRole, "billing");
+  const canSeeAppointments = hasPageAccess(orgRole, "appointments");
 
   const quickActions = [
-    canSeePatients && { to: "/dashboard/patients", icon: UserPlus, title: "Register Patient", desc: "Add a new patient record", gradient: "from-blue-500/10 to-blue-600/5" },
-    canSeeAppointments && { to: "/dashboard/appointments", icon: CalendarPlus, title: "Book Appointment", desc: "Schedule a visit", gradient: "from-emerald-500/10 to-emerald-600/5" },
-    canSeeBilling && { to: "/dashboard/billing", icon: FileText, title: "Create Invoice", desc: "Generate a bill", gradient: "from-violet-500/10 to-violet-600/5" },
+    canSeePatients && { to: `${basePath}/patients`, icon: UserPlus, title: "Register Patient", desc: "Add a new patient record", gradient: "from-blue-500/10 to-blue-600/5" },
+    canSeeAppointments && { to: `${basePath}/appointments`, icon: CalendarPlus, title: "Book Appointment", desc: "Schedule a visit", gradient: "from-emerald-500/10 to-emerald-600/5" },
+    canSeeBilling && { to: `${basePath}/billing`, icon: FileText, title: "Create Invoice", desc: "Generate a bill", gradient: "from-violet-500/10 to-violet-600/5" },
   ].filter(Boolean) as { to: string; icon: typeof UserPlus; title: string; desc: string; gradient: string }[];
 
   const statCards = [
@@ -138,12 +139,12 @@ export default function DashboardHome() {
         <div className="flex gap-2">
           {canSeePatients && (
             <Button size="sm" variant="outline" asChild className="border-border/50 hover:bg-accent/50">
-              <Link to="/dashboard/patients"><UserPlus className="mr-2 h-4 w-4" />New Patient</Link>
+              <Link to={`${basePath}/patients`}><UserPlus className="mr-2 h-4 w-4" />New Patient</Link>
             </Button>
           )}
           {canSeeAppointments && (
             <Button size="sm" className="bg-secondary hover:bg-secondary/90 shadow-lg shadow-secondary/20" asChild>
-              <Link to="/dashboard/appointments"><CalendarPlus className="mr-2 h-4 w-4" />Book Appointment</Link>
+              <Link to={`${basePath}/appointments`}><CalendarPlus className="mr-2 h-4 w-4" />Book Appointment</Link>
             </Button>
           )}
         </div>
@@ -313,7 +314,7 @@ export default function DashboardHome() {
                   </CardDescription>
                 </div>
                 <Button variant="ghost" size="sm" asChild className="text-secondary hover:text-secondary">
-                  <Link to="/dashboard/appointments">View All →</Link>
+                  <Link to={`${basePath}/appointments`}>View All →</Link>
                 </Button>
               </div>
             </CardHeader>
@@ -340,7 +341,7 @@ export default function DashboardHome() {
                             </div>
                             <p className="text-sm font-medium text-muted-foreground">No appointments today</p>
                             <Button variant="outline" size="sm" asChild>
-                              <Link to="/dashboard/appointments">Schedule one</Link>
+                              <Link to={`${basePath}/appointments`}>Schedule one</Link>
                             </Button>
                           </div>
                         </td>

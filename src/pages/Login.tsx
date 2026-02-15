@@ -39,7 +39,7 @@ export default function Login() {
       } else {
         const { error } = await supabase.auth.signInWithPassword({ email, password });
         if (error) throw error;
-        navigate("/dashboard");
+        navigate("/select-clinic");
       }
     } catch (error: any) {
       toast({ title: isSignUp ? "Sign up failed" : "Login failed", description: error.message, variant: "destructive" });
