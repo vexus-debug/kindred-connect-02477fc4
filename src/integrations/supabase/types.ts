@@ -2028,7 +2028,15 @@ export type Database = {
       is_super_admin: { Args: { _user_id: string }; Returns: boolean }
     }
     Enums: {
-      clinic_type: "dental"
+      clinic_type:
+        | "dental"
+        | "eye"
+        | "dermatology"
+        | "orthopedic"
+        | "pediatric"
+        | "general"
+        | "cardiology"
+        | "ent"
       org_role:
         | "owner"
         | "admin"
@@ -2166,7 +2174,16 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
-      clinic_type: ["dental"],
+      clinic_type: [
+        "dental",
+        "eye",
+        "dermatology",
+        "orthopedic",
+        "pediatric",
+        "general",
+        "cardiology",
+        "ent",
+      ],
       org_role: [
         "owner",
         "admin",
