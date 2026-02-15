@@ -4,9 +4,11 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import { Eye, EyeOff } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { clinicTypeOptions } from "@/config/clinicTypeConfig";
 import logo from "@/assets/logo.jpg";
 
 export default function Login() {
@@ -16,8 +18,12 @@ export default function Login() {
   const [loading, setLoading] = useState(false);
   const [isSignUp, setIsSignUp] = useState(false);
   const [fullName, setFullName] = useState("");
+  const [clinicName, setClinicName] = useState("");
+  const [clinicType, setClinicType] = useState("dental");
   const navigate = useNavigate();
   const { toast } = useToast();
+
+  const selectedOption = clinicTypeOptions.find((o) => o.value === clinicType);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -25,7 +31,14 @@ export default function Login() {
 
     try {
       if (isSignUp) {
-        const { error } = await supabase.auth.signUp({
+        if (selectedOption?.comingSoon) {
+          toast({ title: "Coming Soon", description: `${selectedOption.label} dashboard is not yet available. Please select Dental Clinic for now.`, variant: "destructive" });
+          setLoading(false);
+          return;
+        }
+
+        // 1. Sign up the user
+        const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
           email,
           password,
           options: {
@@ -33,8 +46,38 @@ export default function Login() {
             emailRedirectTo: window.location.origin,
           },
         });
-        if (error) throw error;
-        toast({ title: "Account created!", description: "Check your email to confirm, or sign in if email confirmation is disabled." });
+        if (signUpError) throw signUpError;
+
+        const userId = signUpData.user?.id;
+        if (!userId) {
+          toast({ title: "Account created!", description: "Check your email to confirm your account, then sign in." });
+          setIsSignUp(false);
+          setLoading(false);
+          return;
+        }
+
+        // 2. Create the organization
+        const slug = clinicName
+          .toLowerCase()
+          .replace(/[^a-z0-9]+/g, "-")
+          .replace(/(^-|-$)/g, "") || `clinic-${Date.now()}`;
+
+        const { data: orgData, error: orgError } = await supabase
+          .from("organizations")
+          .insert([{ name: clinicName.trim(), slug, clinic_type: clinicType as any }])
+          .select("id")
+          .single();
+
+        if (orgError) throw orgError;
+
+        // 3. Add user as owner of the org
+        const { error: memberError } = await supabase
+          .from("org_members")
+          .insert([{ org_id: orgData.id, user_id: userId, role: "owner" }]);
+
+        if (memberError) throw memberError;
+
+        toast({ title: "Account & clinic created!", description: "You can now sign in." });
         setIsSignUp(false);
       } else {
         const { error } = await supabase.auth.signInWithPassword({ email, password });
@@ -61,17 +104,59 @@ export default function Login() {
         <CardContent>
           <form onSubmit={handleLogin} className="space-y-4">
             {isSignUp && (
-              <div className="space-y-2">
-                <Label htmlFor="fullName">Full Name</Label>
-                <Input
-                  id="fullName"
-                  type="text"
-                  placeholder="Dr. John Doe"
-                  value={fullName}
-                  onChange={(e) => setFullName(e.target.value)}
-                  required
-                />
-              </div>
+              <>
+                <div className="space-y-2">
+                  <Label htmlFor="fullName">Full Name</Label>
+                  <Input
+                    id="fullName"
+                    type="text"
+                    placeholder="Dr. John Doe"
+                    value={fullName}
+                    onChange={(e) => setFullName(e.target.value)}
+                    required
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="clinicName">Clinic Name</Label>
+                  <Input
+                    id="clinicName"
+                    type="text"
+                    placeholder="e.g. Smile Dental Clinic"
+                    value={clinicName}
+                    onChange={(e) => setClinicName(e.target.value)}
+                    required
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>Clinic Type</Label>
+                  <div className="grid grid-cols-2 gap-2">
+                    {clinicTypeOptions.map((opt) => (
+                      <button
+                        key={opt.value}
+                        type="button"
+                        onClick={() => setClinicType(opt.value)}
+                        className={`relative flex flex-col items-start gap-1 rounded-lg border p-3 text-left text-sm transition-all duration-200 ${
+                          clinicType === opt.value
+                            ? "border-primary bg-primary/5 ring-1 ring-primary/30"
+                            : "border-border hover:border-muted-foreground/30"
+                        } ${opt.comingSoon ? "opacity-60" : ""}`}
+                      >
+                        <div className="flex items-center gap-2 w-full">
+                          <opt.icon className={`h-4 w-4 shrink-0 ${clinicType === opt.value ? "text-primary" : "text-muted-foreground"}`} />
+                          <span className={`font-medium text-xs ${clinicType === opt.value ? "text-primary" : "text-foreground"}`}>
+                            {opt.label}
+                          </span>
+                        </div>
+                        {opt.comingSoon && (
+                          <Badge variant="secondary" className="text-[9px] px-1.5 py-0 mt-0.5">
+                            Coming Soon
+                          </Badge>
+                        )}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              </>
             )}
             <div className="space-y-2">
               <Label htmlFor="email">Email</Label>

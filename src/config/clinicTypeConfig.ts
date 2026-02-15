@@ -2,7 +2,7 @@ import {
   LayoutDashboard, Users, CalendarDays, Stethoscope, CreditCard, FlaskConical,
   UserCog, Package, BarChart3, Bell, Settings, GraduationCap, Microscope,
   ClipboardList, DollarSign, Wrench, MessageSquare, Star, Receipt, Shield,
-  FileCheck, FolderOpen,
+  FileCheck, FolderOpen, Eye, Heart, Baby, Bone, Ear,
 } from "lucide-react";
 
 export interface NavItem {
@@ -20,6 +20,26 @@ export interface ClinicTypeConfig {
   label: string;
   navGroups: NavGroup[];
 }
+
+export interface ClinicTypeOption {
+  value: string;
+  label: string;
+  description: string;
+  icon: any;
+  comingSoon: boolean;
+}
+
+// All supported clinic types for selection UI
+export const clinicTypeOptions: ClinicTypeOption[] = [
+  { value: "dental", label: "Dental Clinic", description: "General & specialized dentistry", icon: Stethoscope, comingSoon: false },
+  { value: "eye", label: "Eye Clinic", description: "Ophthalmology & optometry", icon: Eye, comingSoon: true },
+  { value: "dermatology", label: "Dermatology Clinic", description: "Skin care & cosmetic dermatology", icon: Heart, comingSoon: true },
+  { value: "orthopedic", label: "Orthopedic Clinic", description: "Bone, joint & musculoskeletal care", icon: Bone, comingSoon: true },
+  { value: "pediatric", label: "Pediatric Clinic", description: "Children's healthcare", icon: Baby, comingSoon: true },
+  { value: "cardiology", label: "Cardiology Clinic", description: "Heart & cardiovascular care", icon: Heart, comingSoon: true },
+  { value: "ent", label: "ENT Clinic", description: "Ear, nose & throat specialist", icon: Ear, comingSoon: true },
+  { value: "general", label: "General Practice", description: "Primary care & family medicine", icon: Stethoscope, comingSoon: true },
+];
 
 const dentalNav: NavGroup[] = [
   {
@@ -88,6 +108,7 @@ export const clinicTypeConfig: Record<string, ClinicTypeConfig> = {
     label: "Dental Clinic",
     navGroups: dentalNav,
   },
+  // Future clinic types will be added here with their own navGroups
 };
 
 export const sharedNavItems = extraItems;
@@ -95,4 +116,10 @@ export const sharedNavItems = extraItems;
 // Get config for a clinic type, falling back to dental
 export function getClinicConfig(clinicType: string): ClinicTypeConfig {
   return clinicTypeConfig[clinicType] || clinicTypeConfig.dental;
+}
+
+// Check if a clinic type is available (not coming soon)
+export function isClinicTypeAvailable(clinicType: string): boolean {
+  const option = clinicTypeOptions.find((o) => o.value === clinicType);
+  return option ? !option.comingSoon : false;
 }

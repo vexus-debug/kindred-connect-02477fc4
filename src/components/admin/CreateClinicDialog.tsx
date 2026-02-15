@@ -5,10 +5,12 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
+import { Badge } from "@/components/ui/badge";
 import { Plus } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
 import { useQueryClient } from "@tanstack/react-query";
+import { clinicTypeOptions } from "@/config/clinicTypeConfig";
 
 export function CreateClinicDialog() {
   const [open, setOpen] = useState(false);
@@ -18,7 +20,7 @@ export function CreateClinicDialog() {
   const [form, setForm] = useState({
     name: "",
     slug: "",
-    clinic_type: "dental" as "dental" | "lab",
+    clinic_type: "dental",
     email: "",
     phone: "",
     address: "",
@@ -91,11 +93,19 @@ export function CreateClinicDialog() {
           </div>
           <div className="space-y-2">
             <Label>Clinic Type</Label>
-            <Select value={form.clinic_type} onValueChange={(v) => setForm((f) => ({ ...f, clinic_type: v as "dental" | "lab" }))}>
+            <Select value={form.clinic_type} onValueChange={(v) => setForm((f) => ({ ...f, clinic_type: v }))}>
               <SelectTrigger><SelectValue /></SelectTrigger>
               <SelectContent>
-                <SelectItem value="dental">Dental</SelectItem>
-                <SelectItem value="lab">Lab</SelectItem>
+                {clinicTypeOptions.map((opt) => (
+                  <SelectItem key={opt.value} value={opt.value}>
+                    <span className="flex items-center gap-2">
+                      {opt.label}
+                      {opt.comingSoon && (
+                        <Badge variant="secondary" className="text-[9px] px-1 py-0">Coming Soon</Badge>
+                      )}
+                    </span>
+                  </SelectItem>
+                ))}
               </SelectContent>
             </Select>
           </div>
