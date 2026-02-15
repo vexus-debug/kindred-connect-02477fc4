@@ -1,6 +1,5 @@
 import { useState } from "react";
-import { useNavigate, Link } from "react-router-dom";
-import { supabase } from "@/integrations/supabase/client";
+import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -21,12 +20,12 @@ export default function Login() {
     e.preventDefault();
     setLoading(true);
 
-    const { error } = await supabase.auth.signInWithPassword({ email, password });
-
-    if (error) {
-      toast({ title: "Login failed", description: error.message, variant: "destructive" });
-    } else {
+    // Simple localStorage-based auth (no Supabase)
+    if (email && password) {
+      localStorage.setItem("auth_user", JSON.stringify({ email, loggedIn: true }));
       navigate("/dashboard");
+    } else {
+      toast({ title: "Login failed", description: "Please enter email and password.", variant: "destructive" });
     }
     setLoading(false);
   };
@@ -80,11 +79,6 @@ export default function Login() {
           </form>
           <div className="mt-4 text-center text-sm text-muted-foreground">
             Staff accounts are created by your administrator.
-          </div>
-          <div className="mt-2 text-center">
-            <Link to="/" className="text-xs text-muted-foreground hover:text-foreground">
-              ← Back to website
-            </Link>
           </div>
         </CardContent>
       </Card>
