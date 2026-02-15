@@ -8,6 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import { Eye, EyeOff } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/useAuth";
 import { clinicTypeOptions } from "@/config/clinicTypeConfig";
 import logo from "@/assets/logo.jpg";
 
@@ -22,6 +23,7 @@ export default function Login() {
   const [clinicType, setClinicType] = useState("dental");
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { refetchUserData } = useAuth();
 
   const selectedOption = clinicTypeOptions.find((o) => o.value === clinicType);
 
@@ -69,6 +71,9 @@ export default function Login() {
         });
 
         if (orgError) throw orgError;
+
+        // Refetch user data so orgMemberships are available before navigating
+        await refetchUserData();
 
         toast({ title: "Account & clinic created!", description: "Welcome to Vexus Health!" });
         navigate("/select-clinic");
