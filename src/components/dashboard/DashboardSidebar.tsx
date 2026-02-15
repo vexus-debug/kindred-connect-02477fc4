@@ -132,7 +132,7 @@ export function DashboardSidebar() {
 
   const handleSignOut = async () => {
     await signOut();
-    navigate("/login");
+    navigate("/");
   };
 
   return (
