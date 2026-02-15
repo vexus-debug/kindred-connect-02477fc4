@@ -56,7 +56,7 @@ export function DashboardHeader() {
 
   const handleSignOut = async () => {
     await signOut();
-    navigate("/login");
+    navigate("/");
   };
 
   const currentPage = breadcrumbMap[location.pathname] || "Dashboard";
@@ -89,10 +89,6 @@ export function DashboardHeader() {
       </div>
 
       <div className="flex items-center gap-1.5">
-        {/* Back to website */}
-        <Button variant="ghost" size="sm" asChild className="hidden lg:inline-flex text-xs text-muted-foreground hover:text-foreground">
-          <Link to="/">← Website</Link>
-        </Button>
 
         {/* Notifications */}
         <Button variant="ghost" size="icon" className="relative" asChild>
