@@ -26,7 +26,7 @@ function formatCurrency(amount: number) {
 }
 
 function getInvoiceHTML(invoice: InvoiceWithPatient, lineItems: any[], payments: any[], clinic: any, balance: number) {
-  const clinicName = clinic?.clinic_name || "Vista Dental Care";
+  const clinicName = clinic?.name || clinic?.clinic_name || "Vista Dental Care";
   const clinicPhone = clinic?.phone || "";
   const clinicAddress = clinic?.address || "";
   const clinicEmail = clinic?.email || "";
@@ -230,7 +230,7 @@ export function InvoiceDetailDialog({ open, onOpenChange, invoice }: InvoiceDeta
   };
 
   const handleEmail = () => {
-    const clinicName = clinic?.clinic_name || "Vista Dental Care";
+    const clinicName = clinic?.name || "Vista Dental Care";
     const clinicPhone = clinic?.phone || "";
     const clinicAddress = clinic?.address || "";
     const subject = `Invoice ${invoice.invoice_number} from ${clinicName}`;
@@ -260,7 +260,7 @@ export function InvoiceDetailDialog({ open, onOpenChange, invoice }: InvoiceDeta
   };
 
   const handleWhatsApp = () => {
-    const clinicName = clinic?.clinic_name || "Vista Dental Care";
+    const clinicName = clinic?.name || "Vista Dental Care";
     let text = `🏥 *${clinicName}*\n\n`;
     text += `📋 *Invoice ${invoice.invoice_number}*\n`;
     text += `📅 Date: ${invoice.invoice_date}\n`;
@@ -284,7 +284,7 @@ export function InvoiceDetailDialog({ open, onOpenChange, invoice }: InvoiceDeta
           <div className="flex items-center gap-3">
             <img src={logo} alt="Clinic Logo" className="h-14 w-14 rounded-xl object-cover border border-border shadow-sm" />
             <div>
-              <h2 className="text-lg font-bold text-foreground">{clinic?.clinic_name || "Vista Dental Care"}</h2>
+              <h2 className="text-lg font-bold text-foreground">{clinic?.name || "Vista Dental Care"}</h2>
               {clinic?.address && (
                 <p className="text-xs text-muted-foreground flex items-center gap-1">
                   <MapPin className="h-3 w-3" />{clinic.address}
