@@ -81,6 +81,8 @@ serve(async (req) => {
         : role === "assistant" ? "assistant"
         : role === "receptionist" ? "receptionist"
         : role === "accountant" ? "accountant"
+        : role === "lab_technician" ? "lab_technician"
+        : role === "lab_assistant" ? "lab_assistant"
         : "assistant";
 
       await supabaseAdmin.from("org_members").insert({

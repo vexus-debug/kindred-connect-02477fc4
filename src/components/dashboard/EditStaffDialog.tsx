@@ -10,7 +10,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
 import { Eye, EyeOff, KeyRound } from "lucide-react";
 
-const roles = ["dentist", "assistant", "hygienist", "receptionist", "accountant"];
+const roles = ["dentist", "assistant", "hygienist", "receptionist", "accountant", "lab_technician", "lab_assistant"];
 
 interface EditStaffDialogProps {
   staff: StaffMember | null;

@@ -51,13 +51,13 @@ export function DashboardSidebar() {
       {/* Logo / Clinic Name */}
       <div className="flex items-center gap-2.5 px-4 py-4 border-b border-sidebar-border">
         <div className="relative shrink-0">
-          <img src={logo} alt="Vexus Health" className="h-9 w-9 rounded-xl object-cover ring-2 ring-sidebar-primary/30" />
+          <img src={logo} alt="Clinexus" className="h-9 w-9 rounded-xl object-cover ring-2 ring-sidebar-primary/30" />
           <div className="absolute -bottom-0.5 -right-0.5 h-2.5 w-2.5 rounded-full bg-emerald-500 ring-2 ring-sidebar" />
         </div>
         {!collapsed && (
           <div className="flex flex-col overflow-hidden">
             <span className="text-sm font-bold text-sidebar-primary-foreground truncate tracking-tight">
-              {currentOrg?.org_name || "Vexus Health"}
+              {currentOrg?.org_name || "Clinexus"}
             </span>
             <span className="text-[10px] text-sidebar-foreground/60 font-medium capitalize">
               {config.label}

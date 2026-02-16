@@ -2055,6 +2055,7 @@ export type Database = {
         | "assistant"
         | "accountant"
         | "lab_technician"
+        | "lab_assistant"
       platform_role: "super_admin" | "user"
     }
     CompositeTypes: {
@@ -2202,6 +2203,7 @@ export const Constants = {
         "assistant",
         "accountant",
         "lab_technician",
+        "lab_assistant",
       ],
       platform_role: ["super_admin", "user"],
     },

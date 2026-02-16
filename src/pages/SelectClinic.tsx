@@ -45,7 +45,7 @@ export default function SelectClinic() {
       <div className="flex min-h-screen items-center justify-center bg-muted/30 px-4">
         <Card className="w-full max-w-md text-center">
           <CardHeader>
-            <img src={logo} alt="Vexus Health" className="h-14 w-14 rounded-full object-cover mx-auto mb-2" />
+            <img src={logo} alt="Clinexus" className="h-14 w-14 rounded-full object-cover mx-auto mb-2" />
             <CardTitle>No Clinic Found</CardTitle>
             <CardDescription>
               You are not a member of any clinic yet. Please contact your administrator to be added.
@@ -67,7 +67,7 @@ export default function SelectClinic() {
     <div className="flex min-h-screen items-center justify-center bg-muted/30 px-4">
       <div className="w-full max-w-lg space-y-6">
         <div className="text-center space-y-2">
-          <img src={logo} alt="Vexus Health" className="h-14 w-14 rounded-full object-cover mx-auto" />
+          <img src={logo} alt="Clinexus" className="h-14 w-14 rounded-full object-cover mx-auto" />
           <h1 className="text-2xl font-bold text-foreground">Welcome, {displayName}</h1>
           <p className="text-sm text-muted-foreground">Select a clinic to continue</p>
         </div>
