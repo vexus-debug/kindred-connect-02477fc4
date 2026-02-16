@@ -75,7 +75,7 @@ export default function Login() {
         // Refetch user data so orgMemberships are available before navigating
         await refetchUserData();
 
-        toast({ title: "Account & clinic created!", description: "Welcome to Vexus Health!" });
+        toast({ title: "Account & clinic created!", description: "Welcome to Clinexus!" });
         navigate("/select-clinic");
       } else {
         const { error } = await supabase.auth.signInWithPassword({ email, password });
@@ -94,10 +94,10 @@ export default function Login() {
       <Card className="w-full max-w-md">
         <CardHeader className="text-center space-y-3">
           <div className="mx-auto">
-            <img src={logo} alt="Vexus Health" className="h-16 w-16 rounded-full object-cover mx-auto" />
-          </div>
+          <img src={logo} alt="Clinexus" className="h-16 w-16 rounded-full object-cover mx-auto" />
+        </div>
           <CardTitle className="text-2xl text-primary">{isSignUp ? "Create Account" : "Welcome Back"}</CardTitle>
-          <CardDescription>{isSignUp ? "Sign up for Vexus Health" : "Sign in to Vexus Health Platform"}</CardDescription>
+          <CardDescription>{isSignUp ? "Sign up for Clinexus" : "Sign in to Clinexus"}</CardDescription>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleLogin} className="space-y-4">
