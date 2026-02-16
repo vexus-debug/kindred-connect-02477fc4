@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -7,8 +7,9 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Plus, Trash2 } from "lucide-react";
-import { useClinicSettings, useUpdateClinicSettings } from "@/hooks/useClinicSettings";
+import { Textarea } from "@/components/ui/textarea";
+import { Plus, Trash2, ExternalLink, Upload, Image as ImageIcon } from "lucide-react";
+import { useClinicSettings, useUpdateClinicSettings, type SiteSettings } from "@/hooks/useClinicSettings";
 import { useNotificationPreferences, useUpsertNotificationPreferences } from "@/hooks/useNotificationPreferences";
 import { useOrgMembers, useUpdateOrgMemberRole, useRemoveOrgMember } from "@/hooks/useOrgMembers";
 import { useClinicChairs, useCreateClinicChair, useUpdateClinicChair, useDeleteClinicChair } from "@/hooks/useClinicChairs";
@@ -16,6 +17,8 @@ import { useOrg } from "@/hooks/useOrg";
 import { getRoleLabel } from "@/config/roleAccess";
 import { PageHeader } from "@/components/dashboard/PageHeader";
 import { motion } from "framer-motion";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "@/hooks/use-toast";
 
 const orgRoles = ["owner", "admin", "dentist", "assistant", "hygienist", "receptionist", "accountant", "lab_technician"] as const;
 
@@ -28,12 +31,61 @@ export default function SettingsPage() {
   const updateClinic = useUpdateClinicSettings();
   const [clinicForm, setClinicForm] = useState<Record<string, string>>({});
 
+  // Site customization
+  const [siteForm, setSiteForm] = useState<SiteSettings>({});
+  const [logoUploading, setLogoUploading] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
   const getClinicValue = (key: string) => clinicForm[key] ?? (clinicSettings as any)?.[key] ?? "";
+  const getSiteValue = (key: keyof SiteSettings) => siteForm[key] ?? (clinicSettings?.settings as any)?.[key] ?? "";
 
   const handleSaveClinic = () => {
     if (!clinicSettings) return;
     updateClinic.mutate({ id: clinicSettings.id, ...clinicForm });
   };
+
+  const handleSaveSite = () => {
+    if (!clinicSettings) return;
+    const merged: SiteSettings = {
+      ...(clinicSettings.settings || {}),
+      ...siteForm,
+    };
+    updateClinic.mutate({ id: clinicSettings.id, settings: merged });
+  };
+
+  const handleLogoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !clinicSettings) return;
+
+    setLogoUploading(true);
+    try {
+      const ext = file.name.split(".").pop();
+      const path = `${clinicSettings.id}/logo.${ext}`;
+
+      const { error: uploadError } = await supabase.storage
+        .from("clinic-logos")
+        .upload(path, file, { upsert: true });
+
+      if (uploadError) throw uploadError;
+
+      const { data: urlData } = supabase.storage
+        .from("clinic-logos")
+        .getPublicUrl(path);
+
+      const logoUrl = urlData.publicUrl + "?t=" + Date.now();
+
+      await updateClinic.mutateAsync({ id: clinicSettings.id, logo_url: logoUrl });
+      toast({ title: "Logo uploaded successfully" });
+    } catch (err: any) {
+      toast({ title: "Upload failed", description: err.message, variant: "destructive" });
+    } finally {
+      setLogoUploading(false);
+    }
+  };
+
+  const publicSiteUrl = clinicSettings?.slug
+    ? `${window.location.origin}/site/${clinicSettings.slug}`
+    : "";
 
   // Notification preferences
   const { data: notifPrefs } = useNotificationPreferences();
@@ -79,6 +131,7 @@ export default function SettingsPage() {
         <Tabs defaultValue="clinic">
           <TabsList className="bg-muted/50 backdrop-blur-sm">
             <TabsTrigger value="clinic">Clinic Profile</TabsTrigger>
+            {isAdmin && <TabsTrigger value="website">Public Website</TabsTrigger>}
             <TabsTrigger value="notifications">Notifications</TabsTrigger>
             {isAdmin && <TabsTrigger value="members">Members & Roles</TabsTrigger>}
             {isAdmin && <TabsTrigger value="chairs">Chairs</TabsTrigger>}
@@ -91,6 +144,40 @@ export default function SettingsPage() {
                 <CardDescription>Update your clinic details</CardDescription>
               </CardHeader>
               <CardContent className="space-y-4 max-w-lg pt-6">
+                {/* Logo Upload */}
+                <div className="space-y-2">
+                  <Label className="text-xs font-medium">Clinic Logo</Label>
+                  <div className="flex items-center gap-4">
+                    <div className="h-16 w-16 rounded-full bg-muted/50 border border-border/40 flex items-center justify-center overflow-hidden">
+                      {clinicSettings?.logo_url ? (
+                        <img src={clinicSettings.logo_url} alt="Logo" className="h-full w-full object-cover" />
+                      ) : (
+                        <ImageIcon className="h-6 w-6 text-muted-foreground" />
+                      )}
+                    </div>
+                    <div>
+                      <input
+                        ref={fileInputRef}
+                        type="file"
+                        accept="image/*"
+                        className="hidden"
+                        onChange={handleLogoUpload}
+                      />
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="border-border/50"
+                        onClick={() => fileInputRef.current?.click()}
+                        disabled={logoUploading || !isAdmin}
+                      >
+                        <Upload className="mr-2 h-3.5 w-3.5" />
+                        {logoUploading ? "Uploading..." : "Upload Logo"}
+                      </Button>
+                      <p className="text-[10px] text-muted-foreground mt-1">Recommended: 200×200px, PNG or JPG</p>
+                    </div>
+                  </div>
+                </div>
+
                 <div className="space-y-2">
                   <Label htmlFor="clinicName" className="text-xs font-medium">Clinic Name</Label>
                   <Input id="clinicName" className="bg-muted/30 border-border/40" value={getClinicValue("name")} onChange={(e) => setClinicForm({ ...clinicForm, name: e.target.value })} />
@@ -116,6 +203,88 @@ export default function SettingsPage() {
               </CardContent>
             </Card>
           </TabsContent>
+
+          {isAdmin && (
+            <TabsContent value="website" className="mt-4 space-y-4">
+              {/* Public Site Link */}
+              <Card className="glass-card border-secondary/20">
+                <CardContent className="p-4 flex items-center justify-between">
+                  <div>
+                    <p className="text-sm font-medium">Your Public Clinic Page</p>
+                    <p className="text-xs text-muted-foreground mt-0.5 break-all">{publicSiteUrl || "Loading..."}</p>
+                  </div>
+                  {publicSiteUrl && (
+                    <Button variant="outline" size="sm" className="shrink-0 border-border/50" asChild>
+                      <a href={publicSiteUrl} target="_blank" rel="noopener noreferrer">
+                        <ExternalLink className="mr-2 h-3.5 w-3.5" /> View Site
+                      </a>
+                    </Button>
+                  )}
+                </CardContent>
+              </Card>
+
+              {/* Customization */}
+              <Card className="glass-card">
+                <CardHeader className="border-b border-border/30">
+                  <CardTitle className="text-base">Customize Your Page</CardTitle>
+                  <CardDescription>Control how your public booking page looks</CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4 max-w-lg pt-6">
+                  <div className="space-y-2">
+                    <Label className="text-xs font-medium">Welcome Text</Label>
+                    <Textarea
+                      className="bg-muted/30 border-border/40 min-h-[80px]"
+                      placeholder="Welcome to our clinic! Book your appointment today."
+                      value={getSiteValue("welcome_text")}
+                      onChange={(e) => setSiteForm({ ...siteForm, welcome_text: e.target.value })}
+                    />
+                    <p className="text-[10px] text-muted-foreground">Shown below your clinic name on the public page</p>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label className="text-xs font-medium">Primary Color</Label>
+                      <div className="flex items-center gap-2">
+                        <input
+                          type="color"
+                          className="h-8 w-8 rounded border border-border/40 cursor-pointer"
+                          value={getSiteValue("primary_color") || "#2563eb"}
+                          onChange={(e) => setSiteForm({ ...siteForm, primary_color: e.target.value })}
+                        />
+                        <Input
+                          className="bg-muted/30 border-border/40 flex-1"
+                          value={getSiteValue("primary_color") || "#2563eb"}
+                          onChange={(e) => setSiteForm({ ...siteForm, primary_color: e.target.value })}
+                          placeholder="#2563eb"
+                        />
+                      </div>
+                    </div>
+                    <div className="space-y-2">
+                      <Label className="text-xs font-medium">Accent Color</Label>
+                      <div className="flex items-center gap-2">
+                        <input
+                          type="color"
+                          className="h-8 w-8 rounded border border-border/40 cursor-pointer"
+                          value={getSiteValue("accent_color") || "#1d4ed8"}
+                          onChange={(e) => setSiteForm({ ...siteForm, accent_color: e.target.value })}
+                        />
+                        <Input
+                          className="bg-muted/30 border-border/40 flex-1"
+                          value={getSiteValue("accent_color") || "#1d4ed8"}
+                          onChange={(e) => setSiteForm({ ...siteForm, accent_color: e.target.value })}
+                          placeholder="#1d4ed8"
+                        />
+                      </div>
+                    </div>
+                  </div>
+
+                  <Button className="bg-secondary hover:bg-secondary/90 shadow-lg shadow-secondary/20" onClick={handleSaveSite} disabled={updateClinic.isPending}>
+                    {updateClinic.isPending ? "Saving..." : "Save Site Settings"}
+                  </Button>
+                </CardContent>
+              </Card>
+            </TabsContent>
+          )}
 
           <TabsContent value="notifications" className="mt-4">
             <Card className="glass-card">
