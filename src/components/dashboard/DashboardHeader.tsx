@@ -63,7 +63,7 @@ export function DashboardHeader() {
   const currentPage = breadcrumbLabels[relativePath] || "Dashboard";
 
   return (
-    <header className="sticky top-0 z-40 flex h-14 items-center gap-4 border-b border-border/40 bg-card/90 backdrop-blur-2xl px-4 lg:px-6 shadow-[0_1px_3px_hsl(var(--primary)/0.04)]">
+    <header className="flex h-14 items-center gap-4 border-b border-border/40 bg-card/90 backdrop-blur-2xl px-4 lg:px-6 shadow-[0_1px_3px_hsl(var(--primary)/0.04)]">
       <SidebarTrigger className="-ml-1" />
 
       {/* Breadcrumb */}
