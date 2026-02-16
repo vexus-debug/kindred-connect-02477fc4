@@ -27,9 +27,9 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
     <SidebarProvider>
       <div className="flex min-h-screen w-full dashboard-bg">
         <DashboardSidebar />
-        <div className="flex flex-1 flex-col overflow-hidden">
+        <div className="flex flex-1 flex-col min-h-0">
           <DashboardHeader />
-          <main className="flex-1 overflow-y-auto p-4 lg:p-6 scroll-smooth">
+          <main className="flex-1 overflow-y-auto p-4 lg:p-6 scroll-smooth -webkit-overflow-scrolling-touch">
             <AnimatePresence mode="wait">
               <motion.div
                 key={location.pathname}
