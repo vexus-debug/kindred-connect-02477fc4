@@ -42,6 +42,7 @@ import LabCasesPage from "./pages/dashboard/LabCasesPage";
 import LabTechniciansPage from "./pages/dashboard/LabTechniciansPage";
 import LabBillingPage from "./pages/dashboard/LabBillingPage";
 import LabSettingsPage from "./pages/dashboard/LabSettingsPage";
+import PublicClinicSite from "./pages/PublicClinicSite";
 
 // Admin pages
 import AdminOverview from "./pages/admin/AdminOverview";
@@ -78,6 +79,7 @@ const App = () => (
         <AuthProvider>
           <Routes>
             <Route path="/" element={<Login />} />
+            <Route path="/site/:slug" element={<PublicClinicSite />} />
             <Route path="/select-clinic" element={<SelectClinic />} />
 
             {/* Legacy redirect */}
