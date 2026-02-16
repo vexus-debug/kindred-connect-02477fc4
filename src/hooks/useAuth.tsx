@@ -88,35 +88,50 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   useEffect(() => {
+    let isMounted = true;
+
     // Set up auth state listener FIRST
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event, newSession) => {
+      (event, newSession) => {
+        if (!isMounted) return;
         setSession(newSession);
         setUser(newSession?.user ?? null);
 
         if (newSession?.user) {
-          // Use setTimeout to avoid Supabase deadlock
+          // Use setTimeout to avoid Supabase deadlock, but don't control loading here
           setTimeout(() => fetchUserData(newSession.user.id), 0);
         } else {
           setProfile(null);
           setRoles([]);
           setOrgMemberships([]);
+          setLoading(false);
         }
-        setLoading(false);
       }
     );
 
-    // Then check for existing session
-    supabase.auth.getSession().then(({ data: { session: existingSession } }) => {
-      setSession(existingSession);
-      setUser(existingSession?.user ?? null);
-      if (existingSession?.user) {
-        fetchUserData(existingSession.user.id);
-      }
-      setLoading(false);
-    });
+    // INITIAL load — await all data before setting loading false
+    const initializeAuth = async () => {
+      try {
+        const { data: { session: existingSession } } = await supabase.auth.getSession();
+        if (!isMounted) return;
 
-    return () => subscription.unsubscribe();
+        setSession(existingSession);
+        setUser(existingSession?.user ?? null);
+
+        if (existingSession?.user) {
+          await fetchUserData(existingSession.user.id);
+        }
+      } finally {
+        if (isMounted) setLoading(false);
+      }
+    };
+
+    initializeAuth();
+
+    return () => {
+      isMounted = false;
+      subscription.unsubscribe();
+    };
   }, []);
 
   const refetchUserData = async () => {
