@@ -29,9 +29,9 @@ export function AdminLayout({ children }: AdminLayoutProps) {
 
   return (
     <SidebarProvider>
-      <div className="flex min-h-screen w-full dashboard-bg">
+      <div className="flex h-dvh w-full overflow-hidden dashboard-bg">
         <AdminSidebar />
-        <div className="flex flex-1 flex-col overflow-hidden">
+        <div className="flex flex-1 flex-col h-full overflow-hidden">
           <AdminHeader />
           <main className="flex-1 overflow-y-auto overscroll-contain p-4 lg:p-6 scroll-momentum">
             <AnimatePresence mode="wait">
