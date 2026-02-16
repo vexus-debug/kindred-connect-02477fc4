@@ -48,12 +48,12 @@ export default function PatientsPage() {
         title="Patients"
         description={`${patients.length} total patients`}
         badge={
-          <Badge variant="outline" className="text-[10px] border-secondary/30 text-secondary">
+          <Badge variant="outline" className="text-[10px] border-primary/30 text-primary">
             {patients.filter((p) => p.status === "active").length} active
           </Badge>
         }
       >
-        <Button size="sm" className="bg-secondary hover:bg-secondary/90 shadow-lg shadow-secondary/20" onClick={() => setAddOpen(true)}>
+        <Button size="sm" className="bg-primary hover:bg-primary/90 shadow-lg shadow-primary/20" onClick={() => setAddOpen(true)}>
           <UserPlus className="mr-2 h-4 w-4" />
           Add Patient
         </Button>
