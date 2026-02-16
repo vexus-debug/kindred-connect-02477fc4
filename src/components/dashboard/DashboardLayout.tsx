@@ -1,27 +1,43 @@
-import { ReactNode } from "react";
+import { ReactNode, useRef } from "react";
 import { SidebarProvider } from "@/components/ui/sidebar";
 import { DashboardSidebar } from "./DashboardSidebar";
 import { DashboardHeader } from "./DashboardHeader";
 import { motion, AnimatePresence } from "framer-motion";
-import { useLocation } from "react-router-dom";
+import { useLocation, useNavigationType } from "react-router-dom";
 
 interface DashboardLayoutProps {
   children: ReactNode;
 }
 
-const pageVariants = {
-  initial: { opacity: 0, y: 10, scale: 0.995 },
-  animate: { opacity: 1, y: 0, scale: 1 },
-  exit: { opacity: 0, y: -6, scale: 0.995 },
-};
-
-const pageTransition = {
-  duration: 0.3,
-  ease: [0.25, 0.1, 0.25, 1] as [number, number, number, number],
+const springTransition = {
+  type: "spring" as const,
+  stiffness: 350,
+  damping: 30,
+  mass: 0.8,
 };
 
 export function DashboardLayout({ children }: DashboardLayoutProps) {
   const location = useLocation();
+  const navType = useNavigationType();
+  const isBack = navType === "POP";
+
+  const pageVariants = {
+    initial: {
+      opacity: 0,
+      x: isBack ? -40 : 40,
+      scale: 0.98,
+    },
+    animate: {
+      opacity: 1,
+      x: 0,
+      scale: 1,
+    },
+    exit: {
+      opacity: 0,
+      x: isBack ? 40 : -40,
+      scale: 0.98,
+    },
+  };
 
   return (
     <SidebarProvider>
@@ -29,7 +45,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
         <DashboardSidebar />
         <div className="flex flex-1 flex-col min-h-0">
           <DashboardHeader />
-          <main className="flex-1 overflow-y-auto p-4 lg:p-6 scroll-smooth -webkit-overflow-scrolling-touch">
+          <main className="flex-1 overflow-y-auto overscroll-contain p-4 lg:p-6 scroll-momentum">
             <AnimatePresence mode="wait">
               <motion.div
                 key={location.pathname}
@@ -37,7 +53,8 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
                 initial="initial"
                 animate="animate"
                 exit="exit"
-                transition={pageTransition}
+                transition={springTransition}
+                className="gpu-accelerated"
               >
                 {children}
               </motion.div>
