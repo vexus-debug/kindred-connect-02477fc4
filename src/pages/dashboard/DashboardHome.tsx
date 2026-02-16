@@ -18,23 +18,23 @@ import { motion } from "framer-motion";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 
 const statusColors: Record<string, string> = {
-  scheduled: "bg-blue-500/10 text-blue-700 dark:text-blue-400",
+  scheduled: "bg-primary/10 text-primary",
   "in-progress": "bg-amber-500/10 text-amber-700 dark:text-amber-400",
   completed: "bg-emerald-500/10 text-emerald-700 dark:text-emerald-400",
   cancelled: "bg-red-500/10 text-red-700 dark:text-red-400",
 };
 
 const statusDots: Record<string, string> = {
-  scheduled: "bg-blue-500",
+  scheduled: "bg-primary",
   "in-progress": "bg-amber-500",
   completed: "bg-emerald-500",
   cancelled: "bg-red-500",
 };
 
 const activityColors: Record<string, string> = {
-  appointment: "bg-blue-500/10 text-blue-600",
+  appointment: "bg-primary/10 text-primary",
   payment: "bg-emerald-500/10 text-emerald-600",
-  patient: "bg-violet-500/10 text-violet-600",
+  patient: "bg-primary/10 text-primary",
   lab: "bg-amber-500/10 text-amber-600",
   prescription: "bg-rose-500/10 text-rose-600",
 };
@@ -94,16 +94,16 @@ export default function DashboardHome() {
   const canSeeAppointments = hasPageAccess(orgRole, "appointments");
 
   const quickActions = [
-    canSeePatients && { to: `${basePath}/patients`, icon: UserPlus, title: "Register Patient", desc: "Add a new patient record", gradient: "from-blue-500/10 to-blue-600/5" },
+    canSeePatients && { to: `${basePath}/patients`, icon: UserPlus, title: "Register Patient", desc: "Add a new patient record", gradient: "from-primary/10 to-primary/5" },
     canSeeAppointments && { to: `${basePath}/appointments`, icon: CalendarPlus, title: "Book Appointment", desc: "Schedule a visit", gradient: "from-emerald-500/10 to-emerald-600/5" },
-    canSeeBilling && { to: `${basePath}/billing`, icon: FileText, title: "Create Invoice", desc: "Generate a bill", gradient: "from-violet-500/10 to-violet-600/5" },
+    canSeeBilling && { to: `${basePath}/billing`, icon: FileText, title: "Create Invoice", desc: "Generate a bill", gradient: "from-primary/10 to-primary/5" },
   ].filter(Boolean) as { to: string; icon: typeof UserPlus; title: string; desc: string; gradient: string }[];
 
   const statCards = [
     canSeePatients && {
       label: "Total Patients", value: s.totalPatients, icon: Users,
-      trend: "+12%", trendUp: true, color: "#3b82f6", bgColor: "from-blue-500/10 to-blue-600/5",
-      iconBg: "bg-blue-500/10", iconColor: "text-blue-600", spark: sparkData.patients,
+      trend: "+12%", trendUp: true, color: "hsl(217, 91%, 55%)", bgColor: "from-primary/10 to-primary/5",
+      iconBg: "bg-primary/10", iconColor: "text-primary", spark: sparkData.patients,
     },
     canSeeAppointments && {
       label: "Today's Appointments", value: s.todayAppointments, icon: CalendarDays,
@@ -119,8 +119,8 @@ export default function DashboardHome() {
     canSeeBilling && {
       label: `Revenue (${currentMonth})`, value: s.monthlyRevenue, icon: TrendingUp,
       formatter: formatCurrency, trend: "+8.2%", trendUp: true,
-      color: "#8b5cf6", bgColor: "from-violet-500/10 to-violet-600/5",
-      iconBg: "bg-violet-500/10", iconColor: "text-violet-600", spark: sparkData.revenue,
+      color: "hsl(217, 91%, 55%)", bgColor: "from-primary/10 to-primary/5",
+      iconBg: "bg-primary/10", iconColor: "text-primary", spark: sparkData.revenue,
     },
   ].filter(Boolean) as any[];
 
@@ -143,7 +143,7 @@ export default function DashboardHome() {
             </Button>
           )}
           {canSeeAppointments && (
-            <Button size="sm" className="bg-secondary hover:bg-secondary/90 shadow-lg shadow-secondary/20" asChild>
+            <Button size="sm" className="bg-primary hover:bg-primary/90 shadow-lg shadow-primary/20" asChild>
               <Link to={`${basePath}/appointments`}><CalendarPlus className="mr-2 h-4 w-4" />Book Appointment</Link>
             </Button>
           )}
@@ -313,7 +313,7 @@ export default function DashboardHome() {
                     </span>
                   </CardDescription>
                 </div>
-                <Button variant="ghost" size="sm" asChild className="text-secondary hover:text-secondary">
+                <Button variant="ghost" size="sm" asChild className="text-primary hover:text-primary">
                   <Link to={`${basePath}/appointments`}>View All →</Link>
                 </Button>
               </div>
@@ -434,13 +434,13 @@ export default function DashboardHome() {
           {quickActions.map((action, i) => (
             <motion.div key={action.to} variants={stagger.item}>
               <Link to={action.to}>
-                <Card className="glass-card hover:border-secondary/30 hover:shadow-lg hover:shadow-secondary/5 transition-all duration-300 cursor-pointer group">
+                <Card className="glass-card hover:border-primary/30 hover:shadow-lg hover:shadow-primary/5 transition-all duration-300 cursor-pointer group">
                   <CardContent className="p-4 flex items-center gap-3">
                     <div className={`h-10 w-10 rounded-xl bg-gradient-to-br ${action.gradient} flex items-center justify-center group-hover:scale-110 transition-transform duration-300`}>
-                      <action.icon className="h-5 w-5 text-secondary" />
+                      <action.icon className="h-5 w-5 text-primary" />
                     </div>
                     <div>
-                      <p className="text-sm font-semibold group-hover:text-secondary transition-colors">{action.title}</p>
+                      <p className="text-sm font-semibold group-hover:text-primary transition-colors">{action.title}</p>
                       <p className="text-xs text-muted-foreground">{action.desc}</p>
                     </div>
                     <ArrowUpRight className="h-4 w-4 text-muted-foreground/0 group-hover:text-muted-foreground ml-auto transition-all duration-300 group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
