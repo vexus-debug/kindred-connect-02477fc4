@@ -41,9 +41,9 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
 
   return (
     <SidebarProvider>
-      <div className="flex min-h-screen w-full dashboard-bg">
+      <div className="flex h-screen w-full overflow-hidden dashboard-bg">
         <DashboardSidebar />
-        <div className="flex flex-1 flex-col min-h-0">
+        <div className="flex flex-1 flex-col h-full overflow-hidden">
           <DashboardHeader />
           <main className="flex-1 overflow-y-auto overscroll-contain p-4 lg:p-6 scroll-momentum">
             <AnimatePresence mode="wait">
