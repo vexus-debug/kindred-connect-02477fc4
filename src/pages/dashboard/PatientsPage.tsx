@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { useOrg } from "@/hooks/useOrg";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -20,6 +21,7 @@ import { motion } from "framer-motion";
 
 export default function PatientsPage() {
   const navigate = useNavigate();
+  const { basePath } = useOrg();
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [sortBy, setSortBy] = useState("name");
@@ -121,7 +123,7 @@ export default function PatientsPage() {
                         <motion.tr
                           key={p.id}
                           className="border-b border-border/30 last:border-0 hover:bg-accent/30 transition-all duration-200 cursor-pointer group"
-                          onClick={() => navigate(`/dashboard/patients/${p.id}`)}
+                          onClick={() => navigate(`${basePath}/patients/${p.id}`)}
                           initial={{ opacity: 0, x: -8 }}
                           animate={{ opacity: 1, x: 0 }}
                           transition={{ delay: i * 0.02 }}
@@ -164,7 +166,7 @@ export default function PatientsPage() {
                                 </Button>
                               </DropdownMenuTrigger>
                               <DropdownMenuContent align="end" className="backdrop-blur-xl bg-popover/95">
-                                <DropdownMenuItem onClick={() => navigate(`/dashboard/patients/${p.id}`)}>View Profile</DropdownMenuItem>
+                                <DropdownMenuItem onClick={() => navigate(`${basePath}/patients/${p.id}`)}>View Profile</DropdownMenuItem>
                                 <DropdownMenuItem onClick={() => { setSelectedPatientId(p.id); setBookOpen(true); }}>Book Appointment</DropdownMenuItem>
                                 <DropdownMenuItem asChild>
                                   <a href={`tel:${p.phone}`}><Phone className="mr-2 h-3.5 w-3.5" />Call Patient</a>
