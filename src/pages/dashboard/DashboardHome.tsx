@@ -107,7 +107,7 @@ export default function DashboardHome() {
   const statCards = [
     canSeePatients && {
       label: "Total Patients", value: s.totalPatients, icon: Users,
-      trend: "+12%", trendUp: true, color: "hsl(220, 82%, 38%)",
+      trend: "+12%", trendUp: true, color: "hsl(220, 80%, 50%)",
       iconBg: "bg-primary/10", iconColor: "text-primary", spark: sparkData.patients,
     },
     canSeeAppointments && {
@@ -124,7 +124,7 @@ export default function DashboardHome() {
     canSeeBilling && {
       label: `Revenue (${currentMonth})`, value: s.monthlyRevenue, icon: TrendingUp,
       formatter: formatCurrency, trend: "+8.2%", trendUp: true,
-      color: "hsl(220, 82%, 38%)",
+      color: "hsl(220, 80%, 50%)",
       iconBg: "bg-primary/10", iconColor: "text-primary", spark: sparkData.revenue,
     },
   ].filter(Boolean) as any[];
