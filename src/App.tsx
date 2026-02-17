@@ -41,6 +41,7 @@ import InventoryCostsPage from "./pages/dashboard/InventoryCostsPage";
 import AuditLogPage from "./pages/dashboard/AuditLogPage";
 import ConsentFormsPage from "./pages/dashboard/ConsentFormsPage";
 import DocumentsPage from "./pages/dashboard/DocumentsPage";
+import AutomationPage from "./pages/dashboard/AutomationPage";
 import PatientProfilePage from "./pages/dashboard/PatientProfilePage";
 import LabDashboardPage from "./pages/dashboard/LabDashboardPage";
 import LabCasesPage from "./pages/dashboard/LabCasesPage";
@@ -126,6 +127,7 @@ const App = () => (
             <Route path="/clinic/:slug/audit-log" element={<ClinicRoute><AuditLogPage /></ClinicRoute>} />
             <Route path="/clinic/:slug/consent-forms" element={<ClinicRoute><ConsentFormsPage /></ClinicRoute>} />
             <Route path="/clinic/:slug/documents" element={<ClinicRoute><DocumentsPage /></ClinicRoute>} />
+            <Route path="/clinic/:slug/automation" element={<ClinicRoute><AutomationPage /></ClinicRoute>} />
             <Route path="/clinic/:slug/lab" element={<ClinicRoute><LabDashboardPage /></ClinicRoute>} />
             <Route path="/clinic/:slug/lab/cases" element={<ClinicRoute><LabCasesPage /></ClinicRoute>} />
             <Route path="/clinic/:slug/lab/technicians" element={<ClinicRoute><LabTechniciansPage /></ClinicRoute>} />
