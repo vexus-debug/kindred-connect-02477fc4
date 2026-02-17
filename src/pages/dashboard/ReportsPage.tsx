@@ -9,6 +9,10 @@ import { CalendarIcon, Download } from "lucide-react";
 import { format, subMonths } from "date-fns";
 import { PageHeader } from "@/components/dashboard/PageHeader";
 import { motion } from "framer-motion";
+import { KPICards } from "@/components/dashboard/reports/KPICards";
+import { PatientLTVCard } from "@/components/dashboard/reports/PatientLTVCard";
+import { ProfitableTreatmentsCard } from "@/components/dashboard/reports/ProfitableTreatmentsCard";
+import { ChairUtilizationCard } from "@/components/dashboard/reports/ChairUtilizationCard";
 
 const COLORS = ["hsl(174, 60%, 40%)", "hsl(220, 60%, 20%)", "hsl(174, 50%, 50%)", "hsl(220, 50%, 30%)", "hsl(165, 40%, 50%)", "hsl(210, 30%, 60%)"];
 
@@ -91,16 +95,15 @@ export default function ReportsPage() {
         </Button>
       </PageHeader>
 
+      {/* Phase 1: KPI Cards */}
+      <KPICards />
+
       <motion.div className="grid gap-4 lg:grid-cols-2" variants={stagger.container} initial="hidden" animate="visible">
         <motion.div variants={stagger.item}>
           <Card className="glass-card">
             <CardHeader className="pb-2 border-b border-border/30">
-              <div className="flex items-center justify-between">
-                <div>
-                  <CardTitle className="text-base">Revenue Trend</CardTitle>
-                  <CardDescription>Monthly revenue overview</CardDescription>
-                </div>
-              </div>
+              <CardTitle className="text-base">Revenue Trend</CardTitle>
+              <CardDescription>Monthly revenue overview</CardDescription>
             </CardHeader>
             <CardContent className="pt-4">
               <ResponsiveContainer width="100%" height={250}>
@@ -207,6 +210,19 @@ export default function ReportsPage() {
               )}
             </CardContent>
           </Card>
+        </motion.div>
+      </motion.div>
+
+      {/* Phase 1: Patient LTV, Profitable Treatments, Chair Utilization */}
+      <motion.div className="grid gap-4 lg:grid-cols-3" variants={stagger.container} initial="hidden" animate="visible">
+        <motion.div variants={stagger.item}>
+          <PatientLTVCard />
+        </motion.div>
+        <motion.div variants={stagger.item}>
+          <ProfitableTreatmentsCard />
+        </motion.div>
+        <motion.div variants={stagger.item}>
+          <ChairUtilizationCard />
         </motion.div>
       </motion.div>
     </div>
