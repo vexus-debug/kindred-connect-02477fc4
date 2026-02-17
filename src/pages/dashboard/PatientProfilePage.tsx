@@ -15,6 +15,7 @@ import { usePatientConsentForms } from "@/hooks/useConsentForms";
 import { usePatientDocuments, useUploadPatientDocument } from "@/hooks/useDocuments";
 import { EditPatientDialog } from "@/components/dashboard/EditPatientDialog";
 import { useAuth } from "@/hooks/useAuth";
+import { useOrg } from "@/hooks/useOrg";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
@@ -32,9 +33,10 @@ function formatCurrency(amount: number) {
 }
 
 export default function PatientProfilePage() {
-  const { patientId } = useParams<{ patientId: string }>();
+  const { id: patientId } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { user, roles } = useAuth();
+  const { basePath } = useOrg();
   const [editOpen, setEditOpen] = useState(false);
   const [noteDialogOpen, setNoteDialogOpen] = useState(false);
   const [imageDialogOpen, setImageDialogOpen] = useState(false);
@@ -70,7 +72,7 @@ export default function PatientProfilePage() {
     return (
       <div className="flex flex-col items-center justify-center py-20 gap-4">
         <p className="text-muted-foreground">Patient not found.</p>
-        <Button variant="outline" onClick={() => navigate("/dashboard/patients")}>
+        <Button variant="outline" onClick={() => navigate(`${basePath}/patients`)}>
           <ArrowLeft className="mr-2 h-4 w-4" /> Back to Patients
         </Button>
       </div>
@@ -84,7 +86,7 @@ export default function PatientProfilePage() {
     <div className="space-y-6">
       {/* Header */}
       <div className="flex items-center gap-3">
-        <Button variant="ghost" size="icon" onClick={() => navigate("/dashboard/patients")}>
+        <Button variant="ghost" size="icon" onClick={() => navigate(`${basePath}/patients`)}>
           <ArrowLeft className="h-4 w-4" />
         </Button>
         <div className="flex-1">
