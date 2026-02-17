@@ -578,6 +578,63 @@ export type Database = {
           },
         ]
       }
+      dentist_schedules: {
+        Row: {
+          break_end: string | null
+          break_start: string | null
+          created_at: string
+          day_of_week: number
+          end_time: string
+          id: string
+          is_available: boolean
+          org_id: string
+          staff_id: string
+          start_time: string
+          updated_at: string
+        }
+        Insert: {
+          break_end?: string | null
+          break_start?: string | null
+          created_at?: string
+          day_of_week: number
+          end_time?: string
+          id?: string
+          is_available?: boolean
+          org_id: string
+          staff_id: string
+          start_time?: string
+          updated_at?: string
+        }
+        Update: {
+          break_end?: string | null
+          break_start?: string | null
+          created_at?: string
+          day_of_week?: number
+          end_time?: string
+          id?: string
+          is_available?: boolean
+          org_id?: string
+          staff_id?: string
+          start_time?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "dentist_schedules_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "dentist_schedules_staff_id_fkey"
+            columns: ["staff_id"]
+            isOneToOne: false
+            referencedRelation: "staff"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       expenses: {
         Row: {
           amount: number
@@ -635,6 +692,7 @@ export type Database = {
         Row: {
           category: string
           created_at: string
+          expiry_date: string | null
           id: string
           last_restocked: string | null
           min_stock: number
@@ -649,6 +707,7 @@ export type Database = {
         Insert: {
           category?: string
           created_at?: string
+          expiry_date?: string | null
           id?: string
           last_restocked?: string | null
           min_stock?: number
@@ -663,6 +722,7 @@ export type Database = {
         Update: {
           category?: string
           created_at?: string
+          expiry_date?: string | null
           id?: string
           last_restocked?: string | null
           min_stock?: number
@@ -1965,6 +2025,123 @@ export type Database = {
         }
         Relationships: []
       }
+      purchase_order_items: {
+        Row: {
+          created_at: string
+          id: string
+          inventory_id: string | null
+          item_name: string
+          po_id: string
+          quantity: number
+          total: number
+          unit_cost: number
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          inventory_id?: string | null
+          item_name: string
+          po_id: string
+          quantity?: number
+          total?: number
+          unit_cost?: number
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          inventory_id?: string | null
+          item_name?: string
+          po_id?: string
+          quantity?: number
+          total?: number
+          unit_cost?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "purchase_order_items_inventory_id_fkey"
+            columns: ["inventory_id"]
+            isOneToOne: false
+            referencedRelation: "inventory"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "purchase_order_items_po_id_fkey"
+            columns: ["po_id"]
+            isOneToOne: false
+            referencedRelation: "purchase_orders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      purchase_orders: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          expected_date: string | null
+          id: string
+          notes: string | null
+          order_date: string
+          order_number: string
+          org_id: string
+          received_date: string | null
+          status: string
+          subtotal: number
+          supplier_id: string | null
+          tax: number
+          total: number
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          expected_date?: string | null
+          id?: string
+          notes?: string | null
+          order_date?: string
+          order_number: string
+          org_id: string
+          received_date?: string | null
+          status?: string
+          subtotal?: number
+          supplier_id?: string | null
+          tax?: number
+          total?: number
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          expected_date?: string | null
+          id?: string
+          notes?: string | null
+          order_date?: string
+          order_number?: string
+          org_id?: string
+          received_date?: string | null
+          status?: string
+          subtotal?: number
+          supplier_id?: string | null
+          tax?: number
+          total?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "purchase_orders_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "purchase_orders_supplier_id_fkey"
+            columns: ["supplier_id"]
+            isOneToOne: false
+            referencedRelation: "suppliers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       registration_fees: {
         Row: {
           amount: number
@@ -2269,6 +2446,56 @@ export type Database = {
           },
         ]
       }
+      suppliers: {
+        Row: {
+          address: string | null
+          contact_person: string | null
+          created_at: string
+          email: string | null
+          id: string
+          name: string
+          notes: string | null
+          org_id: string
+          phone: string | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          address?: string | null
+          contact_person?: string | null
+          created_at?: string
+          email?: string | null
+          id?: string
+          name: string
+          notes?: string | null
+          org_id: string
+          phone?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          address?: string | null
+          contact_person?: string | null
+          created_at?: string
+          email?: string | null
+          id?: string
+          name?: string
+          notes?: string | null
+          org_id?: string
+          phone?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "suppliers_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       treatment_estimate_items: {
         Row: {
           created_at: string
@@ -2393,6 +2620,58 @@ export type Database = {
           },
         ]
       }
+      treatment_materials: {
+        Row: {
+          created_at: string
+          id: string
+          inventory_id: string
+          notes: string | null
+          org_id: string
+          quantity_used: number
+          treatment_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          inventory_id: string
+          notes?: string | null
+          org_id: string
+          quantity_used?: number
+          treatment_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          inventory_id?: string
+          notes?: string | null
+          org_id?: string
+          quantity_used?: number
+          treatment_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "treatment_materials_inventory_id_fkey"
+            columns: ["inventory_id"]
+            isOneToOne: false
+            referencedRelation: "inventory"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "treatment_materials_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "treatment_materials_treatment_id_fkey"
+            columns: ["treatment_id"]
+            isOneToOne: false
+            referencedRelation: "treatments"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       treatments: {
         Row: {
           category: string | null
@@ -2460,6 +2739,76 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      waiting_list: {
+        Row: {
+          appointment_id: string | null
+          called_time: string | null
+          chair: string | null
+          check_in_time: string
+          completed_time: string | null
+          created_at: string
+          id: string
+          notes: string | null
+          org_id: string
+          patient_id: string
+          priority: number
+          seen_time: string | null
+          status: string
+        }
+        Insert: {
+          appointment_id?: string | null
+          called_time?: string | null
+          chair?: string | null
+          check_in_time?: string
+          completed_time?: string | null
+          created_at?: string
+          id?: string
+          notes?: string | null
+          org_id: string
+          patient_id: string
+          priority?: number
+          seen_time?: string | null
+          status?: string
+        }
+        Update: {
+          appointment_id?: string | null
+          called_time?: string | null
+          chair?: string | null
+          check_in_time?: string
+          completed_time?: string | null
+          created_at?: string
+          id?: string
+          notes?: string | null
+          org_id?: string
+          patient_id?: string
+          priority?: number
+          seen_time?: string | null
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "waiting_list_appointment_id_fkey"
+            columns: ["appointment_id"]
+            isOneToOne: false
+            referencedRelation: "appointments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "waiting_list_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "waiting_list_patient_id_fkey"
+            columns: ["patient_id"]
+            isOneToOne: false
+            referencedRelation: "patients"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       war_chest_entries: {
         Row: {

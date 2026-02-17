@@ -3,7 +3,8 @@ import {
   UserCog, Package, BarChart3, Bell, Settings, GraduationCap, Microscope,
   ClipboardList, DollarSign, Wrench, MessageSquare, Star, Receipt, Shield,
   FileCheck, FolderOpen, Eye, Heart, Baby, Bone, Ear, Wallet, FileText,
-  PiggyBank, TrendingUp, Calculator, Bot,
+  PiggyBank, TrendingUp, Calculator, Bot, Clock, CalendarClock, Truck,
+  ShoppingCart, Link2, Brain,
 } from "lucide-react";
 
 export interface NavItem {
@@ -70,6 +71,7 @@ const dentalNav: NavGroup[] = [
       { title: "Commissions", path: "commissions", icon: Calculator },
       { title: "Profitability", path: "profitability", icon: TrendingUp },
       { title: "Reports", path: "reports", icon: BarChart3 },
+      { title: "Advanced Analytics", path: "analytics", icon: Brain },
       { title: "Revenue Allocation", path: "revenue-allocation", icon: DollarSign },
     ],
   },
@@ -78,8 +80,18 @@ const dentalNav: NavGroup[] = [
     items: [
       { title: "Lab Work", path: "lab-work", icon: FlaskConical },
       { title: "Staff", path: "staff", icon: UserCog },
+      { title: "Schedules", path: "schedules", icon: CalendarClock },
       { title: "Inventory", path: "inventory", icon: Package },
       { title: "Inventory Costs", path: "inventory-costs", icon: PiggyBank },
+      { title: "Suppliers", path: "suppliers", icon: Truck },
+      { title: "Purchase Orders", path: "purchase-orders", icon: ShoppingCart },
+      { title: "Treatment Materials", path: "treatment-materials", icon: Link2 },
+    ],
+  },
+  {
+    label: "Operations",
+    items: [
+      { title: "Waiting List", path: "waiting-list", icon: Clock },
     ],
   },
   {
