@@ -1,4 +1,1 @@
 project_id = "agkmbgxtmvhsyftcrplp"
-
-[functions.daily-automation]
-verify_jwt = false
