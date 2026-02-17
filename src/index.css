@@ -19,17 +19,17 @@
     --popover: 0 0% 100%;
     --popover-foreground: 222 47% 11%;
 
-    /* Primary: Clinexus Blue (lighter, vibrant) */
-    --primary: 220 80% 50%;
+    /* Primary: Premium sky blue (lighter, refined) */
+    --primary: 215 75% 58%;
     --primary-foreground: 0 0% 100%;
 
-    /* Secondary: Deeper navy for contrast */
-    --secondary: 222 60% 22%;
+    /* Secondary: Soft slate-blue for contrast */
+    --secondary: 220 50% 32%;
     --secondary-foreground: 0 0% 100%;
 
     /* Muted: Cool blue-gray */
     --muted: 216 20% 94%;
-    --muted-foreground: 220 13% 46%;
+    --muted-foreground: 218 15% 50%;
 
     /* Accent: Light blue wash */
     --accent: 216 40% 94%;
@@ -40,15 +40,15 @@
 
     --border: 216 18% 90%;
     --input: 216 18% 90%;
-    --ring: 220 80% 50%;
+    --ring: 215 75% 58%;
 
     --radius: 0.75rem;
 
     /* Extended palette tokens */
-    --dental-navy: 222 55% 18%;
-    --dental-navy-light: 222 45% 32%;
-    --dental-teal: 220 80% 50%;
-    --dental-teal-light: 220 78% 58%;
+    --dental-navy: 220 45% 22%;
+    --dental-navy-light: 218 40% 38%;
+    --dental-teal: 215 75% 58%;
+    --dental-teal-light: 212 72% 65%;
     --dental-teal-pale: 216 50% 96%;
     --dental-mint: 216 35% 96%;
     --dental-cream: 40 30% 97%;
@@ -68,15 +68,15 @@
     --shadow-lg: 0 10px 15px -3px hsl(222 47% 11% / 0.07), 0 4px 6px -4px hsl(222 47% 11% / 0.03);
     --shadow-xl: 0 20px 25px -5px hsl(222 47% 11% / 0.08), 0 8px 10px -6px hsl(222 47% 11% / 0.03);
 
-    /* Sidebar: Deep navy */
-    --sidebar-background: 222 55% 12%;
-    --sidebar-foreground: 216 25% 78%;
-    --sidebar-primary: 216 85% 60%;
+    /* Sidebar: Refined dark blue */
+    --sidebar-background: 220 40% 14%;
+    --sidebar-foreground: 215 25% 78%;
+    --sidebar-primary: 215 75% 62%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 222 45% 18%;
-    --sidebar-accent-foreground: 216 70% 70%;
-    --sidebar-border: 222 40% 20%;
-    --sidebar-ring: 220 80% 50%;
+    --sidebar-accent: 220 35% 20%;
+    --sidebar-accent-foreground: 215 60% 72%;
+    --sidebar-border: 220 35% 22%;
+    --sidebar-ring: 215 75% 58%;
   }
 
   .dark {
@@ -89,11 +89,11 @@
     --popover: 222 40% 9%;
     --popover-foreground: 216 25% 95%;
 
-    --primary: 220 78% 50%;
+    --primary: 215 72% 55%;
     --primary-foreground: 0 0% 100%;
 
-    --secondary: 222 45% 28%;
-    --secondary-foreground: 216 25% 95%;
+    --secondary: 218 42% 34%;
+    --secondary-foreground: 215 25% 95%;
 
     --muted: 222 30% 15%;
     --muted-foreground: 216 15% 55%;
@@ -106,7 +106,7 @@
 
     --border: 222 30% 17%;
     --input: 222 30% 17%;
-    --ring: 220 78% 50%;
+    --ring: 215 72% 55%;
 
     --shadow-xs: 0 1px 2px 0 hsl(0 0% 0% / 0.15);
     --shadow-sm: 0 1px 3px 0 hsl(0 0% 0% / 0.2), 0 1px 2px -1px hsl(0 0% 0% / 0.15);
@@ -114,14 +114,14 @@
     --shadow-lg: 0 10px 15px -3px hsl(0 0% 0% / 0.3), 0 4px 6px -4px hsl(0 0% 0% / 0.15);
     --shadow-xl: 0 20px 25px -5px hsl(0 0% 0% / 0.35), 0 8px 10px -6px hsl(0 0% 0% / 0.15);
 
-    --sidebar-background: 222 50% 7%;
-    --sidebar-foreground: 216 25% 95%;
-    --sidebar-primary: 220 78% 55%;
+    --sidebar-background: 220 40% 8%;
+    --sidebar-foreground: 215 25% 95%;
+    --sidebar-primary: 215 72% 58%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 222 40% 14%;
-    --sidebar-accent-foreground: 216 25% 95%;
-    --sidebar-border: 222 40% 14%;
-    --sidebar-ring: 220 78% 50%;
+    --sidebar-accent: 220 35% 15%;
+    --sidebar-accent-foreground: 215 25% 95%;
+    --sidebar-border: 220 35% 15%;
+    --sidebar-ring: 215 72% 55%;
   }
 }
 
