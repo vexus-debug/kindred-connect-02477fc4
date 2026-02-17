@@ -197,7 +197,7 @@ export default function Login() {
 
       <Card className="relative w-full max-w-md border-border/40 shadow-2xl shadow-primary/[0.08] backdrop-blur-sm bg-card/95">
         <CardHeader className="text-center space-y-3 pb-2">
-          <img src={clinexusLogo} alt="Clinexus" className="h-8 w-auto object-contain mx-auto" />
+          <img src={clinexusLogo} alt="Clinexus" className="w-48 h-auto object-contain mx-auto" />
           <div>
             <CardTitle className="text-2xl font-bold text-foreground">{isSignUp ? "Create Account" : "Welcome Back"}</CardTitle>
             <CardDescription className="mt-1">{isSignUp ? "Sign up for Clinexus" : "Sign in to your clinic"}</CardDescription>
