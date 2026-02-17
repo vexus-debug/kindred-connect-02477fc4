@@ -3,10 +3,46 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
 import { useOrg } from "@/hooks/useOrg";
 
+export interface OperatingHour {
+  day: string;
+  open: string;
+  close: string;
+  closed?: boolean;
+}
+
+export interface Certification {
+  title: string;
+  description?: string;
+}
+
 export interface SiteSettings {
+  // Identity
   welcome_text?: string;
+  short_description?: string;
+  hero_title?: string;
+  hero_subtitle?: string;
+  hero_image_url?: string;
+
+  // Colors
   primary_color?: string;
   accent_color?: string;
+
+  // Contact
+  whatsapp_number?: string;
+
+  // Operating hours
+  operating_hours?: OperatingHour[];
+
+  // Social links
+  instagram_url?: string;
+  facebook_url?: string;
+  google_review_url?: string;
+
+  // Certifications
+  certifications?: Certification[];
+
+  // Booking
+  booking_confirmation_message?: string;
 }
 
 export interface ClinicSettings {

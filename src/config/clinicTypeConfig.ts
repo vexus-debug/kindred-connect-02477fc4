@@ -4,7 +4,7 @@ import {
   ClipboardList, DollarSign, Wrench, MessageSquare, Star, Receipt, Shield,
   FileCheck, FolderOpen, Eye, Heart, Baby, Bone, Ear, Wallet, FileText,
   PiggyBank, TrendingUp, Calculator, Bot, Clock, CalendarClock, Truck,
-  ShoppingCart, Link2, Brain,
+  ShoppingCart, Link2, Brain, Globe,
 } from "lucide-react";
 
 export interface NavItem {
@@ -78,6 +78,7 @@ const dentalNav: NavGroup[] = [
   {
     label: "Admin",
     items: [
+      { title: "Website Settings", path: "website-settings", icon: Globe },
       { title: "Lab Work", path: "lab-work", icon: FlaskConical },
       { title: "Staff", path: "staff", icon: UserCog },
       { title: "Schedules", path: "schedules", icon: CalendarClock },

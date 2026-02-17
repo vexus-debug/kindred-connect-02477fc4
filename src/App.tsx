@@ -42,6 +42,7 @@ import AuditLogPage from "./pages/dashboard/AuditLogPage";
 import ConsentFormsPage from "./pages/dashboard/ConsentFormsPage";
 import DocumentsPage from "./pages/dashboard/DocumentsPage";
 import AutomationPage from "./pages/dashboard/AutomationPage";
+import WebsiteSettingsPage from "./pages/dashboard/WebsiteSettingsPage";
 import PatientProfilePage from "./pages/dashboard/PatientProfilePage";
 import LabDashboardPage from "./pages/dashboard/LabDashboardPage";
 import LabCasesPage from "./pages/dashboard/LabCasesPage";
@@ -134,6 +135,7 @@ const App = () => (
             <Route path="/clinic/:slug/consent-forms" element={<ClinicRoute><ConsentFormsPage /></ClinicRoute>} />
             <Route path="/clinic/:slug/documents" element={<ClinicRoute><DocumentsPage /></ClinicRoute>} />
             <Route path="/clinic/:slug/automation" element={<ClinicRoute><AutomationPage /></ClinicRoute>} />
+            <Route path="/clinic/:slug/website-settings" element={<ClinicRoute><WebsiteSettingsPage /></ClinicRoute>} />
             <Route path="/clinic/:slug/waiting-list" element={<ClinicRoute><WaitingListPage /></ClinicRoute>} />
             <Route path="/clinic/:slug/schedules" element={<ClinicRoute><SchedulesPage /></ClinicRoute>} />
             <Route path="/clinic/:slug/suppliers" element={<ClinicRoute><SuppliersPage /></ClinicRoute>} />
