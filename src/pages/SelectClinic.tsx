@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Building2, LogOut, ChevronRight, Shield } from "lucide-react";
 import { getRoleLabel } from "@/config/roleAccess";
-import logo from "@/assets/logo.jpg";
+import clinexusLogo from "@/assets/clinexus-logo.png";
 
 export default function SelectClinic() {
   const { user, profile, orgMemberships, roles, loading, signOut } = useAuth();
@@ -45,7 +45,7 @@ export default function SelectClinic() {
       <div className="flex min-h-screen items-center justify-center bg-muted/30 px-4">
         <Card className="w-full max-w-md text-center">
           <CardHeader>
-            <img src={logo} alt="Clinexus" className="h-14 w-14 rounded-full object-cover mx-auto mb-2" />
+            <img src={clinexusLogo} alt="Clinexus" className="h-12 w-auto object-contain mx-auto mb-2" />
             <CardTitle>No Clinic Found</CardTitle>
             <CardDescription>
               You are not a member of any clinic yet. Please contact your administrator to be added.
@@ -64,10 +64,10 @@ export default function SelectClinic() {
   const displayName = profile?.full_name || user?.email?.split("@")[0] || "User";
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-muted/30 px-4">
+    <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-primary/5 via-background to-accent/30 px-4">
       <div className="w-full max-w-lg space-y-6">
         <div className="text-center space-y-2">
-          <img src={logo} alt="Clinexus" className="h-14 w-14 rounded-full object-cover mx-auto" />
+          <img src={clinexusLogo} alt="Clinexus" className="h-12 w-auto object-contain mx-auto" />
           <h1 className="text-2xl font-bold text-foreground">Welcome, {displayName}</h1>
           <p className="text-sm text-muted-foreground">Select a clinic to continue</p>
         </div>

@@ -51,7 +51,6 @@ function formatCurrency(amount: number) {
   return new Intl.NumberFormat("en-NG", { style: "currency", currency: "NGN", minimumFractionDigits: 0 }).format(amount);
 }
 
-// Mini sparkline data for stat cards
 const sparkData = {
   patients: [{ v: 40 }, { v: 55 }, { v: 48 }, { v: 62 }, { v: 58 }, { v: 72 }, { v: 80 }],
   appointments: [{ v: 12 }, { v: 18 }, { v: 14 }, { v: 22 }, { v: 16 }, { v: 20 }, { v: 18 }],
@@ -59,12 +58,18 @@ const sparkData = {
   revenue: [{ v: 3.2 }, { v: 3.8 }, { v: 4.1 }, { v: 3.6 }, { v: 4.5 }, { v: 4.85 }],
 };
 
-function MiniSparkline({ data, color, height = 32 }: { data: { v: number }[]; color: string; height?: number }) {
+function MiniSparkline({ data, color, height = 36 }: { data: { v: number }[]; color: string; height?: number }) {
   return (
     <ResponsiveContainer width="100%" height={height}>
-      <LineChart data={data}>
-        <Line type="monotone" dataKey="v" stroke={color} strokeWidth={1.5} dot={false} />
-      </LineChart>
+      <AreaChart data={data}>
+        <defs>
+          <linearGradient id={`spark-${color.replace(/[^a-z0-9]/gi, '')}`} x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stopColor={color} stopOpacity={0.3} />
+            <stop offset="100%" stopColor={color} stopOpacity={0} />
+          </linearGradient>
+        </defs>
+        <Area type="monotone" dataKey="v" stroke={color} strokeWidth={2} fill={`url(#spark-${color.replace(/[^a-z0-9]/gi, '')})`} dot={false} />
+      </AreaChart>
     </ResponsiveContainer>
   );
 }
@@ -94,32 +99,32 @@ export default function DashboardHome() {
   const canSeeAppointments = hasPageAccess(orgRole, "appointments");
 
   const quickActions = [
-    canSeePatients && { to: `${basePath}/patients`, icon: UserPlus, title: "Register Patient", desc: "Add a new patient record", gradient: "from-primary/10 to-primary/5" },
-    canSeeAppointments && { to: `${basePath}/appointments`, icon: CalendarPlus, title: "Book Appointment", desc: "Schedule a visit", gradient: "from-emerald-500/10 to-emerald-600/5" },
-    canSeeBilling && { to: `${basePath}/billing`, icon: FileText, title: "Create Invoice", desc: "Generate a bill", gradient: "from-primary/10 to-primary/5" },
-  ].filter(Boolean) as { to: string; icon: typeof UserPlus; title: string; desc: string; gradient: string }[];
+    canSeePatients && { to: `${basePath}/patients`, icon: UserPlus, title: "Register Patient", desc: "Add a new patient record" },
+    canSeeAppointments && { to: `${basePath}/appointments`, icon: CalendarPlus, title: "Book Appointment", desc: "Schedule a visit" },
+    canSeeBilling && { to: `${basePath}/billing`, icon: FileText, title: "Create Invoice", desc: "Generate a bill" },
+  ].filter(Boolean) as { to: string; icon: typeof UserPlus; title: string; desc: string }[];
 
   const statCards = [
     canSeePatients && {
       label: "Total Patients", value: s.totalPatients, icon: Users,
-      trend: "+12%", trendUp: true, color: "hsl(217, 91%, 55%)", bgColor: "from-primary/10 to-primary/5",
+      trend: "+12%", trendUp: true, color: "hsl(220, 82%, 38%)",
       iconBg: "bg-primary/10", iconColor: "text-primary", spark: sparkData.patients,
     },
     canSeeAppointments && {
       label: "Today's Appointments", value: s.todayAppointments, icon: CalendarDays,
       trend: `${schedule.filter((a) => a.status === "completed").length} done`, trendUp: true,
-      color: "#10b981", bgColor: "from-emerald-500/10 to-emerald-600/5",
+      color: "#10b981",
       iconBg: "bg-emerald-500/10", iconColor: "text-emerald-600", spark: sparkData.appointments,
     },
     canSeeBilling && {
       label: "Pending Payments", value: s.pendingPayments, icon: CreditCard,
-      trend: "-5%", trendUp: false, color: "#f59e0b", bgColor: "from-amber-500/10 to-amber-600/5",
+      trend: "-5%", trendUp: false, color: "#f59e0b",
       iconBg: "bg-amber-500/10", iconColor: "text-amber-600", spark: sparkData.payments,
     },
     canSeeBilling && {
       label: `Revenue (${currentMonth})`, value: s.monthlyRevenue, icon: TrendingUp,
       formatter: formatCurrency, trend: "+8.2%", trendUp: true,
-      color: "hsl(217, 91%, 55%)", bgColor: "from-primary/10 to-primary/5",
+      color: "hsl(220, 82%, 38%)",
       iconBg: "bg-primary/10", iconColor: "text-primary", spark: sparkData.revenue,
     },
   ].filter(Boolean) as any[];
@@ -138,19 +143,19 @@ export default function DashboardHome() {
         </div>
         <div className="flex gap-2">
           {canSeePatients && (
-            <Button size="sm" variant="outline" asChild className="border-border/50 hover:bg-accent/50">
+            <Button size="sm" variant="outline" asChild>
               <Link to={`${basePath}/patients`}><UserPlus className="mr-2 h-4 w-4" />New Patient</Link>
             </Button>
           )}
           {canSeeAppointments && (
-            <Button size="sm" className="bg-primary hover:bg-primary/90 shadow-lg shadow-primary/20" asChild>
+            <Button size="sm" className="shadow-lg shadow-primary/20" asChild>
               <Link to={`${basePath}/appointments`}><CalendarPlus className="mr-2 h-4 w-4" />Book Appointment</Link>
             </Button>
           )}
         </div>
       </div>
 
-      {/* Stat Cards */}
+      {/* Stat Cards - Premium */}
       <motion.div
         className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4"
         variants={stagger.container}
@@ -159,22 +164,22 @@ export default function DashboardHome() {
       >
         {statCards.map((card: any, i: number) => (
           <motion.div key={i} variants={stagger.item}>
-            <Card className="stat-card glass-card">
-              <CardContent className="p-5">
-                <div className="flex items-start justify-between mb-3">
-                  <div className={`h-10 w-10 rounded-xl ${card.iconBg} flex items-center justify-center`}>
+            <Card className="stat-card bg-card border-border/40 relative overflow-hidden">
+              <CardContent className="p-5 relative z-10">
+                <div className="flex items-start justify-between mb-4">
+                  <div className={`h-11 w-11 rounded-xl ${card.iconBg} flex items-center justify-center ring-1 ring-border/20`}>
                     <card.icon className={`h-5 w-5 ${card.iconColor}`} />
                   </div>
-                  <div className={`flex items-center gap-1 text-xs font-medium px-2 py-0.5 rounded-full ${card.trendUp ? "bg-emerald-500/10 text-emerald-700 dark:text-emerald-400" : "bg-red-500/10 text-red-700 dark:text-red-400"}`}>
+                  <div className={`flex items-center gap-1 text-xs font-semibold px-2.5 py-1 rounded-full ${card.trendUp ? "bg-emerald-500/10 text-emerald-700 dark:text-emerald-400" : "bg-red-500/10 text-red-700 dark:text-red-400"}`}>
                     {card.trendUp ? <ArrowUpRight className="h-3 w-3" /> : <ArrowDownRight className="h-3 w-3" />}
                     {card.trend}
                   </div>
                 </div>
-                <p className="text-xs font-medium text-muted-foreground mb-1">{card.label}</p>
-                <p className="text-2xl font-bold tracking-tight">
+                <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-1">{card.label}</p>
+                <p className="text-3xl font-bold tracking-tight text-foreground">
                   <AnimatedCounter value={card.value} formatter={card.formatter} />
                 </p>
-                <div className="mt-3 -mx-1 opacity-50">
+                <div className="mt-4 -mx-2 -mb-1">
                   <MiniSparkline data={card.spark} color={card.color} />
                 </div>
               </CardContent>
@@ -193,16 +198,16 @@ export default function DashboardHome() {
         >
           {canSeeAppointments && (
             <motion.div variants={stagger.item}>
-              <Card className="glass-card">
+              <Card className="border-border/40 bg-card">
                 <CardHeader className="pb-2">
                   <div className="flex items-center justify-between">
                     <div>
-                      <CardTitle className="text-base">Weekly Appointments</CardTitle>
-                      <CardDescription>Appointment trends this week</CardDescription>
+                      <CardTitle className="text-base font-semibold">Weekly Appointments</CardTitle>
+                      <CardDescription className="text-xs">Appointment trends this week</CardDescription>
                     </div>
-                    <div className="flex gap-1">
+                    <div className="flex gap-1 bg-muted/50 rounded-lg p-0.5">
                       {["7D", "30D"].map((label) => (
-                        <button key={label} className={`px-2.5 py-1 text-[11px] font-medium rounded-md transition-colors ${label === "7D" ? "bg-secondary/10 text-secondary" : "text-muted-foreground hover:bg-muted"}`}>
+                        <button key={label} className={`px-3 py-1 text-[11px] font-medium rounded-md transition-all ${label === "7D" ? "bg-card text-primary shadow-sm" : "text-muted-foreground hover:text-foreground"}`}>
                           {label}
                         </button>
                       ))}
@@ -210,28 +215,27 @@ export default function DashboardHome() {
                   </div>
                 </CardHeader>
                 <CardContent>
-                  <ResponsiveContainer width="100%" height={220}>
-                    <BarChart data={weeklyData || []}>
+                  <ResponsiveContainer width="100%" height={240}>
+                    <BarChart data={weeklyData || []} barCategoryGap="20%">
                       <defs>
                         <linearGradient id="barGradient" x1="0" y1="0" x2="0" y2="1">
-                          <stop offset="0%" stopColor="hsl(var(--secondary))" stopOpacity={0.9} />
-                          <stop offset="100%" stopColor="hsl(var(--secondary))" stopOpacity={0.4} />
+                          <stop offset="0%" stopColor="hsl(var(--primary))" stopOpacity={1} />
+                          <stop offset="100%" stopColor="hsl(var(--primary))" stopOpacity={0.5} />
                         </linearGradient>
                       </defs>
-                      <CartesianGrid strokeDasharray="3 3" className="stroke-border/50" vertical={false} />
-                      <XAxis dataKey="day" tick={{ fill: "hsl(var(--muted-foreground))", fontSize: 12 }} axisLine={false} tickLine={false} />
-                      <YAxis tick={{ fill: "hsl(var(--muted-foreground))", fontSize: 12 }} axisLine={false} tickLine={false} />
+                      <CartesianGrid strokeDasharray="3 3" className="stroke-border/30" vertical={false} />
+                      <XAxis dataKey="day" tick={{ fill: "hsl(var(--muted-foreground))", fontSize: 11 }} axisLine={false} tickLine={false} />
+                      <YAxis tick={{ fill: "hsl(var(--muted-foreground))", fontSize: 11 }} axisLine={false} tickLine={false} width={30} />
                       <Tooltip
                         contentStyle={{
                           backgroundColor: "hsl(var(--card))",
-                          border: "1px solid hsl(var(--border) / 0.5)",
-                          borderRadius: "12px",
+                          border: "1px solid hsl(var(--border))",
+                          borderRadius: "10px",
                           fontSize: "12px",
-                          boxShadow: "0 8px 24px -4px hsl(var(--foreground) / 0.1)",
-                          backdropFilter: "blur(8px)",
+                          boxShadow: "0 8px 30px -4px hsl(var(--foreground) / 0.08)",
                         }}
                       />
-                      <Bar dataKey="count" fill="url(#barGradient)" radius={[6, 6, 0, 0]} />
+                      <Bar dataKey="count" fill="url(#barGradient)" radius={[8, 8, 0, 0]} />
                     </BarChart>
                   </ResponsiveContainer>
                 </CardContent>
@@ -240,16 +244,16 @@ export default function DashboardHome() {
           )}
           {canSeeBilling && (
             <motion.div variants={stagger.item}>
-              <Card className="glass-card">
+              <Card className="border-border/40 bg-card">
                 <CardHeader className="pb-2">
                   <div className="flex items-center justify-between">
                     <div>
-                      <CardTitle className="text-base">Revenue Overview</CardTitle>
-                      <CardDescription>Monthly revenue trend (₦)</CardDescription>
+                      <CardTitle className="text-base font-semibold">Revenue Overview</CardTitle>
+                      <CardDescription className="text-xs">Monthly revenue trend (₦)</CardDescription>
                     </div>
-                    <div className="flex gap-1">
+                    <div className="flex gap-1 bg-muted/50 rounded-lg p-0.5">
                       {["6M", "1Y"].map((label) => (
-                        <button key={label} className={`px-2.5 py-1 text-[11px] font-medium rounded-md transition-colors ${label === "6M" ? "bg-secondary/10 text-secondary" : "text-muted-foreground hover:bg-muted"}`}>
+                        <button key={label} className={`px-3 py-1 text-[11px] font-medium rounded-md transition-all ${label === "6M" ? "bg-card text-primary shadow-sm" : "text-muted-foreground hover:text-foreground"}`}>
                           {label}
                         </button>
                       ))}
@@ -257,28 +261,28 @@ export default function DashboardHome() {
                   </div>
                 </CardHeader>
                 <CardContent>
-                  <ResponsiveContainer width="100%" height={220}>
+                  <ResponsiveContainer width="100%" height={240}>
                     <AreaChart data={revenueData || []}>
                       <defs>
                         <linearGradient id="areaGradient" x1="0" y1="0" x2="0" y2="1">
-                          <stop offset="0%" stopColor="hsl(var(--secondary))" stopOpacity={0.2} />
-                          <stop offset="100%" stopColor="hsl(var(--secondary))" stopOpacity={0} />
+                          <stop offset="0%" stopColor="hsl(var(--primary))" stopOpacity={0.2} />
+                          <stop offset="100%" stopColor="hsl(var(--primary))" stopOpacity={0} />
                         </linearGradient>
                       </defs>
-                      <CartesianGrid strokeDasharray="3 3" className="stroke-border/50" vertical={false} />
-                      <XAxis dataKey="month" tick={{ fill: "hsl(var(--muted-foreground))", fontSize: 12 }} axisLine={false} tickLine={false} />
-                      <YAxis tick={{ fill: "hsl(var(--muted-foreground))", fontSize: 12 }} axisLine={false} tickLine={false} tickFormatter={(v) => `${(v / 1000000).toFixed(1)}M`} />
+                      <CartesianGrid strokeDasharray="3 3" className="stroke-border/30" vertical={false} />
+                      <XAxis dataKey="month" tick={{ fill: "hsl(var(--muted-foreground))", fontSize: 11 }} axisLine={false} tickLine={false} />
+                      <YAxis tick={{ fill: "hsl(var(--muted-foreground))", fontSize: 11 }} axisLine={false} tickLine={false} width={40} tickFormatter={(v) => `${(v / 1000000).toFixed(1)}M`} />
                       <Tooltip
                         contentStyle={{
                           backgroundColor: "hsl(var(--card))",
-                          border: "1px solid hsl(var(--border) / 0.5)",
-                          borderRadius: "12px",
+                          border: "1px solid hsl(var(--border))",
+                          borderRadius: "10px",
                           fontSize: "12px",
-                          boxShadow: "0 8px 24px -4px hsl(var(--foreground) / 0.1)",
+                          boxShadow: "0 8px 30px -4px hsl(var(--foreground) / 0.08)",
                         }}
                         formatter={(value: number) => [formatCurrency(value), "Revenue"]}
                       />
-                      <Area type="monotone" dataKey="revenue" stroke="hsl(var(--secondary))" fill="url(#areaGradient)" strokeWidth={2.5} />
+                      <Area type="monotone" dataKey="revenue" stroke="hsl(var(--primary))" fill="url(#areaGradient)" strokeWidth={2.5} />
                     </AreaChart>
                   </ResponsiveContainer>
                 </CardContent>
@@ -291,12 +295,12 @@ export default function DashboardHome() {
       {/* Schedule + Activity Row */}
       <div className="grid gap-4 lg:grid-cols-3">
         {canSeeAppointments && (
-          <Card className="lg:col-span-2 glass-card">
+          <Card className="lg:col-span-2 border-border/40 bg-card">
             <CardHeader className="pb-3">
               <div className="flex items-center justify-between">
                 <div>
-                  <CardTitle className="text-base">Today's Schedule</CardTitle>
-                  <CardDescription>
+                  <CardTitle className="text-base font-semibold">Today's Schedule</CardTitle>
+                  <CardDescription className="text-xs">
                     <span className="inline-flex items-center gap-1.5">
                       <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
                       {schedule.filter((a) => a.status === "completed").length} completed
@@ -308,7 +312,7 @@ export default function DashboardHome() {
                     </span>
                     <span className="mx-2 text-border">·</span>
                     <span className="inline-flex items-center gap-1.5">
-                      <span className="h-1.5 w-1.5 rounded-full bg-blue-500" />
+                      <span className="h-1.5 w-1.5 rounded-full bg-primary" />
                       {schedule.filter((a) => a.status === "scheduled").length} upcoming
                     </span>
                   </CardDescription>
@@ -359,7 +363,7 @@ export default function DashboardHome() {
                           <td className="py-3 px-4">
                             <div className="flex items-center gap-2.5">
                               <Avatar className="h-7 w-7">
-                                <AvatarFallback className="bg-secondary/10 text-secondary text-[10px] font-semibold">{patientInitials}</AvatarFallback>
+                                <AvatarFallback className="bg-primary/10 text-primary text-[10px] font-semibold">{patientInitials}</AvatarFallback>
                               </Avatar>
                               <span className="font-medium">{apt.patientName}</span>
                             </div>
@@ -383,14 +387,14 @@ export default function DashboardHome() {
           </Card>
         )}
 
-        {/* Activity Feed - Timeline Style */}
-        <Card className={`glass-card ${canSeeAppointments ? "" : "lg:col-span-3"}`}>
+        {/* Activity Feed */}
+        <Card className={`border-border/40 bg-card ${canSeeAppointments ? "" : "lg:col-span-3"}`}>
           <CardHeader className="pb-3">
             <div className="flex items-center justify-between">
-              <CardTitle className="text-base">Recent Activity</CardTitle>
-              <Sparkles className="h-4 w-4 text-secondary/50" />
+              <CardTitle className="text-base font-semibold">Recent Activity</CardTitle>
+              <Sparkles className="h-4 w-4 text-primary/40" />
             </div>
-            <CardDescription>Latest clinic updates</CardDescription>
+            <CardDescription className="text-xs">Latest clinic updates</CardDescription>
           </CardHeader>
           <CardContent className="px-4">
             <div className="space-y-1">
@@ -434,9 +438,9 @@ export default function DashboardHome() {
           {quickActions.map((action, i) => (
             <motion.div key={action.to} variants={stagger.item}>
               <Link to={action.to}>
-                <Card className="glass-card hover:border-primary/30 hover:shadow-lg hover:shadow-primary/5 transition-all duration-300 cursor-pointer group">
+                <Card className="bg-card border-border/40 hover:border-primary/30 hover:shadow-lg hover:shadow-primary/5 transition-all duration-300 cursor-pointer group">
                   <CardContent className="p-4 flex items-center gap-3">
-                    <div className={`h-10 w-10 rounded-xl bg-gradient-to-br ${action.gradient} flex items-center justify-center group-hover:scale-110 transition-transform duration-300`}>
+                    <div className="h-10 w-10 rounded-xl bg-primary/10 flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
                       <action.icon className="h-5 w-5 text-primary" />
                     </div>
                     <div>

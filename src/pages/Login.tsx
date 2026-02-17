@@ -10,7 +10,7 @@ import { Eye, EyeOff } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { clinicTypeOptions } from "@/config/clinicTypeConfig";
-import logo from "@/assets/logo.jpg";
+import clinexusLogo from "@/assets/clinexus-logo.png";
 
 export default function Login() {
   const [email, setEmail] = useState("");
@@ -39,7 +39,6 @@ export default function Login() {
           return;
         }
 
-        // 1. Sign up the user
         const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
           email,
           password,
@@ -57,7 +56,6 @@ export default function Login() {
           return;
         }
 
-        // 2. Create org + membership via secure RPC (bypasses RLS for new users)
         const slug = clinicName
           .toLowerCase()
           .replace(/[^a-z0-9]+/g, "-")
@@ -72,7 +70,6 @@ export default function Login() {
 
         if (orgError) throw orgError;
 
-        // Refetch user data so orgMemberships are available before navigating
         await refetchUserData();
 
         toast({ title: "Account & clinic created!", description: "Welcome to Clinexus!" });
@@ -90,14 +87,21 @@ export default function Login() {
   };
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-muted/30 px-4 overflow-y-auto py-8">
-      <Card className="w-full max-w-md">
-        <CardHeader className="text-center space-y-3">
+    <div className="relative flex min-h-screen items-center justify-center px-4 overflow-y-auto py-8">
+      {/* Premium gradient background */}
+      <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-background to-accent/30" />
+      <div className="absolute top-0 right-0 w-[500px] h-[500px] rounded-full bg-primary/[0.04] blur-3xl" />
+      <div className="absolute bottom-0 left-0 w-[400px] h-[400px] rounded-full bg-primary/[0.03] blur-3xl" />
+
+      <Card className="relative w-full max-w-md border-border/50 shadow-xl shadow-primary/[0.06]">
+        <CardHeader className="text-center space-y-4 pb-2">
           <div className="mx-auto">
-          <img src={logo} alt="Clinexus" className="h-16 w-16 rounded-full object-cover mx-auto" />
-        </div>
-          <CardTitle className="text-2xl text-primary">{isSignUp ? "Create Account" : "Welcome Back"}</CardTitle>
-          <CardDescription>{isSignUp ? "Sign up for Clinexus" : "Sign in to Clinexus"}</CardDescription>
+            <img src={clinexusLogo} alt="Clinexus" className="h-14 w-auto object-contain mx-auto" />
+          </div>
+          <div>
+            <CardTitle className="text-2xl font-bold text-foreground">{isSignUp ? "Create Account" : "Welcome Back"}</CardTitle>
+            <CardDescription className="mt-1">{isSignUp ? "Sign up for Clinexus" : "Sign in to your clinic"}</CardDescription>
+          </div>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleLogin} className="space-y-4">
@@ -188,7 +192,7 @@ export default function Login() {
                 </button>
               </div>
             </div>
-            <Button type="submit" className="w-full" disabled={loading}>
+            <Button type="submit" className="w-full font-semibold shadow-lg shadow-primary/20" disabled={loading}>
               {loading ? (isSignUp ? "Creating account..." : "Signing in...") : (isSignUp ? "Create Account" : "Sign In")}
             </Button>
             {isSignUp && (
@@ -200,11 +204,11 @@ export default function Login() {
           <div className="mt-4 text-center text-sm text-muted-foreground">
             {isSignUp ? (
               <>Already have an account?{" "}
-                <button onClick={() => setIsSignUp(false)} className="text-primary hover:underline">Sign in</button>
+                <button onClick={() => setIsSignUp(false)} className="text-primary font-medium hover:underline">Sign in</button>
               </>
             ) : (
               <>Don't have an account?{" "}
-                <button onClick={() => setIsSignUp(true)} className="text-primary hover:underline">Sign up — 3 days free trial!</button>
+                <button onClick={() => setIsSignUp(true)} className="text-primary font-medium hover:underline">Sign up — 3 days free trial!</button>
               </>
             )}
           </div>
