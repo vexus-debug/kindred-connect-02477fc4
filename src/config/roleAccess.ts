@@ -35,6 +35,12 @@ export const PAGE_ROLE_ACCESS: Record<string, OrgRole[]> = {
   "consent-forms": ["owner", "admin", "dentist"],
   "documents": ["owner", "admin"],
   "automation": ["owner", "admin"],
+  "waiting-list": ["owner", "admin", "dentist", "receptionist", "hygienist"],
+  "schedules": ["owner", "admin", "dentist"],
+  "suppliers": ["owner", "admin"],
+  "purchase-orders": ["owner", "admin", "receptionist"],
+  "treatment-materials": ["owner", "admin", "dentist"],
+  "analytics": ["owner", "admin"],
 };
 
 /**
