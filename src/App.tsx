@@ -62,6 +62,7 @@ import AdminOverview from "./pages/admin/AdminOverview";
 import AdminClinics from "./pages/admin/AdminClinics";
 import AdminUsers from "./pages/admin/AdminUsers";
 import AdminAnalytics from "./pages/admin/AdminAnalytics";
+import PlatformAuditLogPage from "./pages/admin/PlatformAuditLogPage";
 
 const queryClient = new QueryClient();
 
@@ -104,6 +105,7 @@ const App = () => (
             <Route path="/admin/clinics" element={<AdminRoute><AdminClinics /></AdminRoute>} />
             <Route path="/admin/users" element={<AdminRoute><AdminUsers /></AdminRoute>} />
             <Route path="/admin/analytics" element={<AdminRoute><AdminAnalytics /></AdminRoute>} />
+            <Route path="/admin/audit-log" element={<AdminRoute><PlatformAuditLogPage /></AdminRoute>} />
 
             {/* Clinic routes */}
             <Route path="/clinic/:slug/dashboard" element={<ClinicRoute><DashboardHome /></ClinicRoute>} />
