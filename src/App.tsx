@@ -33,6 +33,11 @@ import TutorialsPage from "./pages/dashboard/TutorialsPage";
 import MessagesPage from "./pages/dashboard/MessagesPage";
 import ReviewsPage from "./pages/dashboard/ReviewsPage";
 import ExpensesPage from "./pages/dashboard/ExpensesPage";
+import PaymentPlansPage from "./pages/dashboard/PaymentPlansPage";
+import EstimatesPage from "./pages/dashboard/EstimatesPage";
+import CommissionPayoutsPage from "./pages/dashboard/CommissionPayoutsPage";
+import ProfitabilityPage from "./pages/dashboard/ProfitabilityPage";
+import InventoryCostsPage from "./pages/dashboard/InventoryCostsPage";
 import AuditLogPage from "./pages/dashboard/AuditLogPage";
 import ConsentFormsPage from "./pages/dashboard/ConsentFormsPage";
 import DocumentsPage from "./pages/dashboard/DocumentsPage";
@@ -113,6 +118,11 @@ const App = () => (
             <Route path="/clinic/:slug/messages" element={<ClinicRoute><MessagesPage /></ClinicRoute>} />
             <Route path="/clinic/:slug/reviews" element={<ClinicRoute><ReviewsPage /></ClinicRoute>} />
             <Route path="/clinic/:slug/expenses" element={<ClinicRoute><ExpensesPage /></ClinicRoute>} />
+            <Route path="/clinic/:slug/payment-plans" element={<ClinicRoute><PaymentPlansPage /></ClinicRoute>} />
+            <Route path="/clinic/:slug/estimates" element={<ClinicRoute><EstimatesPage /></ClinicRoute>} />
+            <Route path="/clinic/:slug/commissions" element={<ClinicRoute><CommissionPayoutsPage /></ClinicRoute>} />
+            <Route path="/clinic/:slug/profitability" element={<ClinicRoute><ProfitabilityPage /></ClinicRoute>} />
+            <Route path="/clinic/:slug/inventory-costs" element={<ClinicRoute><InventoryCostsPage /></ClinicRoute>} />
             <Route path="/clinic/:slug/audit-log" element={<ClinicRoute><AuditLogPage /></ClinicRoute>} />
             <Route path="/clinic/:slug/consent-forms" element={<ClinicRoute><ConsentFormsPage /></ClinicRoute>} />
             <Route path="/clinic/:slug/documents" element={<ClinicRoute><DocumentsPage /></ClinicRoute>} />

@@ -2,7 +2,8 @@ import {
   LayoutDashboard, Users, CalendarDays, Stethoscope, CreditCard, FlaskConical,
   UserCog, Package, BarChart3, Bell, Settings, GraduationCap, Microscope,
   ClipboardList, DollarSign, Wrench, MessageSquare, Star, Receipt, Shield,
-  FileCheck, FolderOpen, Eye, Heart, Baby, Bone, Ear,
+  FileCheck, FolderOpen, Eye, Heart, Baby, Bone, Ear, Wallet, FileText,
+  PiggyBank, TrendingUp, Calculator,
 } from "lucide-react";
 
 export interface NavItem {
@@ -63,7 +64,11 @@ const dentalNav: NavGroup[] = [
     label: "Finance",
     items: [
       { title: "Billing", path: "billing", icon: CreditCard },
+      { title: "Estimates", path: "estimates", icon: FileText },
+      { title: "Payment Plans", path: "payment-plans", icon: Wallet },
       { title: "Expenses", path: "expenses", icon: Receipt },
+      { title: "Commissions", path: "commissions", icon: Calculator },
+      { title: "Profitability", path: "profitability", icon: TrendingUp },
       { title: "Reports", path: "reports", icon: BarChart3 },
       { title: "Revenue Allocation", path: "revenue-allocation", icon: DollarSign },
     ],
@@ -74,6 +79,7 @@ const dentalNav: NavGroup[] = [
       { title: "Lab Work", path: "lab-work", icon: FlaskConical },
       { title: "Staff", path: "staff", icon: UserCog },
       { title: "Inventory", path: "inventory", icon: Package },
+      { title: "Inventory Costs", path: "inventory-costs", icon: PiggyBank },
     ],
   },
   {

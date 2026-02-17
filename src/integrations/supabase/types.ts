@@ -284,6 +284,72 @@ export type Database = {
           },
         ]
       }
+      commission_payouts: {
+        Row: {
+          calculated_amount: number
+          created_at: string
+          id: string
+          notes: string | null
+          org_id: string
+          paid_amount: number
+          payment_date: string | null
+          payment_method: string | null
+          period_end: string
+          period_start: string
+          reference: string | null
+          staff_id: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          calculated_amount?: number
+          created_at?: string
+          id?: string
+          notes?: string | null
+          org_id: string
+          paid_amount?: number
+          payment_date?: string | null
+          payment_method?: string | null
+          period_end: string
+          period_start: string
+          reference?: string | null
+          staff_id: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          calculated_amount?: number
+          created_at?: string
+          id?: string
+          notes?: string | null
+          org_id?: string
+          paid_amount?: number
+          payment_date?: string | null
+          payment_method?: string | null
+          period_end?: string
+          period_start?: string
+          reference?: string | null
+          staff_id?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "commission_payouts_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "commission_payouts_staff_id_fkey"
+            columns: ["staff_id"]
+            isOneToOne: false
+            referencedRelation: "staff"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       consent_form_templates: {
         Row: {
           category: string | null
@@ -457,6 +523,7 @@ export type Database = {
           quantity: number
           supplier: string | null
           unit: string
+          unit_cost: number | null
           updated_at: string
         }
         Insert: {
@@ -470,6 +537,7 @@ export type Database = {
           quantity?: number
           supplier?: string | null
           unit?: string
+          unit_cost?: number | null
           updated_at?: string
         }
         Update: {
@@ -483,11 +551,69 @@ export type Database = {
           quantity?: number
           supplier?: string | null
           unit?: string
+          unit_cost?: number | null
           updated_at?: string
         }
         Relationships: [
           {
             foreignKeyName: "inventory_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      inventory_transactions: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          id: string
+          inventory_id: string
+          notes: string | null
+          org_id: string
+          quantity: number
+          reference: string | null
+          total_cost: number | null
+          transaction_type: string
+          unit_cost: number | null
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          inventory_id: string
+          notes?: string | null
+          org_id: string
+          quantity: number
+          reference?: string | null
+          total_cost?: number | null
+          transaction_type: string
+          unit_cost?: number | null
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          inventory_id?: string
+          notes?: string | null
+          org_id?: string
+          quantity?: number
+          reference?: string | null
+          total_cost?: number | null
+          transaction_type?: string
+          unit_cost?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "inventory_transactions_inventory_id_fkey"
+            columns: ["inventory_id"]
+            isOneToOne: false
+            referencedRelation: "inventory"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "inventory_transactions_org_id_fkey"
             columns: ["org_id"]
             isOneToOne: false
             referencedRelation: "organizations"
@@ -1415,6 +1541,130 @@ export type Database = {
           },
         ]
       }
+      payment_plan_installments: {
+        Row: {
+          amount: number
+          created_at: string
+          due_date: string
+          id: string
+          installment_number: number
+          paid_date: string | null
+          payment_id: string | null
+          plan_id: string
+          status: string
+        }
+        Insert: {
+          amount?: number
+          created_at?: string
+          due_date: string
+          id?: string
+          installment_number: number
+          paid_date?: string | null
+          payment_id?: string | null
+          plan_id: string
+          status?: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          due_date?: string
+          id?: string
+          installment_number?: number
+          paid_date?: string | null
+          payment_id?: string | null
+          plan_id?: string
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "payment_plan_installments_payment_id_fkey"
+            columns: ["payment_id"]
+            isOneToOne: false
+            referencedRelation: "payments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "payment_plan_installments_plan_id_fkey"
+            columns: ["plan_id"]
+            isOneToOne: false
+            referencedRelation: "payment_plans"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      payment_plans: {
+        Row: {
+          created_at: string
+          frequency: string
+          id: string
+          installment_amount: number
+          installment_count: number
+          invoice_id: string
+          notes: string | null
+          org_id: string
+          patient_id: string | null
+          plan_name: string
+          start_date: string
+          status: string
+          total_amount: number
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          frequency?: string
+          id?: string
+          installment_amount?: number
+          installment_count?: number
+          invoice_id: string
+          notes?: string | null
+          org_id: string
+          patient_id?: string | null
+          plan_name?: string
+          start_date?: string
+          status?: string
+          total_amount?: number
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          frequency?: string
+          id?: string
+          installment_amount?: number
+          installment_count?: number
+          invoice_id?: string
+          notes?: string | null
+          org_id?: string
+          patient_id?: string | null
+          plan_name?: string
+          start_date?: string
+          status?: string
+          total_amount?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "payment_plans_invoice_id_fkey"
+            columns: ["invoice_id"]
+            isOneToOne: false
+            referencedRelation: "invoices"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "payment_plans_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "payment_plans_patient_id_fkey"
+            columns: ["patient_id"]
+            isOneToOne: false
+            referencedRelation: "patients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       payments: {
         Row: {
           amount: number
@@ -1895,6 +2145,130 @@ export type Database = {
             columns: ["staff_id"]
             isOneToOne: false
             referencedRelation: "staff"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      treatment_estimate_items: {
+        Row: {
+          created_at: string
+          description: string
+          estimate_id: string
+          id: string
+          line_total: number
+          quantity: number
+          treatment_id: string | null
+          unit_price: number
+        }
+        Insert: {
+          created_at?: string
+          description: string
+          estimate_id: string
+          id?: string
+          line_total?: number
+          quantity?: number
+          treatment_id?: string | null
+          unit_price?: number
+        }
+        Update: {
+          created_at?: string
+          description?: string
+          estimate_id?: string
+          id?: string
+          line_total?: number
+          quantity?: number
+          treatment_id?: string | null
+          unit_price?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "treatment_estimate_items_estimate_id_fkey"
+            columns: ["estimate_id"]
+            isOneToOne: false
+            referencedRelation: "treatment_estimates"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "treatment_estimate_items_treatment_id_fkey"
+            columns: ["treatment_id"]
+            isOneToOne: false
+            referencedRelation: "treatments"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      treatment_estimates: {
+        Row: {
+          converted_invoice_id: string | null
+          created_at: string
+          created_by: string | null
+          discount: number
+          estimate_date: string
+          estimate_number: string
+          id: string
+          notes: string | null
+          org_id: string
+          patient_id: string
+          status: string
+          subtotal: number
+          total: number
+          updated_at: string
+          valid_until: string | null
+        }
+        Insert: {
+          converted_invoice_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          discount?: number
+          estimate_date?: string
+          estimate_number: string
+          id?: string
+          notes?: string | null
+          org_id: string
+          patient_id: string
+          status?: string
+          subtotal?: number
+          total?: number
+          updated_at?: string
+          valid_until?: string | null
+        }
+        Update: {
+          converted_invoice_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          discount?: number
+          estimate_date?: string
+          estimate_number?: string
+          id?: string
+          notes?: string | null
+          org_id?: string
+          patient_id?: string
+          status?: string
+          subtotal?: number
+          total?: number
+          updated_at?: string
+          valid_until?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "treatment_estimates_converted_invoice_id_fkey"
+            columns: ["converted_invoice_id"]
+            isOneToOne: false
+            referencedRelation: "invoices"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "treatment_estimates_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "treatment_estimates_patient_id_fkey"
+            columns: ["patient_id"]
+            isOneToOne: false
+            referencedRelation: "patients"
             referencedColumns: ["id"]
           },
         ]
