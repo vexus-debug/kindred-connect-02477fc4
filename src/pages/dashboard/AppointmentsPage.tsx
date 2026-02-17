@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -6,7 +6,7 @@ import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { CalendarPlus, ChevronLeft, ChevronRight, CalendarIcon, UserPlus, CalendarDays } from "lucide-react";
-import { addDays, subDays, format, startOfWeek, addWeeks, subWeeks, isSameDay } from "date-fns";
+import { addDays, subDays, format, startOfWeek, addWeeks, subWeeks, isSameDay, startOfMonth, endOfMonth, eachDayOfInterval, getDay, addMonths, subMonths } from "date-fns";
 import { BookAppointmentDialog } from "@/components/dashboard/BookAppointmentDialog";
 import { AppointmentDetailDialog } from "@/components/dashboard/AppointmentDetailDialog";
 import { WalkInDialog } from "@/components/dashboard/WalkInDialog";
@@ -16,6 +16,9 @@ import { PageHeader } from "@/components/dashboard/PageHeader";
 import { TableSkeleton } from "@/components/dashboard/TableSkeleton";
 import { EmptyState } from "@/components/dashboard/EmptyState";
 import { motion } from "framer-motion";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
+import { useOrg } from "@/hooks/useOrg";
 
 const chairs = ["Chair 1", "Chair 2", "Chair 3"];
 const timeSlots = ["09:00 AM", "09:30 AM", "10:00 AM", "10:30 AM", "11:00 AM", "11:30 AM", "12:00 PM", "12:30 PM", "01:00 PM", "01:30 PM", "02:00 PM", "02:30 PM", "03:00 PM", "03:30 PM", "04:00 PM"];
@@ -34,14 +37,37 @@ const statusDots: Record<string, string> = {
   cancelled: "bg-red-500",
 };
 
+function useMonthAppointments(month: Date) {
+  const { currentOrg } = useOrg();
+  const orgId = currentOrg?.org_id;
+  const monthStart = format(startOfMonth(month), "yyyy-MM-dd");
+  const monthEnd = format(endOfMonth(month), "yyyy-MM-dd");
+
+  return useQuery({
+    queryKey: ["month-appointments", orgId, monthStart],
+    enabled: !!orgId,
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("appointments")
+        .select("id, appointment_date, appointment_time, status, patients(first_name, last_name), staff(full_name), treatments(name)")
+        .eq("org_id", orgId!)
+        .gte("appointment_date", monthStart)
+        .lte("appointment_date", monthEnd)
+        .order("appointment_time");
+      return data || [];
+    },
+  });
+}
+
 export default function AppointmentsPage() {
   const [currentDate, setCurrentDate] = useState(new Date());
   const [bookOpen, setBookOpen] = useState(false);
   const [walkInOpen, setWalkInOpen] = useState(false);
-  const [viewMode, setViewMode] = useState<"day" | "week">("day");
+  const [viewMode, setViewMode] = useState<"day" | "week" | "month">("day");
   const [selectedAppointment, setSelectedAppointment] = useState<AppointmentRow | null>(null);
 
   const { data: appointments = [], isLoading } = useAppointmentsByDate(currentDate);
+  const { data: monthAppointments = [] } = useMonthAppointments(currentDate);
 
   const displayAppointments = appointments.map((a) => ({
     ...a,
@@ -53,6 +79,35 @@ export default function AppointmentsPage() {
 
   const weekStart = startOfWeek(currentDate, { weekStartsOn: 1 });
   const weekDays = Array.from({ length: 7 }, (_, i) => addDays(weekStart, i));
+
+  // Month view data
+  const monthStart = startOfMonth(currentDate);
+  const monthEnd = endOfMonth(currentDate);
+  const monthDays = eachDayOfInterval({ start: monthStart, end: monthEnd });
+  const startPadding = (getDay(monthStart) + 6) % 7; // Monday = 0
+  const paddedDays = Array.from({ length: startPadding }, () => null).concat(monthDays);
+
+  const appointmentsByDate = useMemo(() => {
+    const map: Record<string, typeof monthAppointments> = {};
+    monthAppointments.forEach((a: any) => {
+      if (!map[a.appointment_date]) map[a.appointment_date] = [];
+      map[a.appointment_date].push(a);
+    });
+    return map;
+  }, [monthAppointments]);
+
+  const handleNav = () => {
+    if (viewMode === "day") return { prev: () => setCurrentDate(subDays(currentDate, 1)), next: () => setCurrentDate(addDays(currentDate, 1)) };
+    if (viewMode === "week") return { prev: () => setCurrentDate(subWeeks(currentDate, 1)), next: () => setCurrentDate(addWeeks(currentDate, 1)) };
+    return { prev: () => setCurrentDate(subMonths(currentDate, 1)), next: () => setCurrentDate(addMonths(currentDate, 1)) };
+  };
+  const nav = handleNav();
+
+  const titleText = viewMode === "day"
+    ? format(currentDate, "EEEE, MMMM d, yyyy")
+    : viewMode === "week"
+    ? `${format(weekStart, "MMM d")} — ${format(addDays(weekStart, 6), "MMM d, yyyy")}`
+    : format(currentDate, "MMMM yyyy");
 
   return (
     <div className="space-y-6">
@@ -79,15 +134,11 @@ export default function AppointmentsPage() {
               <CardHeader className="pb-3 border-b border-border/30">
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                   <div className="flex items-center gap-2 flex-wrap">
-                    <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => setCurrentDate(viewMode === "day" ? subDays(currentDate, 1) : subWeeks(currentDate, 1))}>
+                    <Button variant="ghost" size="icon" className="h-7 w-7" onClick={nav.prev}>
                       <ChevronLeft className="h-4 w-4" />
                     </Button>
-                    <CardTitle className="text-base">
-                      {viewMode === "day"
-                        ? format(currentDate, "EEEE, MMMM d, yyyy")
-                        : `${format(weekStart, "MMM d")} — ${format(addDays(weekStart, 6), "MMM d, yyyy")}`}
-                    </CardTitle>
-                    <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => setCurrentDate(viewMode === "day" ? addDays(currentDate, 1) : addWeeks(currentDate, 1))}>
+                    <CardTitle className="text-base">{titleText}</CardTitle>
+                    <Button variant="ghost" size="icon" className="h-7 w-7" onClick={nav.next}>
                       <ChevronRight className="h-4 w-4" />
                     </Button>
                     <Button variant="outline" size="sm" className="text-xs border-border/50" onClick={() => setCurrentDate(new Date())}>Today</Button>
@@ -103,8 +154,11 @@ export default function AppointmentsPage() {
                       </PopoverContent>
                     </Popover>
                     <div className="flex border border-border/50 rounded-lg overflow-hidden">
-                      <button className={cn("px-3 py-1.5 text-xs font-medium transition-all", viewMode === "day" ? "bg-secondary text-secondary-foreground" : "bg-muted/30 hover:bg-muted/60")} onClick={() => setViewMode("day")}>Day</button>
-                      <button className={cn("px-3 py-1.5 text-xs font-medium transition-all", viewMode === "week" ? "bg-secondary text-secondary-foreground" : "bg-muted/30 hover:bg-muted/60")} onClick={() => setViewMode("week")}>Week</button>
+                      {(["day", "week", "month"] as const).map((mode) => (
+                        <button key={mode} className={cn("px-3 py-1.5 text-xs font-medium transition-all capitalize", viewMode === mode ? "bg-secondary text-secondary-foreground" : "bg-muted/30 hover:bg-muted/60")} onClick={() => setViewMode(mode)}>
+                          {mode}
+                        </button>
+                      ))}
                     </div>
                   </div>
                   <div className="flex gap-2.5 hidden md:flex">
@@ -118,17 +172,11 @@ export default function AppointmentsPage() {
                 </div>
               </CardHeader>
               <CardContent className="p-0 overflow-x-auto">
-                {isLoading ? (
+                {isLoading && viewMode !== "month" ? (
                   <TableSkeleton columns={4} rows={8} />
                 ) : viewMode === "day" ? (
                   displayAppointments.length === 0 ? (
-                    <EmptyState
-                      icon={CalendarDays}
-                      title="No appointments"
-                      description="No appointments scheduled for this day. Book one to get started."
-                      actionLabel="Book Appointment"
-                      onAction={() => setBookOpen(true)}
-                    />
+                    <EmptyState icon={CalendarDays} title="No appointments" description="No appointments scheduled for this day." actionLabel="Book Appointment" onAction={() => setBookOpen(true)} />
                   ) : (
                     <table className="w-full text-sm">
                       <thead>
@@ -150,10 +198,7 @@ export default function AppointmentsPage() {
                                 return (
                                   <td key={chair} className="py-1 px-2">
                                     {apt ? (
-                                      <div
-                                        className={`rounded-lg border p-2.5 text-xs cursor-pointer hover:shadow-md transition-all duration-200 hover:scale-[1.02] ${statusColors[apt.status] || ""}`}
-                                        onClick={() => setSelectedAppointment(apt)}
-                                      >
+                                      <div className={`rounded-lg border p-2.5 text-xs cursor-pointer hover:shadow-md transition-all duration-200 hover:scale-[1.02] ${statusColors[apt.status] || ""}`} onClick={() => setSelectedAppointment(apt)}>
                                         <div className="flex items-center gap-2 mb-1">
                                           <Avatar className="h-5 w-5">
                                             <AvatarFallback className="text-[8px] bg-current/10">{apt.patientName.split(" ").map((n: string) => n[0]).join("")}</AvatarFallback>
@@ -173,20 +218,60 @@ export default function AppointmentsPage() {
                       </tbody>
                     </table>
                   )
-                ) : (
+                ) : viewMode === "week" ? (
                   <div className="p-6 text-sm text-muted-foreground text-center">
                     <p className="mb-4">Select a day to view appointments</p>
                     <div className="grid grid-cols-7 gap-2">
                       {weekDays.map((day) => {
                         const isToday = isSameDay(day, new Date());
                         return (
-                          <button
-                            key={day.toISOString()}
-                            className={cn("p-4 rounded-xl border border-border/40 text-center hover:bg-accent/40 cursor-pointer transition-all duration-200 hover:shadow-md", isToday && "bg-secondary/10 border-secondary/30 shadow-sm")}
-                            onClick={() => { setCurrentDate(day); setViewMode("day"); }}
-                          >
+                          <button key={day.toISOString()} className={cn("p-4 rounded-xl border border-border/40 text-center hover:bg-accent/40 cursor-pointer transition-all duration-200 hover:shadow-md", isToday && "bg-secondary/10 border-secondary/30 shadow-sm")} onClick={() => { setCurrentDate(day); setViewMode("day"); }}>
                             <div className="text-[10px] uppercase text-muted-foreground font-medium">{format(day, "EEE")}</div>
                             <div className="text-lg font-semibold mt-0.5">{format(day, "d")}</div>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                ) : (
+                  /* Month View */
+                  <div className="p-4">
+                    <div className="grid grid-cols-7 gap-1">
+                      {["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"].map((d) => (
+                        <div key={d} className="text-center text-[10px] font-medium text-muted-foreground uppercase py-2">{d}</div>
+                      ))}
+                      {paddedDays.map((day, i) => {
+                        if (!day) return <div key={`pad-${i}`} className="min-h-[80px]" />;
+                        const dateStr = format(day, "yyyy-MM-dd");
+                        const dayAppts = appointmentsByDate[dateStr] || [];
+                        const isToday = isSameDay(day, new Date());
+                        const isSelected = isSameDay(day, currentDate);
+
+                        return (
+                          <button
+                            key={dateStr}
+                            className={cn(
+                              "min-h-[80px] p-1.5 rounded-lg border border-border/30 text-left hover:bg-accent/30 transition-all cursor-pointer",
+                              isToday && "bg-primary/5 border-primary/30",
+                              isSelected && "ring-2 ring-primary/40"
+                            )}
+                            onClick={() => { setCurrentDate(day); setViewMode("day"); }}
+                          >
+                            <div className={cn("text-xs font-medium mb-1", isToday ? "text-primary font-bold" : "text-foreground")}>
+                              {format(day, "d")}
+                            </div>
+                            {dayAppts.length > 0 && (
+                              <div className="space-y-0.5">
+                                {dayAppts.slice(0, 3).map((a: any) => (
+                                  <div key={a.id} className={cn("text-[9px] px-1 py-0.5 rounded truncate", statusColors[a.status]?.replace(/border-\S+/g, "") || "bg-muted")}>
+                                    {a.patients?.first_name || "Appt"}
+                                  </div>
+                                ))}
+                                {dayAppts.length > 3 && (
+                                  <div className="text-[9px] text-muted-foreground">+{dayAppts.length - 3} more</div>
+                                )}
+                              </div>
+                            )}
                           </button>
                         );
                       })}
@@ -220,14 +305,7 @@ export default function AppointmentsPage() {
                       {displayAppointments.map((apt, i) => {
                         const initials = apt.patientName.split(" ").map((n: string) => n[0]).join("").slice(0, 2);
                         return (
-                          <motion.tr
-                            key={apt.id}
-                            className="border-b border-border/30 last:border-0 hover:bg-accent/30 cursor-pointer transition-all group"
-                            onClick={() => setSelectedAppointment(apt)}
-                            initial={{ opacity: 0, x: -8 }}
-                            animate={{ opacity: 1, x: 0 }}
-                            transition={{ delay: i * 0.02 }}
-                          >
+                          <motion.tr key={apt.id} className="border-b border-border/30 last:border-0 hover:bg-accent/30 cursor-pointer transition-all group" onClick={() => setSelectedAppointment(apt)} initial={{ opacity: 0, x: -8 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: i * 0.02 }}>
                             <td className="py-3 px-4 font-mono text-xs">{apt.time}</td>
                             <td className="py-3 px-4">
                               <div className="flex items-center gap-2.5">
