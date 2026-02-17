@@ -1,0 +1,385 @@
+import { useState, useRef, useEffect } from "react";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Button } from "@/components/ui/button";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Switch } from "@/components/ui/switch";
+import { Textarea } from "@/components/ui/textarea";
+import { Badge } from "@/components/ui/badge";
+import {
+  Plus, Trash2, ExternalLink, Upload, Image as ImageIcon,
+  Globe, Palette, Clock, Share2, Shield, MessageSquare,
+} from "lucide-react";
+import {
+  useClinicSettings, useUpdateClinicSettings,
+  type SiteSettings, type OperatingHour, type Certification,
+} from "@/hooks/useClinicSettings";
+import { PageHeader } from "@/components/dashboard/PageHeader";
+import { motion } from "framer-motion";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "@/hooks/use-toast";
+
+const DEFAULT_HOURS: OperatingHour[] = [
+  { day: "Monday", open: "09:00", close: "17:00" },
+  { day: "Tuesday", open: "09:00", close: "17:00" },
+  { day: "Wednesday", open: "09:00", close: "17:00" },
+  { day: "Thursday", open: "09:00", close: "17:00" },
+  { day: "Friday", open: "09:00", close: "17:00" },
+  { day: "Saturday", open: "09:00", close: "13:00" },
+  { day: "Sunday", open: "09:00", close: "13:00", closed: true },
+];
+
+export default function WebsiteSettingsPage() {
+  const { data: clinicSettings } = useClinicSettings();
+  const updateClinic = useUpdateClinicSettings();
+  const heroImageRef = useRef<HTMLInputElement>(null);
+  const [heroUploading, setHeroUploading] = useState(false);
+
+  const settings = clinicSettings?.settings || {};
+
+  // Form state
+  const [form, setForm] = useState<SiteSettings>({});
+  const [hours, setHours] = useState<OperatingHour[]>([]);
+  const [certs, setCerts] = useState<Certification[]>([]);
+  const [newCert, setNewCert] = useState("");
+
+  // Sync from server
+  useEffect(() => {
+    if (settings) {
+      setHours(settings.operating_hours || DEFAULT_HOURS);
+      setCerts(settings.certifications || []);
+    }
+  }, [clinicSettings]);
+
+  const get = (key: keyof SiteSettings) => (form[key] as string) ?? (settings as any)?.[key] ?? "";
+
+  const set = (key: keyof SiteSettings, value: string) => setForm({ ...form, [key]: value });
+
+  const publicSiteUrl = clinicSettings?.slug
+    ? `${window.location.origin}/site/${clinicSettings.slug}`
+    : "";
+
+  const handleSave = (extraFields?: Partial<SiteSettings>) => {
+    if (!clinicSettings) return;
+    const merged: SiteSettings = {
+      ...settings,
+      ...form,
+      operating_hours: hours,
+      certifications: certs,
+      ...extraFields,
+    };
+    updateClinic.mutate({ id: clinicSettings.id, settings: merged });
+  };
+
+  const handleHeroUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !clinicSettings) return;
+    setHeroUploading(true);
+    try {
+      const ext = file.name.split(".").pop();
+      const path = `${clinicSettings.id}/hero.${ext}`;
+      const { error: uploadError } = await supabase.storage
+        .from("clinic-logos")
+        .upload(path, file, { upsert: true });
+      if (uploadError) throw uploadError;
+      const { data: urlData } = supabase.storage.from("clinic-logos").getPublicUrl(path);
+      const heroUrl = urlData.publicUrl + "?t=" + Date.now();
+      setForm({ ...form, hero_image_url: heroUrl });
+      handleSave({ hero_image_url: heroUrl });
+      toast({ title: "Hero image uploaded" });
+    } catch (err: any) {
+      toast({ title: "Upload failed", description: err.message, variant: "destructive" });
+    } finally {
+      setHeroUploading(false);
+    }
+  };
+
+  const updateHour = (idx: number, field: keyof OperatingHour, value: any) => {
+    const updated = [...hours];
+    (updated[idx] as any)[field] = value;
+    setHours(updated);
+  };
+
+  const addCert = () => {
+    if (!newCert.trim()) return;
+    setCerts([...certs, { title: newCert.trim() }]);
+    setNewCert("");
+  };
+
+  const removeCert = (idx: number) => {
+    setCerts(certs.filter((_, i) => i !== idx));
+  };
+
+  return (
+    <div className="space-y-6">
+      <PageHeader title="Website Settings" description="Manage your public clinic website content and appearance" />
+
+      {/* Public site link */}
+      <Card className="glass-card border-secondary/20">
+        <CardContent className="p-4 flex items-center justify-between">
+          <div>
+            <p className="text-sm font-medium">Your Public Clinic Website</p>
+            <p className="text-xs text-muted-foreground mt-0.5 break-all">{publicSiteUrl || "Loading..."}</p>
+          </div>
+          {publicSiteUrl && (
+            <Button variant="outline" size="sm" className="shrink-0 border-border/50" asChild>
+              <a href={publicSiteUrl} target="_blank" rel="noopener noreferrer">
+                <ExternalLink className="mr-2 h-3.5 w-3.5" /> View Site
+              </a>
+            </Button>
+          )}
+        </CardContent>
+      </Card>
+
+      <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}>
+        <Tabs defaultValue="identity">
+          <TabsList className="bg-muted/50 backdrop-blur-sm flex-wrap h-auto gap-1">
+            <TabsTrigger value="identity"><Globe className="mr-1.5 h-3.5 w-3.5" />Identity & Hero</TabsTrigger>
+            <TabsTrigger value="hours"><Clock className="mr-1.5 h-3.5 w-3.5" />Hours</TabsTrigger>
+            <TabsTrigger value="appearance"><Palette className="mr-1.5 h-3.5 w-3.5" />Appearance</TabsTrigger>
+            <TabsTrigger value="social"><Share2 className="mr-1.5 h-3.5 w-3.5" />Social & Contact</TabsTrigger>
+            <TabsTrigger value="trust"><Shield className="mr-1.5 h-3.5 w-3.5" />Trust & Certs</TabsTrigger>
+            <TabsTrigger value="booking"><MessageSquare className="mr-1.5 h-3.5 w-3.5" />Booking</TabsTrigger>
+          </TabsList>
+
+          {/* Identity & Hero */}
+          <TabsContent value="identity" className="mt-4 space-y-4">
+            <Card className="glass-card">
+              <CardHeader className="border-b border-border/30">
+                <CardTitle className="text-base">Clinic Identity & Hero Section</CardTitle>
+                <CardDescription>Configure what visitors see first</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4 max-w-lg pt-6">
+                <div className="space-y-2">
+                  <Label className="text-xs font-medium">Short Description</Label>
+                  <Textarea
+                    className="bg-muted/30 border-border/40 min-h-[60px]"
+                    placeholder="A modern dental clinic dedicated to your smile..."
+                    value={get("short_description")}
+                    onChange={(e) => set("short_description", e.target.value)}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label className="text-xs font-medium">Hero Title</Label>
+                  <Input
+                    className="bg-muted/30 border-border/40"
+                    placeholder="Your Smile, Our Priority"
+                    value={get("hero_title")}
+                    onChange={(e) => set("hero_title", e.target.value)}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label className="text-xs font-medium">Hero Subtitle</Label>
+                  <Input
+                    className="bg-muted/30 border-border/40"
+                    placeholder="Professional dental care for the whole family"
+                    value={get("hero_subtitle")}
+                    onChange={(e) => set("hero_subtitle", e.target.value)}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label className="text-xs font-medium">Hero Background Image</Label>
+                  <div className="flex items-center gap-4">
+                    <div className="h-20 w-36 rounded-lg bg-muted/50 border border-border/40 flex items-center justify-center overflow-hidden">
+                      {get("hero_image_url") ? (
+                        <img src={get("hero_image_url")} alt="Hero" className="h-full w-full object-cover" />
+                      ) : (
+                        <ImageIcon className="h-6 w-6 text-muted-foreground" />
+                      )}
+                    </div>
+                    <div>
+                      <input ref={heroImageRef} type="file" accept="image/*" className="hidden" onChange={handleHeroUpload} />
+                      <Button variant="outline" size="sm" onClick={() => heroImageRef.current?.click()} disabled={heroUploading}>
+                        <Upload className="mr-2 h-3.5 w-3.5" />
+                        {heroUploading ? "Uploading..." : "Upload Image"}
+                      </Button>
+                      <p className="text-[10px] text-muted-foreground mt-1">Recommended: 1920×800px</p>
+                    </div>
+                  </div>
+                </div>
+                <Button className="bg-secondary hover:bg-secondary/90 shadow-lg shadow-secondary/20" onClick={() => handleSave()} disabled={updateClinic.isPending}>
+                  {updateClinic.isPending ? "Saving..." : "Save Changes"}
+                </Button>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          {/* Operating Hours */}
+          <TabsContent value="hours" className="mt-4">
+            <Card className="glass-card">
+              <CardHeader className="border-b border-border/30">
+                <CardTitle className="text-base">Operating Hours</CardTitle>
+                <CardDescription>Set your clinic's working hours</CardDescription>
+              </CardHeader>
+              <CardContent className="pt-4 space-y-3 max-w-lg">
+                {hours.map((h, i) => (
+                  <div key={h.day} className="flex items-center gap-3 p-2 rounded-lg hover:bg-accent/30 transition-colors">
+                    <span className="text-sm font-medium w-24">{h.day}</span>
+                    <Switch
+                      checked={!h.closed}
+                      onCheckedChange={(checked) => updateHour(i, "closed", !checked)}
+                    />
+                    {!h.closed ? (
+                      <>
+                        <Input type="time" className="w-28 bg-muted/30 h-8 text-xs" value={h.open} onChange={(e) => updateHour(i, "open", e.target.value)} />
+                        <span className="text-xs text-muted-foreground">to</span>
+                        <Input type="time" className="w-28 bg-muted/30 h-8 text-xs" value={h.close} onChange={(e) => updateHour(i, "close", e.target.value)} />
+                      </>
+                    ) : (
+                      <span className="text-xs text-muted-foreground">Closed</span>
+                    )}
+                  </div>
+                ))}
+                <Button className="bg-secondary hover:bg-secondary/90 shadow-lg shadow-secondary/20 mt-4" onClick={() => handleSave()} disabled={updateClinic.isPending}>
+                  {updateClinic.isPending ? "Saving..." : "Save Hours"}
+                </Button>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          {/* Appearance */}
+          <TabsContent value="appearance" className="mt-4">
+            <Card className="glass-card">
+              <CardHeader className="border-b border-border/30">
+                <CardTitle className="text-base">Color Theme</CardTitle>
+                <CardDescription>Customize your website's brand colors</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4 max-w-lg pt-6">
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label className="text-xs font-medium">Primary Color</Label>
+                    <div className="flex items-center gap-2">
+                      <input type="color" className="h-8 w-8 rounded border border-border/40 cursor-pointer" value={get("primary_color") || "#2563eb"} onChange={(e) => set("primary_color", e.target.value)} />
+                      <Input className="bg-muted/30 border-border/40 flex-1" value={get("primary_color") || "#2563eb"} onChange={(e) => set("primary_color", e.target.value)} />
+                    </div>
+                  </div>
+                  <div className="space-y-2">
+                    <Label className="text-xs font-medium">Accent Color</Label>
+                    <div className="flex items-center gap-2">
+                      <input type="color" className="h-8 w-8 rounded border border-border/40 cursor-pointer" value={get("accent_color") || "#1d4ed8"} onChange={(e) => set("accent_color", e.target.value)} />
+                      <Input className="bg-muted/30 border-border/40 flex-1" value={get("accent_color") || "#1d4ed8"} onChange={(e) => set("accent_color", e.target.value)} />
+                    </div>
+                  </div>
+                </div>
+                <div className="p-4 rounded-lg border border-border/40">
+                  <p className="text-xs text-muted-foreground mb-2">Preview</p>
+                  <div className="flex gap-3">
+                    <div className="h-10 w-20 rounded-md" style={{ backgroundColor: get("primary_color") || "#2563eb" }} />
+                    <div className="h-10 w-20 rounded-md" style={{ backgroundColor: get("accent_color") || "#1d4ed8" }} />
+                    <div className="h-10 flex-1 rounded-md flex items-center justify-center text-xs font-medium text-white" style={{ backgroundColor: get("primary_color") || "#2563eb" }}>
+                      Book Now
+                    </div>
+                  </div>
+                </div>
+                <Button className="bg-secondary hover:bg-secondary/90 shadow-lg shadow-secondary/20" onClick={() => handleSave()} disabled={updateClinic.isPending}>
+                  {updateClinic.isPending ? "Saving..." : "Save Colors"}
+                </Button>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          {/* Social & Contact */}
+          <TabsContent value="social" className="mt-4">
+            <Card className="glass-card">
+              <CardHeader className="border-b border-border/30">
+                <CardTitle className="text-base">Social Links & Contact</CardTitle>
+                <CardDescription>Connect your social media and WhatsApp</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4 max-w-lg pt-6">
+                <div className="space-y-2">
+                  <Label className="text-xs font-medium">WhatsApp Number</Label>
+                  <Input className="bg-muted/30 border-border/40" placeholder="e.g. 2348012345678" value={get("whatsapp_number")} onChange={(e) => set("whatsapp_number", e.target.value)} />
+                  <p className="text-[10px] text-muted-foreground">Include country code without + sign</p>
+                </div>
+                <div className="space-y-2">
+                  <Label className="text-xs font-medium">Instagram URL</Label>
+                  <Input className="bg-muted/30 border-border/40" placeholder="https://instagram.com/yourclinic" value={get("instagram_url")} onChange={(e) => set("instagram_url", e.target.value)} />
+                </div>
+                <div className="space-y-2">
+                  <Label className="text-xs font-medium">Facebook URL</Label>
+                  <Input className="bg-muted/30 border-border/40" placeholder="https://facebook.com/yourclinic" value={get("facebook_url")} onChange={(e) => set("facebook_url", e.target.value)} />
+                </div>
+                <div className="space-y-2">
+                  <Label className="text-xs font-medium">Google Review URL</Label>
+                  <Input className="bg-muted/30 border-border/40" placeholder="https://g.page/yourclinic/review" value={get("google_review_url")} onChange={(e) => set("google_review_url", e.target.value)} />
+                </div>
+                <Button className="bg-secondary hover:bg-secondary/90 shadow-lg shadow-secondary/20" onClick={() => handleSave()} disabled={updateClinic.isPending}>
+                  {updateClinic.isPending ? "Saving..." : "Save Social Links"}
+                </Button>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          {/* Trust & Certifications */}
+          <TabsContent value="trust" className="mt-4">
+            <Card className="glass-card">
+              <CardHeader className="border-b border-border/30">
+                <CardTitle className="text-base">Certifications & Licenses</CardTitle>
+                <CardDescription>Display trust signals on your website</CardDescription>
+              </CardHeader>
+              <CardContent className="pt-4 space-y-4 max-w-lg">
+                <div className="flex gap-2">
+                  <Input className="bg-muted/30 border-border/40 flex-1" placeholder="e.g. Licensed by Nigerian Medical Council" value={newCert} onChange={(e) => setNewCert(e.target.value)} onKeyDown={(e) => e.key === "Enter" && addCert()} />
+                  <Button variant="outline" onClick={addCert} disabled={!newCert.trim()}>
+                    <Plus className="mr-1 h-4 w-4" /> Add
+                  </Button>
+                </div>
+                <div className="space-y-2">
+                  {certs.map((cert, i) => (
+                    <div key={i} className="flex items-center justify-between p-3 rounded-lg border border-border/40 bg-card/50">
+                      <div className="flex items-center gap-2">
+                        <Shield className="h-4 w-4 text-primary" />
+                        <span className="text-sm">{cert.title}</span>
+                      </div>
+                      <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive" onClick={() => removeCert(i)}>
+                        <Trash2 className="h-3.5 w-3.5" />
+                      </Button>
+                    </div>
+                  ))}
+                  {certs.length === 0 && <p className="text-xs text-muted-foreground text-center py-4">No certifications added yet</p>}
+                </div>
+                <Button className="bg-secondary hover:bg-secondary/90 shadow-lg shadow-secondary/20" onClick={() => handleSave()} disabled={updateClinic.isPending}>
+                  {updateClinic.isPending ? "Saving..." : "Save Certifications"}
+                </Button>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          {/* Booking */}
+          <TabsContent value="booking" className="mt-4">
+            <Card className="glass-card">
+              <CardHeader className="border-b border-border/30">
+                <CardTitle className="text-base">Booking Settings</CardTitle>
+                <CardDescription>Customize the booking experience</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4 max-w-lg pt-6">
+                <div className="space-y-2">
+                  <Label className="text-xs font-medium">Welcome Text (shown on website header)</Label>
+                  <Textarea
+                    className="bg-muted/30 border-border/40 min-h-[60px]"
+                    placeholder="Welcome to our clinic! Book your appointment today."
+                    value={get("welcome_text")}
+                    onChange={(e) => set("welcome_text", e.target.value)}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label className="text-xs font-medium">Booking Confirmation Message</Label>
+                  <Textarea
+                    className="bg-muted/30 border-border/40 min-h-[60px]"
+                    placeholder="Thank you for booking! We'll confirm your appointment shortly via WhatsApp."
+                    value={get("booking_confirmation_message")}
+                    onChange={(e) => set("booking_confirmation_message", e.target.value)}
+                  />
+                </div>
+                <Button className="bg-secondary hover:bg-secondary/90 shadow-lg shadow-secondary/20" onClick={() => handleSave()} disabled={updateClinic.isPending}>
+                  {updateClinic.isPending ? "Saving..." : "Save Booking Settings"}
+                </Button>
+              </CardContent>
+            </Card>
+          </TabsContent>
+        </Tabs>
+      </motion.div>
+    </div>
+  );
+}
