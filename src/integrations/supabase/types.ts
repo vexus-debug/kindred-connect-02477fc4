@@ -135,6 +135,126 @@ export type Database = {
           },
         ]
       }
+      automation_logs: {
+        Row: {
+          channel: string
+          entity_id: string | null
+          entity_type: string | null
+          error_message: string | null
+          id: string
+          message: string | null
+          org_id: string
+          patient_id: string | null
+          sent_at: string
+          status: string
+          workflow_id: string | null
+        }
+        Insert: {
+          channel?: string
+          entity_id?: string | null
+          entity_type?: string | null
+          error_message?: string | null
+          id?: string
+          message?: string | null
+          org_id: string
+          patient_id?: string | null
+          sent_at?: string
+          status?: string
+          workflow_id?: string | null
+        }
+        Update: {
+          channel?: string
+          entity_id?: string | null
+          entity_type?: string | null
+          error_message?: string | null
+          id?: string
+          message?: string | null
+          org_id?: string
+          patient_id?: string | null
+          sent_at?: string
+          status?: string
+          workflow_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "automation_logs_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "automation_logs_patient_id_fkey"
+            columns: ["patient_id"]
+            isOneToOne: false
+            referencedRelation: "patients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "automation_logs_workflow_id_fkey"
+            columns: ["workflow_id"]
+            isOneToOne: false
+            referencedRelation: "automation_workflows"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      automation_workflows: {
+        Row: {
+          channel: string
+          created_at: string
+          description: string | null
+          id: string
+          is_enabled: boolean
+          message_template: string
+          name: string
+          org_id: string
+          timing_unit: string
+          timing_value: number
+          trigger_event: string | null
+          updated_at: string
+          workflow_type: string
+        }
+        Insert: {
+          channel?: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_enabled?: boolean
+          message_template?: string
+          name: string
+          org_id: string
+          timing_unit?: string
+          timing_value?: number
+          trigger_event?: string | null
+          updated_at?: string
+          workflow_type: string
+        }
+        Update: {
+          channel?: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_enabled?: boolean
+          message_template?: string
+          name?: string
+          org_id?: string
+          timing_unit?: string
+          timing_value?: number
+          trigger_event?: string | null
+          updated_at?: string
+          workflow_type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "automation_workflows_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       clinic_chairs: {
         Row: {
           created_at: string

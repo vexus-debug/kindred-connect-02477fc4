@@ -3,7 +3,7 @@ import {
   UserCog, Package, BarChart3, Bell, Settings, GraduationCap, Microscope,
   ClipboardList, DollarSign, Wrench, MessageSquare, Star, Receipt, Shield,
   FileCheck, FolderOpen, Eye, Heart, Baby, Bone, Ear, Wallet, FileText,
-  PiggyBank, TrendingUp, Calculator,
+  PiggyBank, TrendingUp, Calculator, Bot,
 } from "lucide-react";
 
 export interface NavItem {
@@ -88,6 +88,12 @@ const dentalNav: NavGroup[] = [
       { title: "Consent Forms", path: "consent-forms", icon: FileCheck },
       { title: "Documents", path: "documents", icon: FolderOpen },
       { title: "Audit Log", path: "audit-log", icon: Shield },
+    ],
+  },
+  {
+    label: "Automation",
+    items: [
+      { title: "Automation", path: "automation", icon: Bot },
     ],
   },
   {
