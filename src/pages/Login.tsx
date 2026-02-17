@@ -10,7 +10,7 @@ import { Eye, EyeOff } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { clinicTypeOptions } from "@/config/clinicTypeConfig";
-
+import clinexusLogo from "@/assets/clinexus-logo.png";
 
 function MedicalBackground() {
   return (
@@ -197,9 +197,7 @@ export default function Login() {
 
       <Card className="relative w-full max-w-md border-border/40 shadow-2xl shadow-primary/[0.08] backdrop-blur-sm bg-card/95">
         <CardHeader className="text-center space-y-3 pb-2">
-          <h1 className="text-3xl font-display font-extrabold tracking-tight text-primary">
-            CLINEXUS
-          </h1>
+          <img src={clinexusLogo} alt="Clinexus" className="h-8 w-auto object-contain mx-auto" />
           <div>
             <CardTitle className="text-2xl font-bold text-foreground">{isSignUp ? "Create Account" : "Welcome Back"}</CardTitle>
             <CardDescription className="mt-1">{isSignUp ? "Sign up for Clinexus" : "Sign in to your clinic"}</CardDescription>
