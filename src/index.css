@@ -19,8 +19,8 @@
     --popover: 0 0% 100%;
     --popover-foreground: 222 47% 11%;
 
-    /* Primary: Clinexus Royal Blue (from logo) */
-    --primary: 220 82% 38%;
+    /* Primary: Clinexus Blue (lighter, vibrant) */
+    --primary: 220 80% 50%;
     --primary-foreground: 0 0% 100%;
 
     /* Secondary: Deeper navy for contrast */
@@ -40,15 +40,15 @@
 
     --border: 216 18% 90%;
     --input: 216 18% 90%;
-    --ring: 220 82% 38%;
+    --ring: 220 80% 50%;
 
     --radius: 0.75rem;
 
     /* Extended palette tokens */
-    --dental-navy: 222 60% 16%;
-    --dental-navy-light: 222 45% 28%;
-    --dental-teal: 220 82% 38%;
-    --dental-teal-light: 220 75% 50%;
+    --dental-navy: 222 55% 18%;
+    --dental-navy-light: 222 45% 32%;
+    --dental-teal: 220 80% 50%;
+    --dental-teal-light: 220 78% 58%;
     --dental-teal-pale: 216 50% 96%;
     --dental-mint: 216 35% 96%;
     --dental-cream: 40 30% 97%;
@@ -76,7 +76,7 @@
     --sidebar-accent: 222 45% 18%;
     --sidebar-accent-foreground: 216 70% 70%;
     --sidebar-border: 222 40% 20%;
-    --sidebar-ring: 220 82% 38%;
+    --sidebar-ring: 220 80% 50%;
   }
 
   .dark {
@@ -217,15 +217,15 @@
   100% { background-position: 200% 0; }
 }
 @keyframes pulse-glow {
-  0%, 100% { box-shadow: 0 0 20px hsla(220, 82%, 38%, 0.2); }
-  50% { box-shadow: 0 0 40px hsla(220, 82%, 38%, 0.4); }
+  0%, 100% { box-shadow: 0 0 20px hsla(220, 80%, 50%, 0.2); }
+  50% { box-shadow: 0 0 40px hsla(220, 80%, 50%, 0.4); }
 }
 
 .animate-float { animation: float 6s ease-in-out infinite; }
 .animate-float-slow { animation: float-slow 8s ease-in-out infinite; }
 .animate-gradient { background-size: 200% 200%; animation: gradient-shift 8s ease infinite; }
 .animate-shimmer {
-  background: linear-gradient(90deg, transparent, hsla(220, 82%, 38%, 0.08), transparent);
+  background: linear-gradient(90deg, transparent, hsla(220, 80%, 50%, 0.08), transparent);
   background-size: 200% 100%;
   animation: shimmer 2s infinite;
 }
