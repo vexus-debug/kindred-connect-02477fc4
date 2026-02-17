@@ -7,7 +7,7 @@ import {
 } from "@/components/ui/sidebar";
 import { LayoutDashboard, Building2, Users, BarChart3, LogOut, Shield } from "lucide-react";
 import { useLocation, useNavigate } from "react-router-dom";
-import logo from "@/assets/logo.jpg";
+import clinexusLogoWhite from "@/assets/clinexus-logo-white.png";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { useAuth } from "@/hooks/useAuth";
@@ -44,8 +44,7 @@ export function AdminSidebar() {
       {/* Logo */}
       <div className="flex items-center gap-2.5 px-4 py-4 border-b border-sidebar-border">
         <div className="relative shrink-0">
-          <img src={logo} alt="Clinexus" className="h-9 w-9 rounded-xl object-cover ring-2 ring-sidebar-primary/30" />
-          <div className="absolute -bottom-0.5 -right-0.5 h-2.5 w-2.5 rounded-full bg-red-500 ring-2 ring-sidebar" />
+          <img src={clinexusLogoWhite} alt="Clinexus" className="h-8 w-auto object-contain" />
         </div>
         {!collapsed && (
           <div className="flex flex-col overflow-hidden">
