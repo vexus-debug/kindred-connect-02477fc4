@@ -5,7 +5,7 @@ import {
   Sidebar, SidebarContent, SidebarGroup, SidebarGroupContent,
   SidebarGroupLabel, SidebarMenu, SidebarMenuButton, SidebarMenuItem, SidebarFooter,
 } from "@/components/ui/sidebar";
-import { LayoutDashboard, Building2, Users, BarChart3, LogOut, Shield } from "lucide-react";
+import { LayoutDashboard, Building2, Users, BarChart3, LogOut, Shield, ScrollText } from "lucide-react";
 import { useLocation, useNavigate } from "react-router-dom";
 import clinexusLogoWhite from "@/assets/clinexus-logo-white.png";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -18,6 +18,7 @@ const adminNav = [
   { title: "Clinics", path: "/admin/clinics", icon: Building2 },
   { title: "Users", path: "/admin/users", icon: Users },
   { title: "Analytics", path: "/admin/analytics", icon: BarChart3 },
+  { title: "Audit Log", path: "/admin/audit-log", icon: ScrollText },
 ];
 
 export function AdminSidebar() {
