@@ -5,7 +5,7 @@ import {
   Sidebar, SidebarContent, SidebarGroup, SidebarGroupContent,
   SidebarGroupLabel, SidebarMenu, SidebarMenuButton, SidebarMenuItem, SidebarFooter,
 } from "@/components/ui/sidebar";
-import { LayoutDashboard, Building2, Users, BarChart3, LogOut, Shield, ScrollText } from "lucide-react";
+import { LayoutDashboard, Building2, Users, BarChart3, LogOut, Shield, ScrollText, CreditCard, DollarSign, Megaphone, Ticket, Flag, Settings, Download, GitBranch, HardDrive, Bell, Activity, Palette } from "lucide-react";
 import { useLocation, useNavigate } from "react-router-dom";
 import clinexusLogoWhite from "@/assets/clinexus-logo-white.png";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -14,11 +14,23 @@ import { useAuth } from "@/hooks/useAuth";
 import { motion } from "framer-motion";
 
 const adminNav = [
-  { title: "Overview", path: "/admin", icon: LayoutDashboard },
-  { title: "Clinics", path: "/admin/clinics", icon: Building2 },
-  { title: "Users", path: "/admin/users", icon: Users },
-  { title: "Analytics", path: "/admin/analytics", icon: BarChart3 },
-  { title: "Audit Log", path: "/admin/audit-log", icon: ScrollText },
+  { title: "Overview", path: "/admin", icon: LayoutDashboard, group: "Core" },
+  { title: "Clinics", path: "/admin/clinics", icon: Building2, group: "Core" },
+  { title: "Users", path: "/admin/users", icon: Users, group: "Core" },
+  { title: "Subscriptions", path: "/admin/subscriptions", icon: CreditCard, group: "Billing" },
+  { title: "Revenue", path: "/admin/revenue", icon: DollarSign, group: "Billing" },
+  { title: "Analytics", path: "/admin/analytics", icon: BarChart3, group: "Insights" },
+  { title: "Onboarding", path: "/admin/onboarding", icon: GitBranch, group: "Insights" },
+  { title: "Announcements", path: "/admin/announcements", icon: Megaphone, group: "Comms" },
+  { title: "Support", path: "/admin/support", icon: Ticket, group: "Comms" },
+  { title: "Notifications", path: "/admin/notification-logs", icon: Bell, group: "Comms" },
+  { title: "Feature Flags", path: "/admin/feature-flags", icon: Flag, group: "System" },
+  { title: "Settings", path: "/admin/settings", icon: Settings, group: "System" },
+  { title: "Audit Log", path: "/admin/audit-log", icon: ScrollText, group: "System" },
+  { title: "Health", path: "/admin/health", icon: Activity, group: "System" },
+  { title: "Storage", path: "/admin/storage", icon: HardDrive, group: "System" },
+  { title: "Data Export", path: "/admin/data-export", icon: Download, group: "System" },
+  { title: "White-label", path: "/admin/white-label", icon: Palette, group: "System" },
 ];
 
 export function AdminSidebar() {
@@ -59,40 +71,48 @@ export function AdminSidebar() {
         )}
       </div>
 
-      <SidebarContent className="pt-2 px-2">
-        <SidebarGroup>
-          <SidebarGroupLabel className="text-[10px] uppercase tracking-[0.15em] text-sidebar-foreground/40 font-semibold px-2 mb-0.5">
-            Platform
-          </SidebarGroupLabel>
-          <SidebarGroupContent>
-            <SidebarMenu>
-              {adminNav.map((item) => {
-                const active = location.pathname === item.path;
-                return (
-                  <SidebarMenuItem key={item.title}>
-                    <SidebarMenuButton asChild isActive={active} tooltip={item.title}>
-                      <NavLink
-                        to={item.path}
-                        className="relative flex items-center gap-3 rounded-lg px-3 py-2 text-sm transition-all duration-200 hover:bg-sidebar-accent group"
-                        activeClassName="bg-sidebar-accent text-sidebar-primary font-medium"
-                      >
-                        {active && (
-                          <motion.div
-                            layoutId="admin-sidebar-active-pill"
-                            className="absolute inset-0 rounded-lg bg-sidebar-primary/10 border border-sidebar-primary/20"
-                            transition={{ type: "spring", bounce: 0.2, duration: 0.5 }}
-                          />
-                        )}
-                        <item.icon className={`h-4 w-4 shrink-0 relative z-10 transition-transform duration-200 group-hover:scale-110 ${active ? "text-sidebar-primary" : "text-sidebar-foreground/70"}`} />
-                        <span className="relative z-10">{item.title}</span>
-                      </NavLink>
-                    </SidebarMenuButton>
-                  </SidebarMenuItem>
-                );
-              })}
-            </SidebarMenu>
-          </SidebarGroupContent>
-        </SidebarGroup>
+      <SidebarContent className="pt-2 px-2 overflow-y-auto">
+        {Object.entries(
+          adminNav.reduce((acc, item) => {
+            if (!acc[item.group]) acc[item.group] = [];
+            acc[item.group].push(item);
+            return acc;
+          }, {} as Record<string, typeof adminNav>)
+        ).map(([group, items]) => (
+          <SidebarGroup key={group}>
+            <SidebarGroupLabel className="text-[10px] uppercase tracking-[0.15em] text-sidebar-foreground/40 font-semibold px-2 mb-0.5">
+              {group}
+            </SidebarGroupLabel>
+            <SidebarGroupContent>
+              <SidebarMenu>
+                {items.map((item) => {
+                  const active = location.pathname === item.path;
+                  return (
+                    <SidebarMenuItem key={item.title}>
+                      <SidebarMenuButton asChild isActive={active} tooltip={item.title}>
+                        <NavLink
+                          to={item.path}
+                          className="relative flex items-center gap-3 rounded-lg px-3 py-1.5 text-sm transition-all duration-200 hover:bg-sidebar-accent group"
+                          activeClassName="bg-sidebar-accent text-sidebar-primary font-medium"
+                        >
+                          {active && (
+                            <motion.div
+                              layoutId="admin-sidebar-active-pill"
+                              className="absolute inset-0 rounded-lg bg-sidebar-primary/10 border border-sidebar-primary/20"
+                              transition={{ type: "spring", bounce: 0.2, duration: 0.5 }}
+                            />
+                          )}
+                          <item.icon className={`h-4 w-4 shrink-0 relative z-10 ${active ? "text-sidebar-primary" : "text-sidebar-foreground/70"}`} />
+                          <span className="relative z-10 text-xs">{item.title}</span>
+                        </NavLink>
+                      </SidebarMenuButton>
+                    </SidebarMenuItem>
+                  );
+                })}
+              </SidebarMenu>
+            </SidebarGroupContent>
+          </SidebarGroup>
+        ))}
       </SidebarContent>
 
       {/* User Footer */}

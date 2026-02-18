@@ -105,10 +105,10 @@ export default function AdminClinics() {
                 </span>
                 <div className="flex items-center gap-1">
                   <Button
-                    variant="default"
+                    variant="outline"
                     size="sm"
                     className="h-7 text-xs gap-1"
-                    onClick={() => navigate(`/clinic/${org.slug}/dashboard`)}
+                    onClick={() => navigate(`/admin/clinics/${org.slug}`)}
                   >
                     <ExternalLink className="h-3 w-3" /> Open
                   </Button>
