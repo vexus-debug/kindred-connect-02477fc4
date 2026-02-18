@@ -63,6 +63,19 @@ import AdminClinics from "./pages/admin/AdminClinics";
 import AdminUsers from "./pages/admin/AdminUsers";
 import AdminAnalytics from "./pages/admin/AdminAnalytics";
 import PlatformAuditLogPage from "./pages/admin/PlatformAuditLogPage";
+import AdminSubscriptions from "./pages/admin/AdminSubscriptions";
+import AdminClinicDetail from "./pages/admin/AdminClinicDetail";
+import AdminRevenue from "./pages/admin/AdminRevenue";
+import AdminAnnouncements from "./pages/admin/AdminAnnouncements";
+import AdminSupportTickets from "./pages/admin/AdminSupportTickets";
+import AdminFeatureFlags from "./pages/admin/AdminFeatureFlags";
+import AdminPlatformSettings from "./pages/admin/AdminPlatformSettings";
+import AdminDataExport from "./pages/admin/AdminDataExport";
+import AdminOnboardingFunnel from "./pages/admin/AdminOnboardingFunnel";
+import AdminStorageMonitoring from "./pages/admin/AdminStorageMonitoring";
+import AdminNotificationLogs from "./pages/admin/AdminNotificationLogs";
+import AdminHealthMonitoring from "./pages/admin/AdminHealthMonitoring";
+import AdminWhiteLabel from "./pages/admin/AdminWhiteLabel";
 
 const queryClient = new QueryClient();
 
@@ -103,9 +116,22 @@ const App = () => (
             {/* Admin routes */}
             <Route path="/admin" element={<AdminRoute><AdminOverview /></AdminRoute>} />
             <Route path="/admin/clinics" element={<AdminRoute><AdminClinics /></AdminRoute>} />
+            <Route path="/admin/clinics/:slug" element={<AdminRoute><AdminClinicDetail /></AdminRoute>} />
             <Route path="/admin/users" element={<AdminRoute><AdminUsers /></AdminRoute>} />
+            <Route path="/admin/subscriptions" element={<AdminRoute><AdminSubscriptions /></AdminRoute>} />
+            <Route path="/admin/revenue" element={<AdminRoute><AdminRevenue /></AdminRoute>} />
             <Route path="/admin/analytics" element={<AdminRoute><AdminAnalytics /></AdminRoute>} />
+            <Route path="/admin/onboarding" element={<AdminRoute><AdminOnboardingFunnel /></AdminRoute>} />
+            <Route path="/admin/announcements" element={<AdminRoute><AdminAnnouncements /></AdminRoute>} />
+            <Route path="/admin/support" element={<AdminRoute><AdminSupportTickets /></AdminRoute>} />
+            <Route path="/admin/notification-logs" element={<AdminRoute><AdminNotificationLogs /></AdminRoute>} />
+            <Route path="/admin/feature-flags" element={<AdminRoute><AdminFeatureFlags /></AdminRoute>} />
+            <Route path="/admin/settings" element={<AdminRoute><AdminPlatformSettings /></AdminRoute>} />
             <Route path="/admin/audit-log" element={<AdminRoute><PlatformAuditLogPage /></AdminRoute>} />
+            <Route path="/admin/health" element={<AdminRoute><AdminHealthMonitoring /></AdminRoute>} />
+            <Route path="/admin/storage" element={<AdminRoute><AdminStorageMonitoring /></AdminRoute>} />
+            <Route path="/admin/data-export" element={<AdminRoute><AdminDataExport /></AdminRoute>} />
+            <Route path="/admin/white-label" element={<AdminRoute><AdminWhiteLabel /></AdminRoute>} />
 
             {/* Clinic routes */}
             <Route path="/clinic/:slug/dashboard" element={<ClinicRoute><DashboardHome /></ClinicRoute>} />
