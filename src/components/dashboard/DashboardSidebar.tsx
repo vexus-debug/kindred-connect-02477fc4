@@ -91,7 +91,7 @@ export function DashboardSidebar() {
                             {active && (
                               <motion.div
                                 layoutId="sidebar-active-pill"
-                                className="absolute inset-0 rounded-lg bg-sidebar-primary/10 border border-sidebar-primary/20"
+                                className="absolute inset-0 rounded-lg bg-white/15 border border-white/20"
                                 transition={{ type: "spring", bounce: 0.2, duration: 0.5 }}
                               />
                             )}
