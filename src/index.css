@@ -3,110 +3,110 @@
 @tailwind utilities;
 
 /* Clinexus Design System
-   Primary: Royal Blue #0047BB (exact Clinexus logo color)
-   Accent: Teal + White (complementary, clean, clinical)
+   Primary: Signature Teal (matches Clinexus logo)
+   Accent: White & soft teal tints (cleanliness, clarity)
    All colors in HSL format
 */
 
 @layer base {
   :root {
-    --background: 214 25% 97%;
-    --foreground: 214 55% 10%;
+    --background: 185 30% 97%;
+    --foreground: 185 40% 10%;
 
     --card: 0 0% 100%;
-    --card-foreground: 214 55% 10%;
+    --card-foreground: 185 40% 10%;
 
     --popover: 0 0% 100%;
-    --popover-foreground: 214 55% 10%;
+    --popover-foreground: 185 40% 10%;
 
-    /* Primary: Clinexus Royal Blue — exact logo color #0047BB */
-    --primary: 214 96% 38%;
+    /* Primary: Clinexus Signature Teal */
+    --primary: 185 72% 32%;
     --primary-foreground: 0 0% 100%;
 
-    /* Secondary: Deep navy-blue */
-    --secondary: 214 88% 26%;
+    /* Secondary: Deep teal for depth */
+    --secondary: 185 65% 22%;
     --secondary-foreground: 0 0% 100%;
 
-    /* Muted: Soft blue-gray */
-    --muted: 214 22% 93%;
-    --muted-foreground: 214 18% 46%;
+    /* Muted: Cool teal-gray */
+    --muted: 185 20% 93%;
+    --muted-foreground: 185 15% 45%;
 
-    /* Accent: Teal — the complementary pop */
-    --accent: 185 60% 90%;
-    --accent-foreground: 185 60% 20%;
+    /* Accent: Light teal wash */
+    --accent: 185 50% 92%;
+    --accent-foreground: 185 40% 15%;
 
     --destructive: 0 84% 60%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 214 22% 88%;
-    --input: 214 22% 88%;
-    --ring: 214 96% 38%;
+    --border: 185 20% 88%;
+    --input: 185 20% 88%;
+    --ring: 185 72% 32%;
 
     --radius: 0.75rem;
 
-    /* Extended palette tokens */
-    --dental-navy: 214 88% 22%;
-    --dental-navy-light: 214 80% 32%;
-    --dental-teal: 185 68% 36%;
-    --dental-teal-light: 185 60% 48%;
+    /* Extended palette tokens — all teal-based */
+    --dental-navy: 185 72% 22%;
+    --dental-navy-light: 185 65% 30%;
+    --dental-teal: 185 72% 32%;
+    --dental-teal-light: 185 60% 44%;
     --dental-teal-pale: 185 55% 94%;
-    --dental-mint: 185 45% 92%;
-    --dental-cream: 214 25% 98%;
+    --dental-mint: 170 45% 94%;
+    --dental-cream: 185 20% 98%;
 
     /* Success/Warning/Info semantic */
     --success: 152 60% 42%;
     --success-foreground: 0 0% 100%;
     --warning: 38 92% 50%;
     --warning-foreground: 0 0% 100%;
-    --info: 185 68% 36%;
+    --info: 185 72% 38%;
     --info-foreground: 0 0% 100%;
 
-    /* Elevation shadows — blue-tinted */
-    --shadow-xs: 0 1px 2px 0 hsl(214 55% 10% / 0.04);
-    --shadow-sm: 0 1px 3px 0 hsl(214 55% 10% / 0.06), 0 1px 2px -1px hsl(214 55% 10% / 0.04);
-    --shadow-md: 0 4px 6px -1px hsl(214 55% 10% / 0.08), 0 2px 4px -2px hsl(214 55% 10% / 0.05);
-    --shadow-lg: 0 10px 15px -3px hsl(214 55% 10% / 0.10), 0 4px 6px -4px hsl(214 55% 10% / 0.05);
-    --shadow-xl: 0 20px 25px -5px hsl(214 55% 10% / 0.12), 0 8px 10px -6px hsl(214 55% 10% / 0.05);
+    /* Elevation shadows — teal-tinted */
+    --shadow-xs: 0 1px 2px 0 hsl(185 40% 10% / 0.04);
+    --shadow-sm: 0 1px 3px 0 hsl(185 40% 10% / 0.06), 0 1px 2px -1px hsl(185 40% 10% / 0.04);
+    --shadow-md: 0 4px 6px -1px hsl(185 40% 10% / 0.07), 0 2px 4px -2px hsl(185 40% 10% / 0.05);
+    --shadow-lg: 0 10px 15px -3px hsl(185 40% 10% / 0.08), 0 4px 6px -4px hsl(185 40% 10% / 0.04);
+    --shadow-xl: 0 20px 25px -5px hsl(185 40% 10% / 0.10), 0 8px 10px -6px hsl(185 40% 10% / 0.04);
 
-    /* Sidebar: Rich royal blue — exactly the logo background */
-    --sidebar-background: 214 96% 28%;
+    /* Sidebar: Deep Teal — rich and luxurious */
+    --sidebar-background: 185 72% 20%;
     --sidebar-foreground: 0 0% 100%;
     --sidebar-primary: 0 0% 100%;
-    --sidebar-primary-foreground: 214 96% 28%;
-    --sidebar-accent: 214 88% 35%;
+    --sidebar-primary-foreground: 185 72% 20%;
+    --sidebar-accent: 185 65% 27%;
     --sidebar-accent-foreground: 0 0% 100%;
-    --sidebar-border: 214 80% 36%;
-    --sidebar-ring: 185 65% 70%;
+    --sidebar-border: 185 60% 28%;
+    --sidebar-ring: 185 55% 70%;
   }
 
   .dark {
-    --background: 214 45% 7%;
-    --foreground: 214 20% 95%;
+    --background: 185 40% 7%;
+    --foreground: 185 20% 95%;
 
-    --card: 214 40% 10%;
-    --card-foreground: 214 20% 95%;
+    --card: 185 38% 9%;
+    --card-foreground: 185 20% 95%;
 
-    --popover: 214 40% 10%;
-    --popover-foreground: 214 20% 95%;
+    --popover: 185 38% 9%;
+    --popover-foreground: 185 20% 95%;
 
-    --primary: 214 90% 58%;
+    --primary: 185 65% 48%;
     --primary-foreground: 0 0% 100%;
 
-    --secondary: 214 60% 30%;
-    --secondary-foreground: 214 20% 95%;
+    --secondary: 185 50% 28%;
+    --secondary-foreground: 185 20% 95%;
 
-    --muted: 214 30% 15%;
-    --muted-foreground: 214 15% 55%;
+    --muted: 185 30% 14%;
+    --muted-foreground: 185 15% 55%;
 
-    --accent: 185 45% 20%;
-    --accent-foreground: 185 60% 80%;
+    --accent: 185 35% 18%;
+    --accent-foreground: 185 20% 95%;
 
     --destructive: 0 62% 30%;
-    --destructive-foreground: 214 20% 95%;
+    --destructive-foreground: 185 20% 95%;
 
-    --border: 214 30% 17%;
-    --input: 214 30% 17%;
-    --ring: 214 90% 58%;
+    --border: 185 30% 16%;
+    --input: 185 30% 16%;
+    --ring: 185 65% 48%;
 
     --shadow-xs: 0 1px 2px 0 hsl(0 0% 0% / 0.18);
     --shadow-sm: 0 1px 3px 0 hsl(0 0% 0% / 0.22), 0 1px 2px -1px hsl(0 0% 0% / 0.16);
@@ -114,14 +114,14 @@
     --shadow-lg: 0 10px 15px -3px hsl(0 0% 0% / 0.32), 0 4px 6px -4px hsl(0 0% 0% / 0.16);
     --shadow-xl: 0 20px 25px -5px hsl(0 0% 0% / 0.38), 0 8px 10px -6px hsl(0 0% 0% / 0.16);
 
-    --sidebar-background: 214 88% 18%;
+    --sidebar-background: 185 65% 14%;
     --sidebar-foreground: 0 0% 100%;
     --sidebar-primary: 0 0% 100%;
-    --sidebar-primary-foreground: 214 88% 18%;
-    --sidebar-accent: 214 80% 25%;
+    --sidebar-primary-foreground: 185 65% 14%;
+    --sidebar-accent: 185 60% 20%;
     --sidebar-accent-foreground: 0 0% 100%;
-    --sidebar-border: 214 70% 26%;
-    --sidebar-ring: 185 60% 65%;
+    --sidebar-border: 185 55% 22%;
+    --sidebar-ring: 185 50% 60%;
   }
 }
 
@@ -217,15 +217,15 @@
   100% { background-position: 200% 0; }
 }
 @keyframes pulse-glow {
-  0%, 100% { box-shadow: 0 0 20px hsla(214, 96%, 38%, 0.25); }
-  50% { box-shadow: 0 0 40px hsla(214, 96%, 38%, 0.50); }
+  0%, 100% { box-shadow: 0 0 20px hsla(185, 72%, 32%, 0.2); }
+  50% { box-shadow: 0 0 40px hsla(185, 72%, 32%, 0.45); }
 }
 
 .animate-float { animation: float 6s ease-in-out infinite; }
 .animate-float-slow { animation: float-slow 8s ease-in-out infinite; }
 .animate-gradient { background-size: 200% 200%; animation: gradient-shift 8s ease infinite; }
 .animate-shimmer {
-  background: linear-gradient(90deg, transparent, hsla(214, 96%, 38%, 0.10), transparent);
+  background: linear-gradient(90deg, transparent, hsla(185, 72%, 38%, 0.10), transparent);
   background-size: 200% 100%;
   animation: shimmer 2s infinite;
 }
@@ -307,8 +307,8 @@
   background: linear-gradient(-45deg,
     hsl(var(--primary)) 0%,
     hsl(var(--dental-navy)) 25%,
-    hsl(var(--dental-teal)) 50%,
-    hsl(var(--dental-teal-light)) 75%,
+    hsl(var(--dental-teal-light)) 50%,
+    hsl(185 55% 38%) 75%,
     hsl(var(--primary)) 100%);
   background-size: 400% 400%;
   animation: gradient-shift 15s ease infinite;
