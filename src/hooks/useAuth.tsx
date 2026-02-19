@@ -98,8 +98,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setUser(newSession?.user ?? null);
 
         if (newSession?.user) {
-          // Use setTimeout to avoid Supabase deadlock, but don't control loading here
-          setTimeout(() => fetchUserData(newSession.user.id), 0);
+          // Set loading true so downstream pages wait for data
+          setLoading(true);
+          setTimeout(async () => {
+            await fetchUserData(newSession.user.id);
+            if (isMounted) setLoading(false);
+          }, 0);
         } else {
           setProfile(null);
           setRoles([]);
