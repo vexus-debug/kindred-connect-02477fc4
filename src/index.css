@@ -45,8 +45,8 @@
     --radius: 0.75rem;
 
     /* Extended palette tokens */
-    --dental-navy: 220 45% 22%;
-    --dental-navy-light: 218 40% 38%;
+    --dental-navy: 215 74% 58%;
+    --dental-navy-light: 215 74% 65%;
     --dental-teal: 215 75% 58%;
     --dental-teal-light: 212 72% 65%;
     --dental-teal-pale: 216 50% 96%;
@@ -68,15 +68,15 @@
     --shadow-lg: 0 10px 15px -3px hsl(222 47% 11% / 0.07), 0 4px 6px -4px hsl(222 47% 11% / 0.03);
     --shadow-xl: 0 20px 25px -5px hsl(222 47% 11% / 0.08), 0 8px 10px -6px hsl(222 47% 11% / 0.03);
 
-    /* Sidebar: Refined dark blue */
-    --sidebar-background: 220 40% 14%;
-    --sidebar-foreground: 215 25% 78%;
-    --sidebar-primary: 215 75% 62%;
-    --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 220 35% 20%;
-    --sidebar-accent-foreground: 215 60% 72%;
-    --sidebar-border: 220 35% 22%;
-    --sidebar-ring: 215 75% 58%;
+    /* Sidebar: Clinexus Blue #4487e4 */
+    --sidebar-background: 215 74% 58%;
+    --sidebar-foreground: 0 0% 100%;
+    --sidebar-primary: 0 0% 100%;
+    --sidebar-primary-foreground: 215 74% 58%;
+    --sidebar-accent: 215 74% 52%;
+    --sidebar-accent-foreground: 0 0% 100%;
+    --sidebar-border: 215 74% 50%;
+    --sidebar-ring: 0 0% 100%;
   }
 
   .dark {
@@ -114,14 +114,14 @@
     --shadow-lg: 0 10px 15px -3px hsl(0 0% 0% / 0.3), 0 4px 6px -4px hsl(0 0% 0% / 0.15);
     --shadow-xl: 0 20px 25px -5px hsl(0 0% 0% / 0.35), 0 8px 10px -6px hsl(0 0% 0% / 0.15);
 
-    --sidebar-background: 220 40% 8%;
-    --sidebar-foreground: 215 25% 95%;
-    --sidebar-primary: 215 72% 58%;
-    --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 220 35% 15%;
-    --sidebar-accent-foreground: 215 25% 95%;
-    --sidebar-border: 220 35% 15%;
-    --sidebar-ring: 215 72% 55%;
+    --sidebar-background: 215 74% 50%;
+    --sidebar-foreground: 0 0% 100%;
+    --sidebar-primary: 0 0% 100%;
+    --sidebar-primary-foreground: 215 74% 50%;
+    --sidebar-accent: 215 74% 44%;
+    --sidebar-accent-foreground: 0 0% 100%;
+    --sidebar-border: 215 74% 44%;
+    --sidebar-ring: 0 0% 100%;
   }
 }
 
