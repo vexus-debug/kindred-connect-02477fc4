@@ -45,11 +45,18 @@ export const clinicTypeOptions: ClinicTypeOption[] = [
 
 const dentalNav: NavGroup[] = [
   {
-    label: "General",
+    label: "Overview",
     items: [
       { title: "Dashboard", path: "dashboard", icon: LayoutDashboard },
+    ],
+  },
+  {
+    label: "Patient Care",
+    items: [
       { title: "Patients", path: "patients", icon: Users },
       { title: "Appointments", path: "appointments", icon: CalendarDays },
+      { title: "Waiting List", path: "waiting-list", icon: Clock },
+      { title: "Schedules", path: "schedules", icon: CalendarClock },
       { title: "Reviews", path: "reviews", icon: Star },
     ],
   },
@@ -59,6 +66,18 @@ const dentalNav: NavGroup[] = [
       { title: "Dental Charts", path: "dental-charts", icon: Stethoscope },
       { title: "Treatments", path: "treatments", icon: Stethoscope },
       { title: "Prescriptions", path: "prescriptions", icon: Stethoscope },
+      { title: "Consent Forms", path: "consent-forms", icon: FileCheck },
+    ],
+  },
+  {
+    label: "Lab",
+    items: [
+      { title: "Lab Work", path: "lab-work", icon: FlaskConical },
+      { title: "Lab Dashboard", path: "lab", icon: Microscope },
+      { title: "Lab Cases", path: "lab/cases", icon: ClipboardList },
+      { title: "Technicians", path: "lab/technicians", icon: Users },
+      { title: "Lab Billing", path: "lab/billing", icon: DollarSign },
+      { title: "Lab Settings", path: "lab/settings", icon: Wrench },
     ],
   },
   {
@@ -69,55 +88,36 @@ const dentalNav: NavGroup[] = [
       { title: "Payment Plans", path: "payment-plans", icon: Wallet },
       { title: "Expenses", path: "expenses", icon: Receipt },
       { title: "Commissions", path: "commissions", icon: Calculator },
+      { title: "Revenue Allocation", path: "revenue-allocation", icon: DollarSign },
       { title: "Profitability", path: "profitability", icon: TrendingUp },
+    ],
+  },
+  {
+    label: "Reports",
+    items: [
       { title: "Reports", path: "reports", icon: BarChart3 },
       { title: "Advanced Analytics", path: "analytics", icon: Brain },
-      { title: "Revenue Allocation", path: "revenue-allocation", icon: DollarSign },
     ],
   },
   {
-    label: "Admin",
+    label: "Inventory & Supply",
     items: [
-      { title: "Website Settings", path: "website-settings", icon: Globe },
-      { title: "Shop Management", path: "shop-management", icon: ShoppingCart },
-      { title: "Lab Work", path: "lab-work", icon: FlaskConical },
-      { title: "Staff", path: "staff", icon: UserCog },
-      { title: "Schedules", path: "schedules", icon: CalendarClock },
       { title: "Inventory", path: "inventory", icon: Package },
       { title: "Inventory Costs", path: "inventory-costs", icon: PiggyBank },
+      { title: "Treatment Materials", path: "treatment-materials", icon: Link2 },
       { title: "Suppliers", path: "suppliers", icon: Truck },
       { title: "Purchase Orders", path: "purchase-orders", icon: ShoppingCart },
-      { title: "Treatment Materials", path: "treatment-materials", icon: Link2 },
     ],
   },
   {
-    label: "Operations",
+    label: "Administration",
     items: [
-      { title: "Waiting List", path: "waiting-list", icon: Clock },
-    ],
-  },
-  {
-    label: "Compliance",
-    items: [
-      { title: "Consent Forms", path: "consent-forms", icon: FileCheck },
+      { title: "Staff", path: "staff", icon: UserCog },
       { title: "Documents", path: "documents", icon: FolderOpen },
       { title: "Audit Log", path: "audit-log", icon: Shield },
-    ],
-  },
-  {
-    label: "Automation",
-    items: [
       { title: "Automation", path: "automation", icon: Bot },
-    ],
-  },
-  {
-    label: "Lab Management",
-    items: [
-      { title: "Lab Dashboard", path: "lab", icon: Microscope },
-      { title: "Lab Cases", path: "lab/cases", icon: ClipboardList },
-      { title: "Technicians", path: "lab/technicians", icon: Users },
-      { title: "Lab Billing", path: "lab/billing", icon: DollarSign },
-      { title: "Lab Settings", path: "lab/settings", icon: Wrench },
+      { title: "Website Settings", path: "website-settings", icon: Globe },
+      { title: "Shop Management", path: "shop-management", icon: ShoppingCart },
     ],
   },
 ];
