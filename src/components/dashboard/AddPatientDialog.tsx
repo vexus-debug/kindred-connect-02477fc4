@@ -26,6 +26,7 @@ const patientSchema = z.object({
   gender: z.enum(["Male", "Female"]),
   dateOfBirth: z.date({ required_error: "Date of birth is required" }),
   address: z.string().trim().max(200).optional(),
+  occupation: z.string().trim().max(100).optional(),
   emergencyName: z.string().trim().max(100).optional(),
   emergencyPhone: z.string().trim().max(20).optional(),
   medicalHistory: z.string().trim().max(1000).optional(),
@@ -46,7 +47,7 @@ export function AddPatientDialog({ open, onOpenChange }: AddPatientDialogProps) 
     resolver: zodResolver(patientSchema),
     defaultValues: {
       firstName: "", lastName: "", phone: "", email: "", address: "",
-      emergencyName: "", emergencyPhone: "",
+      occupation: "", emergencyName: "", emergencyPhone: "",
       medicalHistory: "", referralSource: "",
     },
   });
@@ -61,6 +62,7 @@ export function AddPatientDialog({ open, onOpenChange }: AddPatientDialogProps) 
         gender: data.gender,
         date_of_birth: format(data.dateOfBirth, "yyyy-MM-dd"),
         address: data.address || "",
+        occupation: data.occupation || "",
         emergency_contact_name: data.emergencyName || "",
         emergency_contact_phone: data.emergencyPhone || "",
         medical_history: data.medicalHistory || "",
@@ -156,7 +158,14 @@ export function AddPatientDialog({ open, onOpenChange }: AddPatientDialogProps) 
                   </FormItem>
                 )} />
               </div>
-              <div className="mt-3">
+              <div className="mt-3 grid gap-3 sm:grid-cols-2">
+                <FormField control={form.control} name="occupation" render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Occupation</FormLabel>
+                    <FormControl><Input placeholder="e.g. Engineer, Teacher" {...field} /></FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )} />
                 <FormField control={form.control} name="address" render={({ field }) => (
                   <FormItem>
                     <FormLabel>Address</FormLabel>
