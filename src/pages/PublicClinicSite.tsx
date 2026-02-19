@@ -82,6 +82,14 @@ function FadeInSection({ children, className = "", delay = 0 }: { children: Reac
   );
 }
 
+// Helper to convert hex to rgba
+function hexToRgba(hex: string, alpha: number) {
+  const r = parseInt(hex.slice(1, 3), 16);
+  const g = parseInt(hex.slice(3, 5), 16);
+  const b = parseInt(hex.slice(5, 7), 16);
+  return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+}
+
 export default function PublicClinicSite() {
   const { slug } = useParams<{ slug: string }>();
   const [clinic, setClinic] = useState<ClinicInfo | null>(null);
@@ -200,12 +208,12 @@ export default function PublicClinicSite() {
 
   return (
     <div className="min-h-screen bg-white" style={dynamicStyles}>
-      {/* Sticky Header */}
+      {/* ── Sticky Header ── */}
       <header
         className="fixed top-0 left-0 right-0 z-50 transition-all duration-300"
         style={{
           backgroundColor: headerSolid ? primaryColor : "transparent",
-          boxShadow: headerSolid ? "0 2px 20px rgba(0,0,0,0.1)" : "none",
+          boxShadow: headerSolid ? "0 1px 12px rgba(0,0,0,0.06)" : "none",
         }}
       >
         <div className="max-w-6xl mx-auto px-4 sm:px-6 py-3 flex items-center justify-between">
@@ -213,64 +221,78 @@ export default function PublicClinicSite() {
             {clinic?.logo_url && (
               <img src={clinic.logo_url} alt={clinic?.name} className="h-10 w-10 rounded-full object-cover border-2 border-white/30 shadow-sm" />
             )}
-            <span className="text-lg font-bold text-white drop-shadow-sm">{clinic?.name}</span>
+            <span className={`text-lg font-bold drop-shadow-sm ${headerSolid ? "text-white" : "text-gray-900"}`}>{clinic?.name}</span>
           </div>
           <div className="flex items-center gap-2">
             <Link to={`/site/${slug}/shop`}>
-              <Button size="sm" variant="ghost" className="text-white/90 hover:text-white hover:bg-white/10">
+              <Button size="sm" variant="ghost" className={headerSolid ? "text-white/90 hover:text-white hover:bg-white/10" : "text-gray-600 hover:text-gray-900 hover:bg-gray-100"}>
                 <ShoppingBag className="mr-1.5 h-3.5 w-3.5" /> Shop
               </Button>
             </Link>
             {clinic?.phone && (
-              <Button size="sm" variant="ghost" className="text-white/90 hover:text-white hover:bg-white/10 hidden sm:flex" asChild>
+              <Button size="sm" variant="ghost" className={`hidden sm:flex ${headerSolid ? "text-white/90 hover:text-white hover:bg-white/10" : "text-gray-600 hover:text-gray-900 hover:bg-gray-100"}`} asChild>
                 <a href={`tel:${clinic.phone}`}><Phone className="mr-1.5 h-3.5 w-3.5" /> Call</a>
               </Button>
             )}
             {s.whatsapp_number && (
-              <Button size="sm" variant="ghost" className="text-white/90 hover:text-white hover:bg-white/10" asChild>
+              <Button size="sm" variant="ghost" className={headerSolid ? "text-white/90 hover:text-white hover:bg-white/10" : "text-gray-600 hover:text-gray-900 hover:bg-gray-100"} asChild>
                 <a href={`https://wa.me/${s.whatsapp_number}`} target="_blank" rel="noopener noreferrer">
                   <MessageCircle className="mr-1.5 h-3.5 w-3.5" /> WhatsApp
                 </a>
               </Button>
             )}
-            <Button size="sm" className="bg-white text-gray-900 hover:bg-gray-100 font-semibold shadow-md" onClick={scrollToBooking}>
+            <Button
+              size="sm"
+              className="font-semibold shadow-md text-white"
+              style={{ backgroundColor: primaryColor }}
+              onClick={scrollToBooking}
+            >
               Book Now
             </Button>
           </div>
         </div>
       </header>
 
-      {/* Hero Section */}
-      <section
-        className="relative min-h-[70vh] flex items-center justify-center overflow-hidden"
-        style={{
-          background: s.hero_image_url
-            ? `linear-gradient(135deg, ${primaryColor}ee 0%, ${accentColor}cc 100%)`
-            : `linear-gradient(135deg, ${primaryColor} 0%, ${accentColor} 100%)`,
-        }}
-      >
+      {/* ── Hero Section — soft, airy ── */}
+      <section className="relative min-h-[65vh] flex items-center justify-center overflow-hidden bg-white">
+        {/* Soft background shapes using brand colors at low opacity */}
+        <div className="absolute inset-0 overflow-hidden">
+          <div
+            className="absolute -top-32 -right-48 w-[600px] h-[600px] rounded-full blur-3xl"
+            style={{ backgroundColor: hexToRgba(primaryColor, 0.07) }}
+          />
+          <div
+            className="absolute -bottom-32 -left-48 w-[500px] h-[500px] rounded-full blur-3xl"
+            style={{ backgroundColor: hexToRgba(accentColor, 0.06) }}
+          />
+        </div>
+
         {s.hero_image_url && (
           <div
             className="absolute inset-0 bg-cover bg-center"
-            style={{ backgroundImage: `url(${s.hero_image_url})`, opacity: 0.15 }}
+            style={{ backgroundImage: `url(${s.hero_image_url})`, opacity: 0.08 }}
           />
         )}
-        <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-white/10" />
 
-        <div className="relative z-10 text-center px-4 max-w-3xl mx-auto">
+        <div className="relative z-10 text-center px-4 max-w-3xl mx-auto pt-20">
           <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.8, ease: [0.22, 1, 0.36, 1] }}>
-            <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold text-white mb-4 leading-tight">
+            <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold text-gray-900 mb-4 leading-tight">
               {s.hero_title || s.welcome_text || `Welcome to ${clinic?.name}`}
             </h1>
-            <p className="text-lg sm:text-xl text-white/85 mb-8 max-w-xl mx-auto">
+            <p className="text-lg sm:text-xl text-gray-500 mb-8 max-w-xl mx-auto">
               {s.hero_subtitle || s.short_description || "Professional healthcare for you and your family"}
             </p>
             <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
-              <Button size="lg" className="bg-white text-gray-900 hover:bg-gray-100 font-semibold px-8 shadow-xl text-base" onClick={scrollToBooking}>
+              <Button
+                size="lg"
+                className="font-semibold px-8 shadow-lg text-base text-white"
+                style={{ backgroundColor: primaryColor }}
+                onClick={scrollToBooking}
+              >
                 <Calendar className="mr-2 h-5 w-5" /> Book Appointment
               </Button>
               {clinic?.phone && (
-                <Button size="lg" variant="outline" className="border-white/40 text-white hover:bg-white/10 px-8 text-base" asChild>
+                <Button size="lg" variant="outline" className="px-8 text-base border-gray-200 text-gray-700 hover:bg-gray-50" asChild>
                   <a href={`tel:${clinic.phone}`}><Phone className="mr-2 h-5 w-5" /> Call Us</a>
                 </Button>
               )}
@@ -282,24 +304,24 @@ export default function PublicClinicSite() {
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.4, duration: 0.6 }}
-            className="mt-12 flex flex-wrap items-center justify-center gap-6 sm:gap-10 text-white/80"
+            className="mt-12 flex flex-wrap items-center justify-center gap-6 sm:gap-10 text-gray-400"
           >
             {staff.length > 0 && (
               <div className="flex items-center gap-2">
-                <Users className="h-5 w-5" />
-                <span className="text-sm font-medium">{staff.length} Doctor{staff.length > 1 ? "s" : ""}</span>
+                <Users className="h-5 w-5" style={{ color: primaryColor }} />
+                <span className="text-sm font-medium text-gray-600">{staff.length} Doctor{staff.length > 1 ? "s" : ""}</span>
               </div>
             )}
             {treatments.length > 0 && (
               <div className="flex items-center gap-2">
-                <Stethoscope className="h-5 w-5" />
-                <span className="text-sm font-medium">{treatments.length} Service{treatments.length > 1 ? "s" : ""}</span>
+                <Stethoscope className="h-5 w-5" style={{ color: accentColor }} />
+                <span className="text-sm font-medium text-gray-600">{treatments.length} Service{treatments.length > 1 ? "s" : ""}</span>
               </div>
             )}
             {avgRating && (
               <div className="flex items-center gap-2">
                 <Star className="h-5 w-5 fill-yellow-400 text-yellow-400" />
-                <span className="text-sm font-medium">{avgRating} Rating</span>
+                <span className="text-sm font-medium text-gray-600">{avgRating} Rating</span>
               </div>
             )}
           </motion.div>
@@ -311,18 +333,18 @@ export default function PublicClinicSite() {
           animate={{ y: [0, 8, 0] }}
           transition={{ repeat: Infinity, duration: 2 }}
         >
-          <ChevronDown className="h-6 w-6 text-white/50" />
+          <ChevronDown className="h-6 w-6 text-gray-300" />
         </motion.div>
       </section>
 
       <main className="max-w-6xl mx-auto px-4 sm:px-6">
-        {/* Contact & Hours */}
-        <FadeInSection className="-mt-12 relative z-20">
+        {/* ── 1. Contact Info Cards ── */}
+        <FadeInSection className="-mt-8 relative z-20">
           <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
             {clinic?.address && (
-              <Card className="shadow-lg border-0 hover:shadow-xl transition-shadow">
+              <Card className="shadow-sm border border-gray-100 hover:shadow-md transition-shadow bg-white">
                 <CardContent className="p-5 flex items-start gap-3">
-                  <div className="h-10 w-10 rounded-xl flex items-center justify-center shrink-0" style={{ backgroundColor: primaryColor + "15" }}>
+                  <div className="h-10 w-10 rounded-xl flex items-center justify-center shrink-0" style={{ backgroundColor: hexToRgba(primaryColor, 0.08) }}>
                     <MapPin className="h-5 w-5" style={{ color: primaryColor }} />
                   </div>
                   <div>
@@ -333,9 +355,9 @@ export default function PublicClinicSite() {
               </Card>
             )}
             {clinic?.phone && (
-              <Card className="shadow-lg border-0 hover:shadow-xl transition-shadow">
+              <Card className="shadow-sm border border-gray-100 hover:shadow-md transition-shadow bg-white">
                 <CardContent className="p-5 flex items-start gap-3">
-                  <div className="h-10 w-10 rounded-xl flex items-center justify-center shrink-0" style={{ backgroundColor: primaryColor + "15" }}>
+                  <div className="h-10 w-10 rounded-xl flex items-center justify-center shrink-0" style={{ backgroundColor: hexToRgba(primaryColor, 0.08) }}>
                     <Phone className="h-5 w-5" style={{ color: primaryColor }} />
                   </div>
                   <div>
@@ -346,9 +368,9 @@ export default function PublicClinicSite() {
               </Card>
             )}
             {clinic?.email && (
-              <Card className="shadow-lg border-0 hover:shadow-xl transition-shadow">
+              <Card className="shadow-sm border border-gray-100 hover:shadow-md transition-shadow bg-white">
                 <CardContent className="p-5 flex items-start gap-3">
-                  <div className="h-10 w-10 rounded-xl flex items-center justify-center shrink-0" style={{ backgroundColor: primaryColor + "15" }}>
+                  <div className="h-10 w-10 rounded-xl flex items-center justify-center shrink-0" style={{ backgroundColor: hexToRgba(primaryColor, 0.08) }}>
                     <Mail className="h-5 w-5" style={{ color: primaryColor }} />
                   </div>
                   <div>
@@ -359,9 +381,9 @@ export default function PublicClinicSite() {
               </Card>
             )}
             {hours.length > 0 && (
-              <Card className="shadow-lg border-0 hover:shadow-xl transition-shadow">
+              <Card className="shadow-sm border border-gray-100 hover:shadow-md transition-shadow bg-white">
                 <CardContent className="p-5 flex items-start gap-3">
-                  <div className="h-10 w-10 rounded-xl flex items-center justify-center shrink-0" style={{ backgroundColor: primaryColor + "15" }}>
+                  <div className="h-10 w-10 rounded-xl flex items-center justify-center shrink-0" style={{ backgroundColor: hexToRgba(primaryColor, 0.08) }}>
                     <Clock className="h-5 w-5" style={{ color: primaryColor }} />
                   </div>
                   <div>
@@ -381,7 +403,7 @@ export default function PublicClinicSite() {
           </div>
         </FadeInSection>
 
-        {/* Services */}
+        {/* ── 2. Services ── */}
         {treatments.length > 0 && (
           <FadeInSection className="mt-20">
             <div className="text-center mb-10">
@@ -392,17 +414,17 @@ export default function PublicClinicSite() {
               const catTreatments = treatments.filter((t) => (t.category || "General") === cat);
               return (
                 <div key={cat} className="mb-8">
-                  <Badge variant="outline" className="mb-4 text-xs font-semibold uppercase tracking-wider" style={{ borderColor: primaryColor + "40", color: primaryColor }}>
+                  <Badge variant="outline" className="mb-4 text-xs font-semibold uppercase tracking-wider border-gray-200" style={{ color: primaryColor }}>
                     {cat}
                   </Badge>
                   <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
                     {catTreatments.map((t, i) => (
                       <FadeInSection key={t.id} delay={i * 0.05}>
-                        <Card className="group hover:shadow-lg transition-all duration-300 border border-gray-100 hover:border-gray-200 overflow-hidden">
+                        <Card className="group hover:shadow-md transition-all duration-300 border border-gray-100 bg-white">
                           <CardContent className="p-5">
                             <div className="flex justify-between items-start gap-3">
                               <div className="flex-1">
-                                <p className="font-semibold text-gray-900 group-hover:text-gray-700 transition-colors">{t.name}</p>
+                                <p className="font-semibold text-gray-900">{t.name}</p>
                                 {t.description && <p className="text-sm text-gray-500 mt-1 line-clamp-2">{t.description}</p>}
                               </div>
                               <span className="text-lg font-bold shrink-0" style={{ color: primaryColor }}>
@@ -426,7 +448,7 @@ export default function PublicClinicSite() {
           </FadeInSection>
         )}
 
-        {/* Doctors */}
+        {/* ── 3. Doctors ── */}
         {staff.length > 0 && (
           <FadeInSection className="mt-20">
             <div className="text-center mb-10">
@@ -436,13 +458,16 @@ export default function PublicClinicSite() {
             <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
               {staff.map((doc, i) => (
                 <FadeInSection key={doc.id} delay={i * 0.08}>
-                  <Card className="text-center p-6 hover:shadow-lg transition-all duration-300 border border-gray-100 group">
-                    <div className="h-20 w-20 rounded-full mx-auto mb-4 flex items-center justify-center text-2xl font-bold text-white shadow-md" style={{ background: `linear-gradient(135deg, ${primaryColor}, ${accentColor})` }}>
+                  <Card className="text-center p-6 hover:shadow-md transition-all duration-300 border border-gray-100 bg-white">
+                    <div
+                      className="h-20 w-20 rounded-full mx-auto mb-4 flex items-center justify-center text-2xl font-bold text-white shadow-sm"
+                      style={{ backgroundColor: primaryColor }}
+                    >
                       {doc.full_name.split(" ").map((n) => n[0]).join("").slice(0, 2)}
                     </div>
                     <h3 className="font-semibold text-gray-900 text-lg">{doc.full_name}</h3>
                     {doc.specialty && <p className="text-sm mt-1" style={{ color: primaryColor }}>{doc.specialty}</p>}
-                    <Badge variant="secondary" className="mt-3 text-xs capitalize">{doc.role}</Badge>
+                    <Badge variant="secondary" className="mt-3 text-xs capitalize bg-gray-100 text-gray-600">{doc.role}</Badge>
                   </Card>
                 </FadeInSection>
               ))}
@@ -450,36 +475,7 @@ export default function PublicClinicSite() {
           </FadeInSection>
         )}
 
-        {/* Operating Hours Full */}
-        {hours.length > 0 && (
-          <FadeInSection className="mt-20">
-            <div className="text-center mb-10">
-              <h2 className="text-3xl font-bold text-gray-900">Operating Hours</h2>
-            </div>
-            <Card className="max-w-md mx-auto shadow-lg border-0">
-              <CardContent className="p-0">
-                {hours.map((h, i) => {
-                  const isToday = new Date().toLocaleDateString("en-US", { weekday: "long" }) === h.day;
-                  return (
-                    <div
-                      key={h.day}
-                      className={`flex items-center justify-between px-6 py-3.5 ${i < hours.length - 1 ? "border-b border-gray-100" : ""} ${isToday ? "bg-gray-50" : ""}`}
-                    >
-                      <span className={`text-sm ${isToday ? "font-bold text-gray-900" : "text-gray-600"}`}>
-                        {h.day} {isToday && <span className="text-xs ml-1" style={{ color: primaryColor }}>(Today)</span>}
-                      </span>
-                      <span className={`text-sm ${h.closed ? "text-gray-400" : "font-medium text-gray-900"}`}>
-                        {h.closed ? "Closed" : `${h.open} – ${h.close}`}
-                      </span>
-                    </div>
-                  );
-                })}
-              </CardContent>
-            </Card>
-          </FadeInSection>
-        )}
-
-        {/* Reviews */}
+        {/* ── 4. Reviews ── */}
         {reviews.length > 0 && (
           <FadeInSection className="mt-20">
             <div className="text-center mb-10">
@@ -499,7 +495,7 @@ export default function PublicClinicSite() {
             <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
               {reviews.map((r, i) => (
                 <FadeInSection key={r.id} delay={i * 0.06}>
-                  <Card className="p-5 border border-gray-100 hover:shadow-md transition-shadow">
+                  <Card className="p-5 border border-gray-100 hover:shadow-md transition-shadow bg-white">
                     <div className="flex mb-2">
                       {[1, 2, 3, 4, 5].map((i) => (
                         <Star key={i} className={`h-4 w-4 ${i <= r.rating ? "fill-yellow-400 text-yellow-400" : "text-gray-200"}`} />
@@ -516,7 +512,36 @@ export default function PublicClinicSite() {
           </FadeInSection>
         )}
 
-        {/* Certifications */}
+        {/* ── 5. Operating Hours ── */}
+        {hours.length > 0 && (
+          <FadeInSection className="mt-20">
+            <div className="text-center mb-10">
+              <h2 className="text-3xl font-bold text-gray-900">Operating Hours</h2>
+            </div>
+            <Card className="max-w-md mx-auto shadow-sm border border-gray-100 bg-white">
+              <CardContent className="p-0">
+                {hours.map((h, i) => {
+                  const isToday = new Date().toLocaleDateString("en-US", { weekday: "long" }) === h.day;
+                  return (
+                    <div
+                      key={h.day}
+                      className={`flex items-center justify-between px-6 py-3.5 ${i < hours.length - 1 ? "border-b border-gray-50" : ""} ${isToday ? "bg-gray-50/50" : ""}`}
+                    >
+                      <span className={`text-sm ${isToday ? "font-bold text-gray-900" : "text-gray-600"}`}>
+                        {h.day} {isToday && <span className="text-xs ml-1" style={{ color: primaryColor }}>(Today)</span>}
+                      </span>
+                      <span className={`text-sm ${h.closed ? "text-gray-400" : "font-medium text-gray-900"}`}>
+                        {h.closed ? "Closed" : `${h.open} – ${h.close}`}
+                      </span>
+                    </div>
+                  );
+                })}
+              </CardContent>
+            </Card>
+          </FadeInSection>
+        )}
+
+        {/* ── 6. Certifications ── */}
         {certs.length > 0 && (
           <FadeInSection className="mt-20">
             <div className="text-center mb-10">
@@ -524,7 +549,7 @@ export default function PublicClinicSite() {
             </div>
             <div className="flex flex-wrap justify-center gap-4">
               {certs.map((cert, i) => (
-                <div key={i} className="flex items-center gap-2 px-5 py-3 rounded-full border border-gray-200 bg-gray-50">
+                <div key={i} className="flex items-center gap-2 px-5 py-3 rounded-full border border-gray-200 bg-gray-50/50">
                   <Award className="h-4 w-4" style={{ color: primaryColor }} />
                   <span className="text-sm font-medium text-gray-700">{cert.title}</span>
                 </div>
@@ -533,15 +558,15 @@ export default function PublicClinicSite() {
           </FadeInSection>
         )}
 
-        {/* Booking Section */}
+        {/* ── 7. Booking Section ── */}
         <FadeInSection className="mt-20 mb-20">
           <div ref={bookingRef} className="scroll-mt-24">
-            <Card className="shadow-2xl border-0 overflow-hidden">
-              <div className="p-6 text-white" style={{ background: `linear-gradient(135deg, ${primaryColor}, ${accentColor})` }}>
-                <h2 className="text-2xl font-bold flex items-center gap-2">
-                  <Calendar className="h-6 w-6" /> Book an Appointment
+            <Card className="shadow-md border border-gray-100 overflow-hidden bg-white">
+              <div className="p-6 border-b border-gray-100">
+                <h2 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
+                  <Calendar className="h-6 w-6" style={{ color: primaryColor }} /> Book an Appointment
                 </h2>
-                <p className="text-white/80 mt-1 text-sm">Select your preferred service, doctor, date and time</p>
+                <p className="text-gray-500 mt-1 text-sm">Select your preferred service, doctor, date and time</p>
               </div>
               <CardContent className="p-6">
                 {booked ? (
@@ -550,12 +575,12 @@ export default function PublicClinicSite() {
                     animate={{ scale: 1, opacity: 1 }}
                     className="text-center py-10 space-y-4"
                   >
-                    <div className="h-16 w-16 rounded-full mx-auto flex items-center justify-center" style={{ backgroundColor: primaryColor + "15" }}>
+                    <div className="h-16 w-16 rounded-full mx-auto flex items-center justify-center" style={{ backgroundColor: hexToRgba(primaryColor, 0.1) }}>
                       <CheckCircle className="h-8 w-8" style={{ color: primaryColor }} />
                     </div>
                     <h3 className="text-xl font-bold text-gray-900">Appointment Booked!</h3>
                     <p className="text-sm text-gray-500 max-w-sm mx-auto">{confirmMsg}</p>
-                    <Button variant="outline" onClick={() => { setBooked(false); setName(""); setPhone(""); setSelectedStaff(""); setSelectedTreatment(""); setDate(""); setTime(""); }}>
+                    <Button variant="outline" className="border-gray-200" onClick={() => { setBooked(false); setName(""); setPhone(""); setSelectedStaff(""); setSelectedTreatment(""); setDate(""); setTime(""); }}>
                       Book Another
                     </Button>
                   </motion.div>
@@ -563,16 +588,16 @@ export default function PublicClinicSite() {
                   <div className="grid gap-5 sm:grid-cols-2">
                     <div className="space-y-1.5">
                       <label className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Full Name *</label>
-                      <Input placeholder="John Doe" value={name} onChange={(e) => setName(e.target.value)} className="h-11" />
+                      <Input placeholder="John Doe" value={name} onChange={(e) => setName(e.target.value)} className="h-11 border-gray-200" />
                     </div>
                     <div className="space-y-1.5">
                       <label className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Phone *</label>
-                      <Input placeholder="080xxxxxxxx" value={phone} onChange={(e) => setPhone(e.target.value)} className="h-11" />
+                      <Input placeholder="080xxxxxxxx" value={phone} onChange={(e) => setPhone(e.target.value)} className="h-11 border-gray-200" />
                     </div>
                     <div className="space-y-1.5">
                       <label className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Service</label>
                       <Select value={selectedTreatment} onValueChange={setSelectedTreatment}>
-                        <SelectTrigger className="h-11"><SelectValue placeholder="Select service (optional)" /></SelectTrigger>
+                        <SelectTrigger className="h-11 border-gray-200"><SelectValue placeholder="Select service (optional)" /></SelectTrigger>
                         <SelectContent>
                           {treatments.map((t) => (
                             <SelectItem key={t.id} value={t.id}>{t.name} — ₦{t.price.toLocaleString()}</SelectItem>
@@ -583,7 +608,7 @@ export default function PublicClinicSite() {
                     <div className="space-y-1.5">
                       <label className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Doctor *</label>
                       <Select value={selectedStaff} onValueChange={setSelectedStaff}>
-                        <SelectTrigger className="h-11"><SelectValue placeholder="Select doctor" /></SelectTrigger>
+                        <SelectTrigger className="h-11 border-gray-200"><SelectValue placeholder="Select doctor" /></SelectTrigger>
                         <SelectContent>
                           {staff.map((s) => (
                             <SelectItem key={s.id} value={s.id}>{s.full_name}{s.specialty ? ` — ${s.specialty}` : ""}</SelectItem>
@@ -593,15 +618,15 @@ export default function PublicClinicSite() {
                     </div>
                     <div className="space-y-1.5">
                       <label className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Preferred Date *</label>
-                      <Input type="date" value={date} onChange={(e) => setDate(e.target.value)} min={new Date().toISOString().split("T")[0]} className="h-11" />
+                      <Input type="date" value={date} onChange={(e) => setDate(e.target.value)} min={new Date().toISOString().split("T")[0]} className="h-11 border-gray-200" />
                     </div>
                     <div className="space-y-1.5">
                       <label className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Preferred Time *</label>
-                      <Input type="time" value={time} onChange={(e) => setTime(e.target.value)} className="h-11" />
+                      <Input type="time" value={time} onChange={(e) => setTime(e.target.value)} className="h-11 border-gray-200" />
                     </div>
                     <div className="sm:col-span-2">
                       <Button
-                        className="w-full h-12 text-white text-base font-semibold shadow-lg transition-all hover:shadow-xl"
+                        className="w-full h-12 text-white text-base font-semibold shadow-sm transition-all hover:shadow-md"
                         style={{ backgroundColor: primaryColor }}
                         onClick={handleBook}
                         disabled={booking}
@@ -617,8 +642,8 @@ export default function PublicClinicSite() {
         </FadeInSection>
       </main>
 
-      {/* Footer */}
-      <footer className="border-t border-gray-100 bg-gray-50">
+      {/* ── Footer ── */}
+      <footer className="border-t border-gray-100 bg-gray-50/50">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 py-10">
           <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-8">
             <div>
@@ -673,7 +698,7 @@ export default function PublicClinicSite() {
           href={`https://wa.me/${s.whatsapp_number}`}
           target="_blank"
           rel="noopener noreferrer"
-          className="fixed bottom-6 right-6 z-50 h-14 w-14 rounded-full bg-green-500 text-white flex items-center justify-center shadow-2xl hover:bg-green-600 transition-all hover:scale-110"
+          className="fixed bottom-6 right-6 z-50 h-14 w-14 rounded-full bg-green-500 text-white flex items-center justify-center shadow-xl hover:bg-green-600 transition-all hover:scale-110"
           title="Chat on WhatsApp"
         >
           <MessageCircle className="h-7 w-7" />
