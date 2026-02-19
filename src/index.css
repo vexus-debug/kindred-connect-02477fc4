@@ -68,6 +68,13 @@
     --slate-pale: 220 30% 94%;
     --slate-foreground: 0 0% 100%;
 
+    /* Gold — premium accent for highlights, trends & CTAs */
+    --gold: 38 85% 52%;
+    --gold-light: 40 90% 65%;
+    --gold-pale: 42 80% 95%;
+    --gold-deep: 34 75% 42%;
+    --gold-foreground: 0 0% 100%;
+
     /* Elevation shadows — teal-tinted */
     --shadow-xs: 0 1px 2px 0 hsl(185 40% 10% / 0.04);
     --shadow-sm: 0 1px 3px 0 hsl(185 40% 10% / 0.06), 0 1px 2px -1px hsl(185 40% 10% / 0.04);
@@ -121,6 +128,13 @@
     --slate-light: 220 35% 68%;
     --slate-pale: 220 25% 18%;
     --slate-foreground: 0 0% 100%;
+
+    /* Gold — dark mode */
+    --gold: 38 80% 62%;
+    --gold-light: 40 85% 72%;
+    --gold-pale: 38 50% 18%;
+    --gold-deep: 34 70% 50%;
+    --gold-foreground: 25 30% 12%;
 
     --shadow-xs: 0 1px 2px 0 hsl(0 0% 0% / 0.18);
     --shadow-sm: 0 1px 3px 0 hsl(0 0% 0% / 0.22), 0 1px 2px -1px hsl(0 0% 0% / 0.16);
@@ -245,7 +259,30 @@
 }
 .animate-pulse-glow { animation: pulse-glow 2s ease-in-out infinite; }
 
-/* Premium card hover */
+/* Gold shimmer — for premium highlights */
+@keyframes gold-shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+.gold-shimmer {
+  background: linear-gradient(90deg,
+    hsl(var(--gold-pale)) 0%,
+    hsl(var(--gold-light) / 0.6) 40%,
+    hsl(var(--gold)) 50%,
+    hsl(var(--gold-light) / 0.6) 60%,
+    hsl(var(--gold-pale)) 100%);
+  background-size: 200% 100%;
+  animation: gold-shimmer 3s ease infinite;
+}
+.gold-glow {
+  box-shadow: 0 0 0 1px hsl(var(--gold) / 0.25), 0 4px 16px -4px hsl(var(--gold) / 0.30);
+}
+.gold-border {
+  border: 1px solid hsl(var(--gold) / 0.35);
+  background: linear-gradient(135deg, hsl(var(--gold-pale)), hsl(var(--card)));
+}
+
+
 .card-hover {
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   will-change: transform, box-shadow;

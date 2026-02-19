@@ -74,6 +74,14 @@ export default {
           pale: "hsl(var(--slate-pale))",
           foreground: "hsl(var(--slate-foreground))",
         },
+        // Gold — premium accent
+        gold: {
+          DEFAULT: "hsl(var(--gold))",
+          light: "hsl(var(--gold-light))",
+          pale: "hsl(var(--gold-pale))",
+          deep: "hsl(var(--gold-deep))",
+          foreground: "hsl(var(--gold-foreground))",
+        },
       },
       borderRadius: {
         lg: "var(--radius)",
