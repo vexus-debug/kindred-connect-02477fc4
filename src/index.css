@@ -58,8 +58,15 @@
     --success-foreground: 0 0% 100%;
     --warning: 38 92% 50%;
     --warning-foreground: 0 0% 100%;
-    --info: 185 72% 38%;
+    /* Info now uses Slate Blue for sophistication */
+    --info: 220 25% 40%;
     --info-foreground: 0 0% 100%;
+
+    /* Slate Blue — sophisticated accent complement to teal */
+    --slate: 220 25% 40%;
+    --slate-light: 220 30% 55%;
+    --slate-pale: 220 30% 94%;
+    --slate-foreground: 0 0% 100%;
 
     /* Elevation shadows — teal-tinted */
     --shadow-xs: 0 1px 2px 0 hsl(185 40% 10% / 0.04);
@@ -107,6 +114,12 @@
     --border: 185 30% 16%;
     --input: 185 30% 16%;
     --ring: 185 65% 48%;
+
+    /* Slate Blue dark mode */
+    --slate: 220 30% 55%;
+    --slate-light: 220 35% 68%;
+    --slate-pale: 220 25% 18%;
+    --slate-foreground: 0 0% 100%;
 
     --shadow-xs: 0 1px 2px 0 hsl(0 0% 0% / 0.18);
     --shadow-sm: 0 1px 3px 0 hsl(0 0% 0% / 0.22), 0 1px 2px -1px hsl(0 0% 0% / 0.16);
