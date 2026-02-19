@@ -2496,6 +2496,181 @@ export type Database = {
           },
         ]
       }
+      shop_order_items: {
+        Row: {
+          created_at: string
+          id: string
+          line_total: number
+          order_id: string
+          product_id: string
+          product_name: string
+          quantity: number
+          unit_price: number
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          line_total?: number
+          order_id: string
+          product_id: string
+          product_name: string
+          quantity?: number
+          unit_price?: number
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          line_total?: number
+          order_id?: string
+          product_id?: string
+          product_name?: string
+          quantity?: number
+          unit_price?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "shop_order_items_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "shop_orders"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "shop_order_items_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "shop_products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      shop_orders: {
+        Row: {
+          created_at: string
+          customer_email: string | null
+          customer_name: string
+          customer_phone: string | null
+          id: string
+          notes: string | null
+          order_number: string
+          org_id: string
+          payment_method: string | null
+          payment_status: string
+          shipping_address: string | null
+          status: string
+          subtotal: number
+          tax: number
+          total: number
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          customer_email?: string | null
+          customer_name: string
+          customer_phone?: string | null
+          id?: string
+          notes?: string | null
+          order_number: string
+          org_id: string
+          payment_method?: string | null
+          payment_status?: string
+          shipping_address?: string | null
+          status?: string
+          subtotal?: number
+          tax?: number
+          total?: number
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          customer_email?: string | null
+          customer_name?: string
+          customer_phone?: string | null
+          id?: string
+          notes?: string | null
+          order_number?: string
+          org_id?: string
+          payment_method?: string | null
+          payment_status?: string
+          shipping_address?: string | null
+          status?: string
+          subtotal?: number
+          tax?: number
+          total?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "shop_orders_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      shop_products: {
+        Row: {
+          category: string
+          compare_at_price: number | null
+          created_at: string
+          description: string | null
+          features: string[] | null
+          id: string
+          image_url: string | null
+          images: string[] | null
+          is_active: boolean
+          name: string
+          org_id: string
+          price: number
+          sku: string | null
+          stock: number
+          updated_at: string
+        }
+        Insert: {
+          category?: string
+          compare_at_price?: number | null
+          created_at?: string
+          description?: string | null
+          features?: string[] | null
+          id?: string
+          image_url?: string | null
+          images?: string[] | null
+          is_active?: boolean
+          name: string
+          org_id: string
+          price?: number
+          sku?: string | null
+          stock?: number
+          updated_at?: string
+        }
+        Update: {
+          category?: string
+          compare_at_price?: number | null
+          created_at?: string
+          description?: string | null
+          features?: string[] | null
+          id?: string
+          image_url?: string | null
+          images?: string[] | null
+          is_active?: boolean
+          name?: string
+          org_id?: string
+          price?: number
+          sku?: string | null
+          stock?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "shop_products_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       staff: {
         Row: {
           created_at: string
