@@ -50,12 +50,15 @@ import LabTechniciansPage from "./pages/dashboard/LabTechniciansPage";
 import LabBillingPage from "./pages/dashboard/LabBillingPage";
 import LabSettingsPage from "./pages/dashboard/LabSettingsPage";
 import PublicClinicSite from "./pages/PublicClinicSite";
+import PublicShopPage from "./pages/PublicShopPage";
+import PublicProductPage from "./pages/PublicProductPage";
 import WaitingListPage from "./pages/dashboard/WaitingListPage";
 import SchedulesPage from "./pages/dashboard/SchedulesPage";
 import SuppliersPage from "./pages/dashboard/SuppliersPage";
 import PurchaseOrdersPage from "./pages/dashboard/PurchaseOrdersPage";
 import TreatmentMaterialsPage from "./pages/dashboard/TreatmentMaterialsPage";
 import AdvancedAnalyticsPage from "./pages/dashboard/AdvancedAnalyticsPage";
+import ShopManagementPage from "./pages/dashboard/ShopManagementPage";
 
 // Admin pages
 import AdminOverview from "./pages/admin/AdminOverview";
@@ -107,6 +110,8 @@ const App = () => (
           <Routes>
             <Route path="/" element={<Login />} />
             <Route path="/site/:slug" element={<PublicClinicSite />} />
+            <Route path="/site/:slug/shop" element={<PublicShopPage />} />
+            <Route path="/site/:slug/shop/:productId" element={<PublicProductPage />} />
             <Route path="/select-clinic" element={<SelectClinic />} />
 
             {/* Legacy redirect */}
@@ -170,6 +175,7 @@ const App = () => (
             <Route path="/clinic/:slug/purchase-orders" element={<ClinicRoute><PurchaseOrdersPage /></ClinicRoute>} />
             <Route path="/clinic/:slug/treatment-materials" element={<ClinicRoute><TreatmentMaterialsPage /></ClinicRoute>} />
             <Route path="/clinic/:slug/analytics" element={<ClinicRoute><AdvancedAnalyticsPage /></ClinicRoute>} />
+            <Route path="/clinic/:slug/shop-management" element={<ClinicRoute><ShopManagementPage /></ClinicRoute>} />
             <Route path="/clinic/:slug/lab" element={<ClinicRoute><LabDashboardPage /></ClinicRoute>} />
             <Route path="/clinic/:slug/lab/cases" element={<ClinicRoute><LabCasesPage /></ClinicRoute>} />
             <Route path="/clinic/:slug/lab/technicians" element={<ClinicRoute><LabTechniciansPage /></ClinicRoute>} />

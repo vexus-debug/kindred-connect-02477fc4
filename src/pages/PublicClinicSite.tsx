@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo, useRef } from "react";
-import { useParams } from "react-router-dom";
+import { useParams, Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -11,7 +11,7 @@ import { toast } from "@/hooks/use-toast";
 import {
   MapPin, Phone, Mail, Clock, CheckCircle, Calendar, Star,
   Shield, ChevronDown, MessageCircle, Instagram, Facebook, ExternalLink,
-  Loader2, Stethoscope, Users, Award,
+  Loader2, Stethoscope, Users, Award, ShoppingBag,
 } from "lucide-react";
 import { motion, useInView } from "framer-motion";
 
@@ -216,6 +216,11 @@ export default function PublicClinicSite() {
             <span className="text-lg font-bold text-white drop-shadow-sm">{clinic?.name}</span>
           </div>
           <div className="flex items-center gap-2">
+            <Link to={`/site/${slug}/shop`}>
+              <Button size="sm" variant="ghost" className="text-white/90 hover:text-white hover:bg-white/10">
+                <ShoppingBag className="mr-1.5 h-3.5 w-3.5" /> Shop
+              </Button>
+            </Link>
             {clinic?.phone && (
               <Button size="sm" variant="ghost" className="text-white/90 hover:text-white hover:bg-white/10 hidden sm:flex" asChild>
                 <a href={`tel:${clinic.phone}`}><Phone className="mr-1.5 h-3.5 w-3.5" /> Call</a>

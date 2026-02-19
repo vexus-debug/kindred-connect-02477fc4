@@ -79,6 +79,7 @@ const dentalNav: NavGroup[] = [
     label: "Admin",
     items: [
       { title: "Website Settings", path: "website-settings", icon: Globe },
+      { title: "Shop Management", path: "shop-management", icon: ShoppingCart },
       { title: "Lab Work", path: "lab-work", icon: FlaskConical },
       { title: "Staff", path: "staff", icon: UserCog },
       { title: "Schedules", path: "schedules", icon: CalendarClock },
