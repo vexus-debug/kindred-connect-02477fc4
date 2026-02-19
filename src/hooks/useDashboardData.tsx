@@ -154,11 +154,21 @@ export function useRecentActivity() {
 }
 
 export function useCurrentUserName() {
-  const { profile } = useAuth();
+  const { profile, user } = useAuth();
 
   return useQuery({
-    queryKey: ["current-user-name", profile?.full_name],
-    queryFn: async () => profile?.full_name || "Doctor",
+    queryKey: ["current-user-name", profile?.full_name, user?.email],
+    queryFn: async () => {
+      if (profile?.full_name) return profile.full_name;
+      if (user?.email) {
+        // Extract name from email (e.g. "john.doe@..." -> "John Doe")
+        const local = user.email.split("@")[0];
+        return local
+          .replace(/[._-]/g, " ")
+          .replace(/\b\w/g, (c) => c.toUpperCase());
+      }
+      return "Doctor";
+    },
     enabled: true,
   });
 }
