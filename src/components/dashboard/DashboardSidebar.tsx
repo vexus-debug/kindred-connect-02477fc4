@@ -72,8 +72,10 @@ export function DashboardSidebar() {
 
           return (
             <SidebarGroup key={group.label}>
-              <SidebarGroupLabel className="text-[10px] uppercase tracking-[0.15em] text-sidebar-foreground/40 font-semibold px-2 mb-0.5">
+              <SidebarGroupLabel className="text-[10px] uppercase tracking-[0.15em] text-sidebar-foreground/40 font-semibold px-2 mb-0.5 flex items-center gap-1.5">
+                <span className="h-px flex-1 bg-sidebar-border/40" />
                 {group.label}
+                <span className="h-px flex-1 bg-sidebar-border/40" />
               </SidebarGroupLabel>
               <SidebarGroupContent>
                 <SidebarMenu>
