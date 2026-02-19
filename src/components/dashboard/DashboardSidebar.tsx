@@ -5,18 +5,19 @@ import {
   Sidebar, SidebarContent, SidebarGroup, SidebarGroupContent,
   SidebarGroupLabel, SidebarMenu, SidebarMenuButton, SidebarMenuItem, SidebarFooter,
 } from "@/components/ui/sidebar";
-import { LogOut, Building2, Shield } from "lucide-react";
+import { LogOut, Building2, Shield, ChevronRight } from "lucide-react";
 import { useLocation, useNavigate } from "react-router-dom";
 import clinexusLogoWhite from "@/assets/clinexus-logo-white.png";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Badge } from "@/components/ui/badge";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { useAuth } from "@/hooks/useAuth";
 import { useOrg } from "@/hooks/useOrg";
 import { hasPageAccess, getRoleLabel } from "@/config/roleAccess";
 import { getClinicConfig, sharedNavItems } from "@/config/clinicTypeConfig";
 import { useUnreadCount, useRealtimeNotifications } from "@/hooks/useNotifications";
 import { useUnreadMessageCount, useRealtimeMessages } from "@/hooks/useMessages";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
+import { cn } from "@/lib/utils";
 
 export function DashboardSidebar() {
   const { state, setOpenMobile, isMobile } = useSidebar();
@@ -39,170 +40,231 @@ export function DashboardSidebar() {
   }, [location.pathname, isMobile, setOpenMobile]);
 
   const displayName = profile?.full_name || user?.email?.split("@")[0] || "Staff";
-  const initials = displayName.split(" ").map((n) => n[0]).join("").toUpperCase().slice(0, 2);
+  const initials = displayName.split(" ").map((n: string) => n[0]).join("").toUpperCase().slice(0, 2);
 
   const handleSignOut = async () => {
     await signOut();
     navigate("/");
   };
 
-  return (
-    <Sidebar collapsible="icon" className="border-r border-sidebar-border bg-sidebar text-sidebar-foreground transition-all duration-300">
-      {/* Logo / Clinic Name */}
-      <div className="flex items-center gap-2.5 px-4 py-4 border-b border-sidebar-border">
-        <div className="relative shrink-0">
-          <img src={clinexusLogoWhite} alt="Clinexus" className="h-8 w-auto object-contain" />
-        </div>
-        {!collapsed && (
-          <div className="flex flex-col overflow-hidden">
-            <span className="text-sm font-bold text-sidebar-primary-foreground truncate tracking-tight">
-              {currentOrg?.org_name || "Clinexus"}
-            </span>
-            <span className="text-[10px] text-sidebar-foreground/60 font-medium capitalize">
-              {config.label}
-            </span>
-          </div>
+  const NavItem = ({ item, fullUrl }: { item: any; fullUrl: string }) => {
+    const active = location.pathname === fullUrl;
+    const badge =
+      item.path === "messages" && unreadMsgCount > 0 ? unreadMsgCount :
+      item.path === "notifications" && unreadCount > 0 ? unreadCount : 0;
+
+    const content = (
+      <NavLink
+        to={fullUrl}
+        className={cn(
+          "relative flex items-center gap-3 rounded-lg px-3 py-2 text-sm transition-all duration-200 group w-full",
+          active
+            ? "bg-sidebar-primary/15 text-sidebar-primary font-medium border-l-[3px] border-sidebar-primary pl-[calc(0.75rem-3px)]"
+            : "text-sidebar-foreground/70 hover:bg-white/8 hover:text-sidebar-foreground border-l-[3px] border-transparent pl-[calc(0.75rem-3px)]"
         )}
+        activeClassName=""
+      >
+        {active && (
+          <motion.div
+            layoutId="sidebar-active-bg"
+            className="absolute inset-0 rounded-lg bg-sidebar-primary/10"
+            transition={{ type: "spring", bounce: 0.15, duration: 0.4 }}
+          />
+        )}
+        <item.icon className={cn(
+          "h-4 w-4 shrink-0 relative z-10 transition-all duration-200",
+          active ? "text-sidebar-primary" : "text-sidebar-foreground/50 group-hover:text-sidebar-foreground/80 group-hover:scale-110"
+        )} />
+        {!collapsed && (
+          <span className="relative z-10 truncate">{item.title}</span>
+        )}
+        {!collapsed && badge > 0 && (
+          <span className="relative z-10 ml-auto flex h-5 min-w-5 items-center justify-center rounded-full bg-destructive text-[10px] font-semibold text-destructive-foreground px-1 animate-pulse">
+            {badge > 99 ? "99+" : badge}
+          </span>
+        )}
+        {collapsed && badge > 0 && (
+          <span className="absolute -top-1 -right-1 h-4 w-4 flex items-center justify-center rounded-full bg-destructive text-[8px] font-bold text-white z-20">
+            {badge}
+          </span>
+        )}
+      </NavLink>
+    );
+
+    if (collapsed) {
+      return (
+        <TooltipProvider delayDuration={0}>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <SidebarMenuButton asChild isActive={active} tooltip={item.title}>
+                {content}
+              </SidebarMenuButton>
+            </TooltipTrigger>
+            <TooltipContent side="right" className="text-xs font-medium">
+              {item.title}
+            </TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
+      );
+    }
+
+    return (
+      <SidebarMenuButton asChild isActive={active} tooltip={item.title}>
+        {content}
+      </SidebarMenuButton>
+    );
+  };
+
+  return (
+    <Sidebar
+      collapsible="icon"
+      className="border-r-0 transition-all duration-300"
+      style={{
+        background: `linear-gradient(180deg, hsl(var(--sidebar-grad-top)) 0%, hsl(var(--sidebar-grad-bottom)) 100%)`,
+      }}
+    >
+      {/* ── Logo / Clinic Name ── */}
+      <div className="flex items-center gap-3 px-4 py-[1.125rem] border-b border-white/8">
+        <div className="relative shrink-0">
+          <img
+            src={clinexusLogoWhite}
+            alt="Clinexus"
+            className="h-7 w-auto object-contain"
+          />
+        </div>
+        <AnimatePresence>
+          {!collapsed && (
+            <motion.div
+              initial={{ opacity: 0, x: -8 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: -8 }}
+              transition={{ duration: 0.2 }}
+              className="flex flex-col overflow-hidden"
+            >
+              <span className="text-[13px] font-bold text-white truncate leading-tight">
+                {currentOrg?.org_name || "Clinexus"}
+              </span>
+              <span className="text-[10px] text-sidebar-foreground/50 font-medium capitalize tracking-wide">
+                {config.label}
+              </span>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
 
-      <SidebarContent className="pt-2 px-2">
+      <SidebarContent className="pt-3 px-2 overflow-y-auto scrollbar-none">
         {config.navGroups.map((group) => {
           const visibleItems = group.items.filter((item) => hasPageAccess(orgRole, item.path));
           if (visibleItems.length === 0) return null;
 
           return (
-            <SidebarGroup key={group.label}>
-              <SidebarGroupLabel className="text-[10px] uppercase tracking-[0.15em] text-sidebar-foreground/40 font-semibold px-2 mb-0.5 flex items-center gap-1.5">
-                <span className="h-px flex-1 bg-sidebar-border/40" />
-                {group.label}
-                <span className="h-px flex-1 bg-sidebar-border/40" />
-              </SidebarGroupLabel>
+            <SidebarGroup key={group.label} className="mb-1">
+              {!collapsed && (
+                <SidebarGroupLabel className="text-[9px] uppercase tracking-[0.18em] text-sidebar-foreground/35 font-semibold px-2 mb-1 flex items-center gap-2">
+                  <span className="h-px flex-1 bg-white/8" />
+                  {group.label}
+                  <span className="h-px flex-1 bg-white/8" />
+                </SidebarGroupLabel>
+              )}
               <SidebarGroupContent>
-                <SidebarMenu>
-                  {visibleItems.map((item) => {
-                    const fullUrl = `${basePath}/${item.path}`;
-                    const active = location.pathname === fullUrl;
-                    return (
-                      <SidebarMenuItem key={item.title}>
-                        <SidebarMenuButton asChild isActive={active} tooltip={item.title}>
-                          <NavLink
-                            to={fullUrl}
-                            className="relative flex items-center gap-3 rounded-lg px-3 py-2 text-sm transition-all duration-200 hover:bg-sidebar-accent group"
-                            activeClassName="bg-sidebar-accent text-sidebar-primary font-medium"
-                          >
-                            {active && (
-                              <motion.div
-                                layoutId="sidebar-active-pill"
-                                className="absolute inset-0 rounded-lg bg-white/15 border border-white/20"
-                                transition={{ type: "spring", bounce: 0.2, duration: 0.5 }}
-                              />
-                            )}
-                            <item.icon className={`h-4 w-4 shrink-0 relative z-10 transition-transform duration-200 group-hover:scale-110 ${active ? "text-sidebar-primary" : "text-sidebar-foreground/70"}`} />
-                            <span className="relative z-10">{item.title}</span>
-                            {item.path === "messages" && !collapsed && unreadMsgCount > 0 && (
-                              <Badge variant="destructive" className="ml-auto h-5 min-w-5 text-[10px] px-1.5 animate-pulse relative z-10">
-                                {unreadMsgCount}
-                              </Badge>
-                            )}
-                            {item.path === "notifications" && !collapsed && unreadCount > 0 && (
-                              <Badge variant="destructive" className="ml-auto h-5 min-w-5 text-[10px] px-1.5 animate-pulse relative z-10">
-                                {unreadCount}
-                              </Badge>
-                            )}
-                          </NavLink>
-                        </SidebarMenuButton>
-                      </SidebarMenuItem>
-                    );
-                  })}
+                <SidebarMenu className="gap-0.5">
+                  {visibleItems.map((item) => (
+                    <SidebarMenuItem key={item.title}>
+                      <NavItem item={item} fullUrl={`${basePath}/${item.path}`} />
+                    </SidebarMenuItem>
+                  ))}
                 </SidebarMenu>
               </SidebarGroupContent>
             </SidebarGroup>
           );
         })}
 
-        {/* Shared nav items (messages, notifications, tutorials, settings) */}
-        <SidebarGroup>
+        {/* Shared nav items */}
+        <SidebarGroup className="mt-1">
+          {!collapsed && (
+            <SidebarGroupLabel className="text-[9px] uppercase tracking-[0.18em] text-sidebar-foreground/35 font-semibold px-2 mb-1 flex items-center gap-2">
+              <span className="h-px flex-1 bg-white/8" />
+              General
+              <span className="h-px flex-1 bg-white/8" />
+            </SidebarGroupLabel>
+          )}
           <SidebarGroupContent>
-            <SidebarMenu>
-              {sharedNavItems.filter((item) => hasPageAccess(orgRole, item.path)).map((item) => {
-                const fullUrl = `${basePath}/${item.path}`;
-                const active = location.pathname === fullUrl;
-                return (
-                  <SidebarMenuItem key={item.title}>
-                    <SidebarMenuButton asChild isActive={active} tooltip={item.title}>
-                      <NavLink
-                        to={fullUrl}
-                        className="relative flex items-center gap-3 rounded-lg px-3 py-2 text-sm transition-all duration-200 hover:bg-sidebar-accent group"
-                        activeClassName="bg-sidebar-accent text-sidebar-primary font-medium"
-                      >
-                        <item.icon className={`h-4 w-4 shrink-0 transition-transform duration-200 group-hover:scale-110 ${active ? "text-sidebar-primary" : "text-sidebar-foreground/70"}`} />
-                        <span>{item.title}</span>
-                        {item.path === "messages" && !collapsed && unreadMsgCount > 0 && (
-                          <Badge variant="destructive" className="ml-auto h-5 min-w-5 text-[10px] px-1.5 animate-pulse">
-                            {unreadMsgCount}
-                          </Badge>
-                        )}
-                        {item.path === "notifications" && !collapsed && unreadCount > 0 && (
-                          <Badge variant="destructive" className="ml-auto h-5 min-w-5 text-[10px] px-1.5 animate-pulse">
-                            {unreadCount}
-                          </Badge>
-                        )}
-                      </NavLink>
-                    </SidebarMenuButton>
-                  </SidebarMenuItem>
-                );
-              })}
+            <SidebarMenu className="gap-0.5">
+              {sharedNavItems.filter((item) => hasPageAccess(orgRole, item.path)).map((item) => (
+                <SidebarMenuItem key={item.title}>
+                  <NavItem item={item} fullUrl={`${basePath}/${item.path}`} />
+                </SidebarMenuItem>
+              ))}
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
       </SidebarContent>
 
-      {/* User Profile Footer */}
-      <SidebarFooter className="border-t border-sidebar-border p-3">
-        <div className="flex items-center gap-3">
-          <button onClick={() => navigate(`${basePath}/profile`)} className="shrink-0 group" title="My Profile">
-            <Avatar className="h-8 w-8 ring-2 ring-sidebar-primary/20 transition-all duration-200 group-hover:ring-sidebar-primary/40">
+      {/* ── User Footer ── */}
+      <SidebarFooter className="border-t border-white/8 p-3">
+        <div className={cn("flex items-center gap-2.5", collapsed && "justify-center")}>
+          <button
+            onClick={() => navigate(`${basePath}/profile`)}
+            className="shrink-0 group"
+            title="My Profile"
+          >
+            <Avatar className="h-8 w-8 ring-2 ring-white/15 transition-all duration-200 group-hover:ring-sidebar-primary/50">
               <AvatarImage src={profile?.avatar_url || ""} />
-              <AvatarFallback className="bg-gradient-to-br from-sidebar-primary/30 to-sidebar-primary/10 text-sidebar-primary text-xs font-semibold">{initials}</AvatarFallback>
+              <AvatarFallback className="bg-gradient-to-br from-sidebar-primary/40 to-sidebar-primary/20 text-sidebar-primary text-xs font-bold">
+                {initials}
+              </AvatarFallback>
             </Avatar>
           </button>
-          {!collapsed && (
-            <button onClick={() => navigate(`${basePath}/profile`)} className="flex flex-col overflow-hidden flex-1 text-left hover:opacity-80 transition-opacity">
-              <span className="text-sm font-medium truncate text-sidebar-primary-foreground">{displayName}</span>
-              <Badge variant="outline" className="w-fit text-[10px] px-1.5 py-0 mt-0.5 border-sidebar-primary/30 text-sidebar-primary/80">
-                {getRoleLabel(orgRole)}
-              </Badge>
-            </button>
-          )}
-          {!collapsed && (
-            <div className="flex items-center gap-1">
-              {roles.includes("super_admin") && (
-                <button
-                  onClick={() => navigate("/admin")}
-                  className="text-red-400 hover:text-red-300 transition-colors p-1.5 rounded-md hover:bg-red-500/10"
-                  title="Admin Panel"
-                >
-                  <Shield className="h-4 w-4" />
-                </button>
-              )}
-              {orgMemberships.length > 1 && (
-                <button
-                  onClick={() => navigate("/select-clinic")}
-                  className="text-muted-foreground hover:text-primary transition-colors p-1.5 rounded-md hover:bg-primary/10"
-                  title="Switch clinic"
-                >
-                  <Building2 className="h-4 w-4" />
-                </button>
-              )}
-              <button
-                onClick={handleSignOut}
-                className="text-muted-foreground hover:text-destructive transition-colors p-1.5 rounded-md hover:bg-destructive/10"
-                title="Sign out"
+
+          <AnimatePresence>
+            {!collapsed && (
+              <motion.div
+                initial={{ opacity: 0, x: -8 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -8 }}
+                transition={{ duration: 0.2 }}
+                className="flex items-center flex-1 min-w-0 gap-2"
               >
-                <LogOut className="h-4 w-4" />
-              </button>
-            </div>
-          )}
+                <button
+                  onClick={() => navigate(`${basePath}/profile`)}
+                  className="flex flex-col overflow-hidden flex-1 text-left hover:opacity-80 transition-opacity"
+                >
+                  <span className="text-[13px] font-semibold truncate text-white leading-tight">{displayName}</span>
+                  <span className="text-[10px] text-sidebar-primary font-medium capitalize mt-0.5">
+                    {getRoleLabel(orgRole)}
+                  </span>
+                </button>
+
+                <div className="flex items-center gap-0.5 shrink-0">
+                  {roles.includes("super_admin") && (
+                    <button
+                      onClick={() => navigate("/admin")}
+                      className="text-destructive/60 hover:text-destructive transition-colors p-1.5 rounded-md hover:bg-destructive/10"
+                      title="Admin Panel"
+                    >
+                      <Shield className="h-3.5 w-3.5" />
+                    </button>
+                  )}
+                  {orgMemberships.length > 1 && (
+                    <button
+                      onClick={() => navigate("/select-clinic")}
+                      className="text-sidebar-foreground/40 hover:text-sidebar-primary transition-colors p-1.5 rounded-md hover:bg-sidebar-primary/10"
+                      title="Switch clinic"
+                    >
+                      <Building2 className="h-3.5 w-3.5" />
+                    </button>
+                  )}
+                  <button
+                    onClick={handleSignOut}
+                    className="text-sidebar-foreground/40 hover:text-destructive transition-colors p-1.5 rounded-md hover:bg-destructive/10"
+                    title="Sign out"
+                  >
+                    <LogOut className="h-3.5 w-3.5" />
+                  </button>
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
         </div>
       </SidebarFooter>
     </Sidebar>
