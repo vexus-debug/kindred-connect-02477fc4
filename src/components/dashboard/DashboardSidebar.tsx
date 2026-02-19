@@ -7,7 +7,7 @@ import {
 } from "@/components/ui/sidebar";
 import { LogOut, Building2, Shield, ChevronRight } from "lucide-react";
 import { useLocation, useNavigate } from "react-router-dom";
-import clinexusLogoWhite from "@/assets/clinexus-logo-white.png";
+import clinexusLogoRect from "@/assets/clinexus-logo-rect.png";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { useAuth } from "@/hooks/useAuth";
@@ -127,9 +127,9 @@ export function DashboardSidebar() {
       <div className="flex items-center gap-3 px-4 py-[1.125rem] border-b border-white/8">
         <div className="relative shrink-0">
           <img
-            src={clinexusLogoWhite}
+            src={clinexusLogoRect}
             alt="Clinexus"
-            className="h-7 w-auto object-contain"
+            className="h-7 w-auto object-contain mix-blend-screen"
           />
         </div>
         <AnimatePresence>
