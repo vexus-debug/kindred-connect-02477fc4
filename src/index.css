@@ -10,7 +10,7 @@
 
 @layer base {
   :root {
-    --background: 216 30% 97%;
+    --background: 220 20% 95%;
     --foreground: 222 47% 11%;
 
     --card: 0 0% 100%;
@@ -19,12 +19,12 @@
     --popover: 0 0% 100%;
     --popover-foreground: 222 47% 11%;
 
-    /* Primary: Premium sky blue (lighter, refined) */
-    --primary: 215 75% 58%;
+    /* Primary: Deep Navy #1a2465 */
+    --primary: 230 58% 25%;
     --primary-foreground: 0 0% 100%;
 
-    /* Secondary: Soft slate-blue for contrast */
-    --secondary: 220 50% 32%;
+    /* Secondary: Slightly lighter navy for contrast */
+    --secondary: 230 50% 32%;
     --secondary-foreground: 0 0% 100%;
 
     /* Muted: Cool blue-gray */
@@ -40,15 +40,15 @@
 
     --border: 216 18% 90%;
     --input: 216 18% 90%;
-    --ring: 215 75% 58%;
+    --ring: 230 58% 25%;
 
     --radius: 0.75rem;
 
     /* Extended palette tokens */
-    --dental-navy: 215 74% 58%;
-    --dental-navy-light: 215 74% 65%;
-    --dental-teal: 215 75% 58%;
-    --dental-teal-light: 212 72% 65%;
+    --dental-navy: 230 58% 25%;
+    --dental-navy-light: 230 50% 35%;
+    --dental-teal: 230 58% 25%;
+    --dental-teal-light: 228 50% 40%;
     --dental-teal-pale: 216 50% 96%;
     --dental-mint: 216 35% 96%;
     --dental-cream: 40 30% 97%;
@@ -68,14 +68,14 @@
     --shadow-lg: 0 10px 15px -3px hsl(222 47% 11% / 0.07), 0 4px 6px -4px hsl(222 47% 11% / 0.03);
     --shadow-xl: 0 20px 25px -5px hsl(222 47% 11% / 0.08), 0 8px 10px -6px hsl(222 47% 11% / 0.03);
 
-    /* Sidebar: Clinexus Blue #4487e4 */
-    --sidebar-background: 215 74% 58%;
+    /* Sidebar: Deep Navy #1a2465 */
+    --sidebar-background: 230 58% 25%;
     --sidebar-foreground: 0 0% 100%;
     --sidebar-primary: 0 0% 100%;
-    --sidebar-primary-foreground: 215 74% 58%;
-    --sidebar-accent: 215 74% 52%;
+    --sidebar-primary-foreground: 230 58% 25%;
+    --sidebar-accent: 230 58% 30%;
     --sidebar-accent-foreground: 0 0% 100%;
-    --sidebar-border: 215 74% 50%;
+    --sidebar-border: 230 50% 32%;
     --sidebar-ring: 0 0% 100%;
   }
 
@@ -114,13 +114,13 @@
     --shadow-lg: 0 10px 15px -3px hsl(0 0% 0% / 0.3), 0 4px 6px -4px hsl(0 0% 0% / 0.15);
     --shadow-xl: 0 20px 25px -5px hsl(0 0% 0% / 0.35), 0 8px 10px -6px hsl(0 0% 0% / 0.15);
 
-    --sidebar-background: 215 74% 50%;
+    --sidebar-background: 230 58% 20%;
     --sidebar-foreground: 0 0% 100%;
     --sidebar-primary: 0 0% 100%;
-    --sidebar-primary-foreground: 215 74% 50%;
-    --sidebar-accent: 215 74% 44%;
+    --sidebar-primary-foreground: 230 58% 20%;
+    --sidebar-accent: 230 58% 26%;
     --sidebar-accent-foreground: 0 0% 100%;
-    --sidebar-border: 215 74% 44%;
+    --sidebar-border: 230 50% 28%;
     --sidebar-ring: 0 0% 100%;
   }
 }
