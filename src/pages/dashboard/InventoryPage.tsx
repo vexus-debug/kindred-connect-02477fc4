@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
-import { AlertTriangle, Plus, Pencil, Trash2, Package } from "lucide-react";
+import { AlertTriangle, Plus, Pencil, Trash2, Package, Minus } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import { useInventory, useAddInventoryItem, useUpdateInventoryStock, useDeleteInventoryItem } from "@/hooks/useInventory";
 import { EditInventoryDialog } from "@/components/dashboard/EditInventoryDialog";
@@ -33,6 +33,8 @@ export default function InventoryPage() {
   const [restockId, setRestockId] = useState<string | null>(null);
   const [restockQty, setRestockQty] = useState("");
   const [editItem, setEditItem] = useState<InventoryItem | null>(null);
+  const [reduceId, setReduceId] = useState<string | null>(null);
+  const [reduceQty, setReduceQty] = useState("");
 
   const [newName, setNewName] = useState("");
   const [newCategory, setNewCategory] = useState("General");
@@ -75,6 +77,25 @@ export default function InventoryPage() {
       toast({ title: "Stock updated" });
       setRestockId(null);
       setRestockQty("");
+    } catch (err: any) {
+      toast({ title: "Error", description: err.message, variant: "destructive" });
+    }
+  };
+
+  const handleReduce = async () => {
+    if (!reduceId || !reduceQty) return;
+    const item = inventory.find((i) => i.id === reduceId);
+    if (!item) return;
+    const qty = parseInt(reduceQty);
+    if (qty > item.quantity) {
+      toast({ title: "Cannot reduce", description: "Amount exceeds current stock", variant: "destructive" });
+      return;
+    }
+    try {
+      await updateStock.mutateAsync({ id: reduceId, quantity: item.quantity - qty });
+      toast({ title: "Stock reduced", description: `Used ${qty} ${item.unit} of ${item.name}` });
+      setReduceId(null);
+      setReduceQty("");
     } catch (err: any) {
       toast({ title: "Error", description: err.message, variant: "destructive" });
     }
@@ -167,9 +188,14 @@ export default function InventoryPage() {
                           <td className="py-3 px-4">
                             <div className="flex items-center gap-1">
                               {canManageStock && (
-                                <Button variant="outline" size="sm" className="h-7 text-xs border-border/50 opacity-0 group-hover:opacity-100 transition-opacity" onClick={() => { setRestockId(item.id); setRestockQty(""); }}>
-                                  Restock
-                                </Button>
+                                <>
+                                  <Button variant="outline" size="sm" className="h-7 text-xs border-border/50 opacity-0 group-hover:opacity-100 transition-opacity" onClick={() => { setRestockId(item.id); setRestockQty(""); }}>
+                                    Restock
+                                  </Button>
+                                  <Button variant="outline" size="sm" className="h-7 text-xs border-destructive/30 text-destructive opacity-0 group-hover:opacity-100 transition-opacity" onClick={() => { setReduceId(item.id); setReduceQty(""); }}>
+                                    <Minus className="mr-1 h-3 w-3" /> Use
+                                  </Button>
+                                </>
                               )}
                               <Button variant="ghost" size="icon" className="h-7 w-7 opacity-0 group-hover:opacity-100 transition-opacity" onClick={() => setEditItem(item)}>
                                 <Pencil className="h-3.5 w-3.5" />
@@ -252,6 +278,24 @@ export default function InventoryPage() {
             <Button variant="outline" onClick={() => setRestockId(null)}>Cancel</Button>
             <Button onClick={handleRestock} className="bg-secondary hover:bg-secondary/90" disabled={updateStock.isPending}>
               {updateStock.isPending ? "Updating..." : "Update Stock"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Use/Reduce Stock Dialog */}
+      <Dialog open={!!reduceId} onOpenChange={(open) => !open && setReduceId(null)}>
+        <DialogContent className="backdrop-blur-xl bg-card/95">
+          <DialogHeader><DialogTitle>Use Stock</DialogTitle></DialogHeader>
+          <p className="text-sm text-muted-foreground">Reduce inventory quantity for items used during procedures.</p>
+          <div className="space-y-1">
+            <Label className="text-xs">Quantity Used</Label>
+            <Input type="number" min={1} value={reduceQty} onChange={(e) => setReduceQty(e.target.value)} placeholder="Enter quantity used" className="bg-muted/30" />
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setReduceId(null)}>Cancel</Button>
+            <Button onClick={handleReduce} variant="destructive" disabled={updateStock.isPending}>
+              {updateStock.isPending ? "Reducing..." : "Reduce Stock"}
             </Button>
           </DialogFooter>
         </DialogContent>

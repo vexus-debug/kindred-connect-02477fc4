@@ -1,7 +1,9 @@
 import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Plus, FlaskConical } from "lucide-react";
+import { Plus, FlaskConical, MessageCircle, Mail, Share2 } from "lucide-react";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+
 import { CreateLabOrderDialog } from "@/components/dashboard/CreateLabOrderDialog";
 import { useLabOrders } from "@/hooks/useLabOrders";
 import { PageHeader } from "@/components/dashboard/PageHeader";
@@ -65,18 +67,45 @@ export default function LabWorkPage() {
                     </div>
                   </CardHeader>
                   <CardContent className="space-y-3 pt-3">
-                    {orders.map((order) => (
+                    {orders.map((order) => {
+                      const patientName = order.patients ? `${order.patients.first_name} ${order.patients.last_name}` : "Unknown";
+                      const orderSummary = `Lab Order: ${order.lab_work_type}\nPatient: ${patientName}\nLab: ${order.lab_name}${order.due_date ? `\nDue: ${order.due_date}` : ""}${order.notes ? `\nNotes: ${order.notes}` : ""}`;
+                      const whatsAppUrl = `https://wa.me/?text=${encodeURIComponent(orderSummary)}`;
+                      const emailUrl = `mailto:?subject=${encodeURIComponent(`Lab Order - ${order.lab_work_type} for ${patientName}`)}&body=${encodeURIComponent(orderSummary)}`;
+                      return (
                       <div key={order.id} className="p-3 rounded-lg border border-border/30 bg-card/50 hover:shadow-md hover:border-secondary/20 transition-all duration-200 group cursor-pointer">
-                        <p className="text-sm font-medium group-hover:text-secondary transition-colors">{order.lab_work_type}</p>
-                        <p className="text-xs text-muted-foreground mt-1">
-                          {order.patients ? `${order.patients.first_name} ${order.patients.last_name}` : "Unknown"}
-                        </p>
+                        <div className="flex items-start justify-between">
+                          <div>
+                            <p className="text-sm font-medium group-hover:text-secondary transition-colors">{order.lab_work_type}</p>
+                            <p className="text-xs text-muted-foreground mt-1">{patientName}</p>
+                          </div>
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <Button variant="ghost" size="icon" className="h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity shrink-0">
+                                <Share2 className="h-3.5 w-3.5" />
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end">
+                              <DropdownMenuItem asChild>
+                                <a href={whatsAppUrl} target="_blank" rel="noopener noreferrer">
+                                  <MessageCircle className="mr-2 h-4 w-4 text-emerald-600" /> Send via WhatsApp
+                                </a>
+                              </DropdownMenuItem>
+                              <DropdownMenuItem asChild>
+                                <a href={emailUrl}>
+                                  <Mail className="mr-2 h-4 w-4 text-primary" /> Send via Email
+                                </a>
+                              </DropdownMenuItem>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
+                        </div>
                         <div className="flex justify-between items-center mt-2 pt-1.5 border-t border-border/20">
                           <span className="text-[10px] text-muted-foreground font-mono">{order.lab_name}</span>
                           {order.due_date && <span className="text-[10px] text-muted-foreground font-mono">Due: {order.due_date}</span>}
                         </div>
                       </div>
-                    ))}
+                    );
+                    })}
                     {orders.length === 0 && (
                       <div className="flex flex-col items-center py-6">
                         <FlaskConical className="h-6 w-6 text-muted-foreground/30 mb-1.5" />

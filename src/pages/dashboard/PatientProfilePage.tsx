@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Progress } from "@/components/ui/progress";
-import { ArrowLeft, Phone, Mail, AlertTriangle, User, FileText, Pencil, Camera, Plus, Upload } from "lucide-react";
+import { ArrowLeft, Phone, Mail, AlertTriangle, User, FileText, Pencil, Camera, Plus, Upload, MessageCircle, ExternalLink } from "lucide-react";
 import {
   usePatientDetail, usePatientVisits, usePatientTreatmentPlans, usePatientInvoices, usePatientPrescriptions,
 } from "@/hooks/usePatientProfile";
@@ -164,12 +164,45 @@ export default function PatientProfilePage() {
                   <CardTitle className="text-sm flex items-center gap-2"><Phone className="h-4 w-4" /> Contact & Emergency</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-3 text-sm">
-                  <div className="flex items-center gap-2"><Phone className="h-3.5 w-3.5 text-muted-foreground" />{patient.phone}</div>
-                  <div className="flex items-center gap-2"><Mail className="h-3.5 w-3.5 text-muted-foreground" />{patient.email || "N/A"}</div>
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2"><Phone className="h-3.5 w-3.5 text-muted-foreground" />{patient.phone}</div>
+                    <div className="flex items-center gap-1">
+                      {patient.phone && (
+                        <>
+                          <Button variant="ghost" size="icon" className="h-7 w-7" asChild>
+                            <a href={`tel:${patient.phone}`} title="Call patient"><Phone className="h-3.5 w-3.5 text-primary" /></a>
+                          </Button>
+                          <Button variant="ghost" size="icon" className="h-7 w-7" asChild>
+                            <a href={`https://wa.me/${patient.phone.replace(/[^0-9+]/g, '')}`} target="_blank" rel="noopener noreferrer" title="WhatsApp patient"><MessageCircle className="h-3.5 w-3.5 text-emerald-600" /></a>
+                          </Button>
+                        </>
+                      )}
+                    </div>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2"><Mail className="h-3.5 w-3.5 text-muted-foreground" />{patient.email || "N/A"}</div>
+                    {patient.email && (
+                      <Button variant="ghost" size="icon" className="h-7 w-7" asChild>
+                        <a href={`mailto:${patient.email}`} title="Email patient"><ExternalLink className="h-3.5 w-3.5 text-primary" /></a>
+                      </Button>
+                    )}
+                  </div>
                   <div className="border-t pt-3 mt-3">
                     <p className="text-xs text-muted-foreground mb-1">Emergency Contact</p>
                     <p className="font-medium">{patient.emergency_contact_name || "N/A"}</p>
-                    <p className="text-muted-foreground">{patient.emergency_contact_phone || "N/A"}</p>
+                    <div className="flex items-center justify-between">
+                      <p className="text-muted-foreground">{patient.emergency_contact_phone || "N/A"}</p>
+                      {patient.emergency_contact_phone && (
+                        <div className="flex items-center gap-1">
+                          <Button variant="ghost" size="icon" className="h-6 w-6" asChild>
+                            <a href={`tel:${patient.emergency_contact_phone}`} title="Call emergency contact"><Phone className="h-3 w-3 text-primary" /></a>
+                          </Button>
+                          <Button variant="ghost" size="icon" className="h-6 w-6" asChild>
+                            <a href={`https://wa.me/${patient.emergency_contact_phone.replace(/[^0-9+]/g, '')}`} target="_blank" rel="noopener noreferrer" title="WhatsApp emergency"><MessageCircle className="h-3 w-3 text-emerald-600" /></a>
+                          </Button>
+                        </div>
+                      )}
+                    </div>
                   </div>
                 </CardContent>
               </Card>
