@@ -298,7 +298,7 @@ export default function RevenueAllocationPage() {
             <TableBody>
               {staffRules.map((rule: any) => (
                 <TableRow key={rule.id}>
-                  <TableCell className="font-medium">{rule.role_title}</TableCell>
+                  <TableCell className="font-medium">{rule.category}</TableCell>
                   <TableCell className="text-right">
                     {editingStaff ? (
                       <Input
@@ -316,10 +316,10 @@ export default function RevenueAllocationPage() {
                     )}
                   </TableCell>
                   <TableCell className="text-right font-mono text-sm">
-                    {fmt(staffBreakdown?.allTime?.[rule.role_title] || 0)}
+                    {fmt(staffBreakdown?.allTime?.[rule.category] || 0)}
                   </TableCell>
                   <TableCell className="text-right font-mono text-sm">
-                    {fmt(staffBreakdown?.thisMonth?.[rule.role_title] || 0)}
+                    {fmt(staffBreakdown?.thisMonth?.[rule.category] || 0)}
                   </TableCell>
                 </TableRow>
               ))}

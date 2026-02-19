@@ -150,20 +150,20 @@ export function useStaffAllocationBreakdown() {
     queryKey: ["staff-allocation-breakdown", orgId],
     enabled: !!orgId,
     queryFn: async () => {
-      const { data: allAllocations } = await (supabase as any).from("staff_revenue_allocations").select("staff_id, amount").eq("org_id", orgId);
+      const { data: allAllocations } = await (supabase as any).from("staff_revenue_allocations").select("category, amount").eq("org_id", orgId);
       const startOfMonth = new Date();
       startOfMonth.setDate(1);
       startOfMonth.setHours(0, 0, 0, 0);
       const { data: monthAllocations } = await (supabase as any)
         .from("staff_revenue_allocations")
-        .select("staff_id, amount, created_at")
+        .select("category, amount, created_at")
         .eq("org_id", orgId)
         .gte("created_at", startOfMonth.toISOString());
 
       const allTime: Record<string, number> = {};
       const thisMonth: Record<string, number> = {};
-      ((allAllocations as any[]) || []).forEach((a) => { allTime[a.staff_id] = (allTime[a.staff_id] || 0) + Number(a.amount); });
-      ((monthAllocations as any[]) || []).forEach((a) => { thisMonth[a.staff_id] = (thisMonth[a.staff_id] || 0) + Number(a.amount); });
+      ((allAllocations as any[]) || []).forEach((a) => { allTime[a.category] = (allTime[a.category] || 0) + Number(a.amount); });
+      ((monthAllocations as any[]) || []).forEach((a) => { thisMonth[a.category] = (thisMonth[a.category] || 0) + Number(a.amount); });
 
       return { allTime, thisMonth };
     },
