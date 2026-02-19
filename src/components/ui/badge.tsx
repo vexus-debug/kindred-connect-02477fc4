@@ -16,6 +16,8 @@ const badgeVariants = cva(
         slate: "border-slate/30 bg-slate-pale text-slate hover:bg-slate/10",
         success: "border-transparent bg-[hsl(var(--success))] text-[hsl(var(--success-foreground))] hover:bg-[hsl(var(--success)/0.85)]",
         warning: "border-transparent bg-[hsl(var(--warning))] text-[hsl(var(--warning-foreground))] hover:bg-[hsl(var(--warning)/0.85)]",
+        gold: "border-transparent bg-gold text-gold-foreground hover:bg-gold-deep",
+        "gold-subtle": "border-gold/40 bg-gold-pale text-gold-deep hover:bg-gold/10 dark:text-gold-light",
       },
     },
     defaultVariants: {

@@ -30,7 +30,7 @@ function KPICard({ icon: Icon, label, value, subtitle, iconBg, iconColor, trend 
             <Icon className={`h-5 w-5 ${iconColor}`} />
           </div>
           {trend && (
-            <div className={`flex items-center gap-1 text-xs font-semibold px-2 py-0.5 rounded-full ${trend.up ? "bg-emerald-500/10 text-emerald-700 dark:text-emerald-400" : "bg-red-500/10 text-red-700 dark:text-red-400"}`}>
+            <div className={`flex items-center gap-1 text-xs font-semibold px-2 py-0.5 rounded-full ${trend.up ? "bg-gold-pale text-gold-deep dark:bg-gold-pale/20 dark:text-gold-light" : "bg-red-500/10 text-red-700 dark:text-red-400"}`}>
               {trend.up ? <TrendingUp className="h-3 w-3" /> : <TrendingDown className="h-3 w-3" />}
               {trend.value}
             </div>
