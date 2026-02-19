@@ -6,7 +6,7 @@ import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem,
   DropdownMenuSeparator, DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Search, Bell, User, Settings, LogOut, ChevronDown, Command } from "lucide-react";
+import { Bell, User, Settings, LogOut, ChevronDown, Command, ChevronRight, Search } from "lucide-react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { useOrg } from "@/hooks/useOrg";
@@ -61,42 +61,47 @@ export function DashboardHeader() {
 
   const relativePath = extractRelativePath(location.pathname);
   const currentPage = breadcrumbLabels[relativePath] || "Dashboard";
+  const isHome = currentPage === "Dashboard";
 
   return (
-    <header className="sticky top-0 z-40 flex h-14 items-center gap-4 border-b border-border/40 bg-card/90 backdrop-blur-2xl px-4 lg:px-6 shadow-[0_1px_3px_hsl(var(--primary)/0.04)]">
-      <SidebarTrigger className="-ml-1" />
+    <header className="header-accent relative sticky top-0 z-40 flex h-14 items-center gap-4 border-b border-border bg-card px-4 lg:px-6 shadow-sm">
+
+      <SidebarTrigger className="-ml-1 text-muted-foreground hover:text-foreground" />
 
       {/* Breadcrumb */}
-      <div className="hidden md:flex items-center gap-1.5 text-sm">
-        <span className="text-muted-foreground">{currentOrg?.org_name || "Dashboard"}</span>
-        {currentPage !== "Dashboard" && (
+      <nav className="hidden md:flex items-center gap-1.5 text-sm min-w-0">
+        <span className="text-muted-foreground/70 font-medium truncate max-w-[120px]">
+          {currentOrg?.org_name || "Dashboard"}
+        </span>
+        {!isHome && (
           <>
-            <span className="text-muted-foreground/50">/</span>
-            <span className="font-medium text-foreground">{currentPage}</span>
+            <ChevronRight className="h-3.5 w-3.5 text-muted-foreground/40 shrink-0" />
+            <span className="font-semibold text-foreground truncate">{currentPage}</span>
           </>
         )}
-      </div>
+      </nav>
 
       {/* Search */}
-      <div className="relative flex-1 max-w-md ml-auto">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+      <div className="relative flex-1 max-w-xs ml-auto">
+        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
         <Input
-          placeholder="Search patients, appointments..."
-          className="pl-9 pr-16 h-9 bg-muted/40 border-border/50 focus-visible:bg-card focus-visible:ring-1 focus-visible:ring-ring/50 rounded-lg"
+          placeholder="Search…"
+          className="pl-8 pr-14 h-8 text-sm bg-muted/50 border-border/60 focus-visible:bg-card focus-visible:ring-1 focus-visible:ring-primary/30 rounded-lg"
         />
-        <kbd className="absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none inline-flex h-5 items-center gap-0.5 rounded border border-border/60 bg-muted/60 px-1.5 font-mono text-[10px] font-medium text-muted-foreground">
+        <kbd className="absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none inline-flex h-5 items-center gap-0.5 rounded border border-border/60 bg-muted px-1.5 font-mono text-[10px] font-medium text-muted-foreground">
           <Command className="h-2.5 w-2.5" />K
         </kbd>
       </div>
 
-      <div className="flex items-center gap-1.5">
-        <Button variant="ghost" size="icon" className="relative" asChild>
+      <div className="flex items-center gap-1">
+        {/* Notification Bell */}
+        <Button variant="ghost" size="icon" className="relative h-8 w-8 text-muted-foreground hover:text-foreground hover:bg-muted/50" asChild>
           <Link to={`${basePath}/notifications`}>
             <Bell className="h-4 w-4" />
             {unreadCount > 0 && (
               <motion.span
-                className="absolute -top-0.5 -right-0.5 h-4 min-w-4 rounded-full bg-destructive text-[10px] text-destructive-foreground flex items-center justify-center px-0.5"
-                animate={{ scale: [1, 1.2, 1] }}
+                className="absolute -top-0.5 -right-0.5 h-4 min-w-4 rounded-full bg-destructive text-[9px] font-bold text-white flex items-center justify-center px-0.5"
+                animate={{ scale: [1, 1.25, 1] }}
                 transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
               >
                 {unreadCount > 99 ? "99+" : unreadCount}
@@ -105,27 +110,44 @@ export function DashboardHeader() {
           </Link>
         </Button>
 
+        {/* Divider */}
+        <div className="h-6 w-px bg-border mx-1" />
+
+        {/* User Menu */}
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button variant="ghost" className="flex items-center gap-2 px-2 hover:bg-accent/50">
-              <Avatar className="h-7 w-7 ring-2 ring-border/50">
+            <Button
+              variant="ghost"
+              className="flex items-center gap-2 px-2 h-8 hover:bg-muted/50 rounded-lg"
+            >
+              <Avatar className="h-6 w-6 ring-2 ring-border">
                 <AvatarImage src={profile?.avatar_url || ""} />
-                <AvatarFallback className="bg-primary/10 text-primary text-xs font-semibold">{initials}</AvatarFallback>
+                <AvatarFallback className="bg-primary/10 text-primary text-[10px] font-bold">
+                  {initials}
+                </AvatarFallback>
               </Avatar>
-              <span className="hidden md:inline text-sm font-medium">{displayName}</span>
+              <span className="hidden md:inline text-sm font-medium text-foreground">
+                {displayName.split(" ")[0]}
+              </span>
               <ChevronDown className="h-3 w-3 text-muted-foreground" />
             </Button>
           </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="w-48 backdrop-blur-xl bg-popover/95 border-border/50">
-            <DropdownMenuItem onClick={() => navigate(`${basePath}/profile`)}>
-              <User className="mr-2 h-4 w-4" />Profile
+          <DropdownMenuContent align="end" className="w-44 shadow-lg border-border/60">
+            <DropdownMenuItem onClick={() => navigate(`${basePath}/profile`)} className="cursor-pointer">
+              <User className="mr-2 h-4 w-4 text-muted-foreground" />
+              <span>Profile</span>
             </DropdownMenuItem>
-            <DropdownMenuItem onClick={() => navigate(`${basePath}/settings`)}>
-              <Settings className="mr-2 h-4 w-4" />Settings
+            <DropdownMenuItem onClick={() => navigate(`${basePath}/settings`)} className="cursor-pointer">
+              <Settings className="mr-2 h-4 w-4 text-muted-foreground" />
+              <span>Settings</span>
             </DropdownMenuItem>
             <DropdownMenuSeparator />
-            <DropdownMenuItem onClick={handleSignOut} className="text-destructive focus:text-destructive">
-              <LogOut className="mr-2 h-4 w-4" />Sign Out
+            <DropdownMenuItem
+              onClick={handleSignOut}
+              className="text-destructive focus:text-destructive cursor-pointer"
+            >
+              <LogOut className="mr-2 h-4 w-4" />
+              <span>Sign Out</span>
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
