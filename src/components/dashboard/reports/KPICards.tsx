@@ -99,8 +99,8 @@ export function KPICards() {
           label="Chair Utilization"
           value={`${chair?.overall || 0}%`}
           subtitle={`${chair?.chairCount || 0} chairs`}
-          iconBg="bg-primary/10"
-          iconColor="text-primary"
+          iconBg="bg-slate-pale"
+          iconColor="text-slate"
         />
       </motion.div>
     </motion.div>

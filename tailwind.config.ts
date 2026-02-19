@@ -67,6 +67,13 @@ export default {
           mint: "hsl(var(--dental-mint))",
           cream: "hsl(var(--dental-cream))",
         },
+        // Slate Blue — sophisticated accent
+        slate: {
+          DEFAULT: "hsl(var(--slate))",
+          light: "hsl(var(--slate-light))",
+          pale: "hsl(var(--slate-pale))",
+          foreground: "hsl(var(--slate-foreground))",
+        },
       },
       borderRadius: {
         lg: "var(--radius)",
