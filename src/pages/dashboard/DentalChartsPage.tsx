@@ -13,16 +13,24 @@ import { Plus, Edit2, Trash2, Calendar, User, FileText, ChevronDown, ChevronUp }
 
 const statusOptions = [
   { value: "healthy", label: "Healthy", bg: "bg-emerald-200", border: "border-emerald-400", text: "text-emerald-900", dot: "bg-emerald-400" },
-  { value: "cavity", label: "Decayed", bg: "bg-amber-200", border: "border-amber-400", text: "text-amber-900", dot: "bg-amber-400" },
-  { value: "filling", label: "Treated", bg: "bg-indigo-200", border: "border-indigo-400", text: "text-indigo-900", dot: "bg-indigo-400" },
-  { value: "extraction", label: "Missing", bg: "bg-red-200", border: "border-red-400", text: "text-red-900", dot: "bg-red-400" },
+  { value: "decayed", label: "Decayed", bg: "bg-red-200", border: "border-red-400", text: "text-red-900", dot: "bg-red-400" },
+  { value: "treated", label: "Treated", bg: "bg-blue-200", border: "border-blue-400", text: "text-blue-900", dot: "bg-blue-400" },
+  { value: "missing", label: "Missing", bg: "bg-gray-200", border: "border-gray-400", text: "text-gray-900", dot: "bg-gray-400" },
+  { value: "crowned", label: "Crowned", bg: "bg-amber-200", border: "border-amber-400", text: "text-amber-900", dot: "bg-amber-400" },
+  { value: "impacted", label: "Impacted", bg: "bg-purple-200", border: "border-purple-400", text: "text-purple-900", dot: "bg-purple-400" },
+  { value: "rotated", label: "Rotated", bg: "bg-orange-200", border: "border-orange-400", text: "text-orange-900", dot: "bg-orange-400" },
+  { value: "fractured", label: "Fractured", bg: "bg-rose-200", border: "border-rose-400", text: "text-rose-900", dot: "bg-rose-400" },
+  { value: "sensitive", label: "Sensitive", bg: "bg-yellow-200", border: "border-yellow-400", text: "text-yellow-900", dot: "bg-yellow-400" },
+  { value: "bridged", label: "Bridged", bg: "bg-indigo-200", border: "border-indigo-400", text: "text-indigo-900", dot: "bg-indigo-400" },
+  { value: "veneer", label: "Veneer", bg: "bg-pink-200", border: "border-pink-400", text: "text-pink-900", dot: "bg-pink-400" },
+  { value: "root_canal", label: "Root Canal", bg: "bg-orange-300", border: "border-orange-500", text: "text-orange-900", dot: "bg-orange-500" },
+  { value: "implant", label: "Implant", bg: "bg-cyan-200", border: "border-cyan-400", text: "text-cyan-900", dot: "bg-cyan-400" },
+  { value: "erupting", label: "Erupting", bg: "bg-lime-200", border: "border-lime-400", text: "text-lime-900", dot: "bg-lime-400" },
+  { value: "other", label: "Other/Custom", bg: "bg-slate-200", border: "border-slate-400", text: "text-slate-900", dot: "bg-slate-400" },
 ];
 
 function getStatusStyle(status: string) {
-  if (["cavity", "decayed"].includes(status)) return statusOptions[1];
-  if (["filling", "crown", "root_canal", "veneer", "sealant", "bridge", "implant", "treated"].includes(status)) return statusOptions[2];
-  if (["extraction", "missing"].includes(status)) return statusOptions[3];
-  return statusOptions[0]; // healthy
+  return statusOptions.find(s => s.value === status) || statusOptions[0];
 }
 
 // Grid rows matching FDI dental chart reference
@@ -68,8 +76,8 @@ function ToothButton({
           {tooth}
         </button>
       </PopoverTrigger>
-      <PopoverContent className="w-44 p-2" side="top" align="center">
-        <p className="text-xs font-semibold text-muted-foreground mb-2 px-1">Tooth #{tooth} — Set Status</p>
+      <PopoverContent className="w-56 p-2 max-h-72 overflow-y-auto" side="top" align="center">
+        <p className="text-xs font-semibold text-muted-foreground mb-2 px-1">Tooth #{tooth} — Set Condition</p>
         <div className="grid grid-cols-2 gap-1.5">
           {statusOptions.map((opt) => (
             <button
@@ -114,12 +122,12 @@ export default function DentalChartsPage() {
 
   entries.forEach((e: any) => {
     if (!toothData[e.tooth_number]) {
-      toothData[e.tooth_number] = { status: e.status, latestEntryId: e.id, history: [] };
+      toothData[e.tooth_number] = { status: e.condition || e.status || "healthy", latestEntryId: e.id, history: [] };
     }
     toothData[e.tooth_number].history.push({
       id: e.id, date: e.entry_date, procedure: e.procedure,
       dentist: (e.staff as any)?.full_name || "Unknown",
-      status: e.status, notes: e.notes || "", dentist_id: e.dentist_id,
+      status: e.condition || e.status || "healthy", notes: e.notes || "", dentist_id: e.dentist_id,
     });
   });
 
@@ -131,19 +139,17 @@ export default function DentalChartsPage() {
     const statusLabel = statusOptions.find(s => s.value === newStatus)?.label || newStatus;
 
     if (existing?.latestEntryId) {
-      // Update the latest entry's status
       updateEntry.mutate({
         id: existing.latestEntryId,
         patient_id: patientId,
-        status: newStatus,
+        condition: newStatus,
       });
     } else {
-      // Create a new entry for this tooth
       createEntry.mutate({
         patient_id: patientId,
         tooth_number: tooth,
-        procedure: `Status set to ${statusLabel}`,
-        status: newStatus,
+        procedure: `Condition: ${statusLabel}`,
+        condition: newStatus,
         entry_date: new Date().toISOString().split("T")[0],
       });
     }
@@ -196,11 +202,11 @@ export default function DentalChartsPage() {
       <Card>
         <CardHeader className="pb-4">
           <CardTitle className="text-lg font-bold">Tooth Chart — Adult (FDI Notation)</CardTitle>
-          <div className="flex flex-wrap gap-x-4 gap-y-1 mt-2">
+          <div className="flex flex-wrap gap-x-3 gap-y-1.5 mt-2">
             {statusOptions.map((item) => (
               <div key={item.value} className="flex items-center gap-1.5">
                 <span className={`w-3 h-3 rounded-full ${item.dot}`} />
-                <span className="text-xs text-muted-foreground font-medium">{item.label}</span>
+                <span className="text-[10px] text-muted-foreground font-medium">{item.label}</span>
               </div>
             ))}
           </div>
@@ -272,7 +278,7 @@ export default function DentalChartsPage() {
                           <div className="flex-1 min-w-0">
                             <div className="flex items-center gap-2 mb-1">
                               <span className="font-semibold">{h.procedure}</span>
-                              <Badge variant="outline" className="text-[9px] capitalize">{h.status}</Badge>
+                              <Badge variant="outline" className="text-[9px] capitalize">{getStatusStyle(h.status).label}</Badge>
                             </div>
                             <div className="flex items-center gap-3 text-muted-foreground">
                               <span className="flex items-center gap-1"><Calendar className="h-3 w-3" />{h.date}</span>

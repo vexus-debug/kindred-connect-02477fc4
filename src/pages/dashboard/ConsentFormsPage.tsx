@@ -4,10 +4,11 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Plus, FileText, Search, CheckCircle, Clock, AlertCircle } from "lucide-react";
+import { Plus, FileText, Search, CheckCircle, Clock, AlertCircle, Upload } from "lucide-react";
 import { PageHeader } from "@/components/dashboard/PageHeader";
 import { useAllConsentForms, useConsentFormTemplates, useCreateConsentFormTemplate, useCreatePatientConsentForm, useSignConsentForm } from "@/hooks/useConsentForms";
 import { usePatients } from "@/hooks/usePatients";
+import { useUploadPatientDocument } from "@/hooks/useDocuments";
 import { useAuth } from "@/hooks/useAuth";
 import { useOrg } from "@/hooks/useOrg";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
@@ -39,13 +40,18 @@ export default function ConsentFormsPage() {
   const createTemplate = useCreateConsentFormTemplate();
   const createForm = useCreatePatientConsentForm();
   const signForm = useSignConsentForm();
+  const uploadDoc = useUploadPatientDocument();
 
   const [search, setSearch] = useState("");
   const [templateDialogOpen, setTemplateDialogOpen] = useState(false);
   const [formDialogOpen, setFormDialogOpen] = useState(false);
   const [signDialogOpen, setSignDialogOpen] = useState(false);
+  const [uploadDialogOpen, setUploadDialogOpen] = useState(false);
   const [selectedFormId, setSelectedFormId] = useState("");
   const [signerName, setSignerName] = useState("");
+  const [uploadPatientId, setUploadPatientId] = useState("");
+  const [uploadFile, setUploadFile] = useState<File | null>(null);
+  const [uploadTitle, setUploadTitle] = useState("");
 
   const [templateForm, setTemplateForm] = useState({ title: "", content: "", category: "general" });
   const [consentForm, setConsentForm] = useState({ patientId: "", templateId: "", title: "", content: "" });
@@ -82,6 +88,25 @@ export default function ConsentFormsPage() {
     });
   };
 
+  const handleUploadScanned = () => {
+    if (!uploadFile || !uploadPatientId || !uploadTitle) return;
+    uploadDoc.mutate({
+      file: uploadFile,
+      patientId: uploadPatientId,
+      title: uploadTitle,
+      category: "scanned_consent",
+      notes: "Scanned consent form upload",
+      userId: user?.id,
+    }, {
+      onSuccess: () => {
+        setUploadDialogOpen(false);
+        setUploadFile(null);
+        setUploadTitle("");
+        setUploadPatientId("");
+      },
+    });
+  };
+
   const filtered = forms.filter((f: any) => {
     const name = `${f.patients?.first_name} ${f.patients?.last_name}`.toLowerCase();
     return name.includes(search.toLowerCase()) || f.title.toLowerCase().includes(search.toLowerCase());
@@ -90,13 +115,16 @@ export default function ConsentFormsPage() {
   return (
     <div className="space-y-6">
       <PageHeader title="Consent Forms" description="Manage consent form templates and patient consents">
-        <div className="flex gap-2">
+        <div className="flex gap-2 flex-wrap">
+          <Button variant="outline" size="sm" onClick={() => setUploadDialogOpen(true)}>
+            <Upload className="mr-2 h-4 w-4" /> Upload Scanned
+          </Button>
           {isAdmin && (
-            <Button variant="outline" onClick={() => setTemplateDialogOpen(true)}>
+            <Button variant="outline" size="sm" onClick={() => setTemplateDialogOpen(true)}>
               <Plus className="mr-2 h-4 w-4" /> New Template
             </Button>
           )}
-          <Button onClick={() => setFormDialogOpen(true)} className="bg-secondary hover:bg-secondary/90">
+          <Button size="sm" onClick={() => setFormDialogOpen(true)} className="bg-secondary hover:bg-secondary/90">
             <Plus className="mr-2 h-4 w-4" /> Create Consent
           </Button>
         </div>
@@ -241,6 +269,36 @@ export default function ConsentFormsPage() {
           <DialogFooter>
             <Button variant="outline" onClick={() => setSignDialogOpen(false)}>Cancel</Button>
             <Button onClick={handleSign} className="bg-secondary hover:bg-secondary/90" disabled={signForm.isPending || !signerName}>{signForm.isPending ? "Signing..." : "Sign"}</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Upload Scanned Consent Dialog */}
+      <Dialog open={uploadDialogOpen} onOpenChange={setUploadDialogOpen}>
+        <DialogContent>
+          <DialogHeader><DialogTitle>Upload Scanned Consent Form</DialogTitle></DialogHeader>
+          <div className="space-y-3">
+            <div className="space-y-1">
+              <Label className="text-xs">Patient *</Label>
+              <Select value={uploadPatientId} onValueChange={setUploadPatientId}>
+                <SelectTrigger><SelectValue placeholder="Select patient" /></SelectTrigger>
+                <SelectContent>{patients.map(p => <SelectItem key={p.id} value={p.id}>{p.first_name} {p.last_name}</SelectItem>)}</SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-1">
+              <Label className="text-xs">Title *</Label>
+              <Input value={uploadTitle} onChange={e => setUploadTitle(e.target.value)} placeholder="e.g. Signed Extraction Consent" />
+            </div>
+            <div className="space-y-1">
+              <Label className="text-xs">Scanned Document / Photo *</Label>
+              <Input type="file" accept="image/*,.pdf,.doc,.docx" onChange={e => setUploadFile(e.target.files?.[0] || null)} />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setUploadDialogOpen(false)}>Cancel</Button>
+            <Button onClick={handleUploadScanned} className="bg-secondary hover:bg-secondary/90" disabled={uploadDoc.isPending || !uploadFile || !uploadPatientId || !uploadTitle}>
+              {uploadDoc.isPending ? "Uploading..." : "Upload"}
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

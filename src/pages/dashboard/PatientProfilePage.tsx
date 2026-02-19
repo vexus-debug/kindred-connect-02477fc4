@@ -13,6 +13,7 @@ import { useClinicalNotes, useCreateClinicalNote } from "@/hooks/useClinicalNote
 import { usePatientImages, useUploadPatientImage } from "@/hooks/usePatientImages";
 import { usePatientConsentForms } from "@/hooks/useConsentForms";
 import { usePatientDocuments, useUploadPatientDocument } from "@/hooks/useDocuments";
+import { useDentalChartEntries } from "@/hooks/useDentalCharts";
 import { EditPatientDialog } from "@/components/dashboard/EditPatientDialog";
 import { useAuth } from "@/hooks/useAuth";
 import { useOrg } from "@/hooks/useOrg";
@@ -32,11 +33,24 @@ function formatCurrency(amount: number) {
   return `₦${amount.toLocaleString()}`;
 }
 
+function calculateAge(dob: string | null): string {
+  if (!dob) return "N/A";
+  const birthDate = new Date(dob);
+  const today = new Date();
+  let age = today.getFullYear() - birthDate.getFullYear();
+  const m = today.getMonth() - birthDate.getMonth();
+  if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate())) age--;
+  return `${age} years`;
+}
+
 export default function PatientProfilePage() {
   const { id: patientId } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { user, roles } = useAuth();
-  const { basePath } = useOrg();
+  const { basePath, currentOrg } = useOrg();
+  const orgRole = currentOrg?.role || "";
+  const canViewContact = ["owner", "admin", "receptionist"].includes(orgRole);
+
   const [editOpen, setEditOpen] = useState(false);
   const [noteDialogOpen, setNoteDialogOpen] = useState(false);
   const [imageDialogOpen, setImageDialogOpen] = useState(false);
@@ -47,8 +61,8 @@ export default function PatientProfilePage() {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [selectedDocFile, setSelectedDocFile] = useState<File | null>(null);
 
-  const canViewClinical = roles.some(r => ["admin", "dentist", "hygienist"].includes(r));
-  const canEditClinical = roles.some(r => ["admin", "dentist", "hygienist"].includes(r));
+  const canViewClinical = roles.some(r => ["admin", "dentist", "hygienist"].includes(r)) || ["owner", "admin", "dentist", "hygienist"].includes(orgRole);
+  const canEditClinical = roles.some(r => ["admin", "dentist", "hygienist"].includes(r)) || ["owner", "admin", "dentist", "hygienist"].includes(orgRole);
 
   const { data: patient, isLoading } = usePatientDetail(patientId);
   const { data: visits = [] } = usePatientVisits(patientId);
@@ -59,6 +73,7 @@ export default function PatientProfilePage() {
   const { data: images = [] } = usePatientImages(patientId);
   const { data: consentForms = [] } = usePatientConsentForms(patientId);
   const { data: documents = [] } = usePatientDocuments(patientId);
+  const { data: dentalEntries = [] } = useDentalChartEntries(patientId);
 
   const createNote = useCreateClinicalNote();
   const uploadImage = useUploadPatientImage();
@@ -96,7 +111,9 @@ export default function PatientProfilePage() {
               {patient.status}
             </Badge>
           </div>
-          <p className="text-sm text-muted-foreground">{patient.gender} · Registered: {patient.registered_date}</p>
+          <p className="text-sm text-muted-foreground">
+            {patient.gender} · Age: {calculateAge(patient.date_of_birth)} · ID: {patient.id?.slice(0, 8)} · Registered: {patient.registered_date}
+          </p>
         </div>
         <Button variant="outline" size="sm" onClick={() => setEditOpen(true)}>
           <Pencil className="mr-2 h-4 w-4" /> Edit
@@ -131,27 +148,41 @@ export default function PatientProfilePage() {
               </CardHeader>
               <CardContent className="space-y-2 text-sm">
                 <div className="flex justify-between"><span className="text-muted-foreground">Date of Birth</span><span>{patient.date_of_birth || "N/A"}</span></div>
+                <div className="flex justify-between"><span className="text-muted-foreground">Age</span><span>{calculateAge(patient.date_of_birth)}</span></div>
                 <div className="flex justify-between"><span className="text-muted-foreground">Blood Group</span><span>{patient.blood_group || "N/A"}</span></div>
+                <div className="flex justify-between"><span className="text-muted-foreground">Occupation</span><span>{(patient as any).occupation || "N/A"}</span></div>
                 <div className="flex justify-between items-start"><span className="text-muted-foreground">Address</span><span className="text-right max-w-[200px]">{patient.address || "N/A"}</span></div>
                 <div className="flex justify-between"><span className="text-muted-foreground">Registered</span><span>{patient.registered_date}</span></div>
                 <div className="flex justify-between"><span className="text-muted-foreground">Referral</span><span>{patient.referral_source || "N/A"}</span></div>
               </CardContent>
             </Card>
 
-            <Card>
-              <CardHeader className="pb-2">
-                <CardTitle className="text-sm flex items-center gap-2"><Phone className="h-4 w-4" /> Contact & Emergency</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-3 text-sm">
-                <div className="flex items-center gap-2"><Phone className="h-3.5 w-3.5 text-muted-foreground" />{patient.phone}</div>
-                <div className="flex items-center gap-2"><Mail className="h-3.5 w-3.5 text-muted-foreground" />{patient.email || "N/A"}</div>
-                <div className="border-t pt-3 mt-3">
-                  <p className="text-xs text-muted-foreground mb-1">Emergency Contact</p>
-                  <p className="font-medium">{patient.emergency_contact_name || "N/A"}</p>
-                  <p className="text-muted-foreground">{patient.emergency_contact_phone || "N/A"}</p>
-                </div>
-              </CardContent>
-            </Card>
+            {/* Contact & Emergency - only visible to admin/receptionist */}
+            {canViewContact ? (
+              <Card>
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-sm flex items-center gap-2"><Phone className="h-4 w-4" /> Contact & Emergency</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-3 text-sm">
+                  <div className="flex items-center gap-2"><Phone className="h-3.5 w-3.5 text-muted-foreground" />{patient.phone}</div>
+                  <div className="flex items-center gap-2"><Mail className="h-3.5 w-3.5 text-muted-foreground" />{patient.email || "N/A"}</div>
+                  <div className="border-t pt-3 mt-3">
+                    <p className="text-xs text-muted-foreground mb-1">Emergency Contact</p>
+                    <p className="font-medium">{patient.emergency_contact_name || "N/A"}</p>
+                    <p className="text-muted-foreground">{patient.emergency_contact_phone || "N/A"}</p>
+                  </div>
+                </CardContent>
+              </Card>
+            ) : (
+              <Card>
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-sm flex items-center gap-2"><User className="h-4 w-4" /> Contact Info</CardTitle>
+                </CardHeader>
+                <CardContent className="text-sm text-muted-foreground py-6 text-center">
+                  Contact details are restricted to Admin and Receptionist roles.
+                </CardContent>
+              </Card>
+            )}
 
             <Card className="md:col-span-2">
               <CardHeader className="pb-2">
@@ -174,7 +205,32 @@ export default function PatientProfilePage() {
         </TabsContent>
 
         {/* Dental History */}
-        <TabsContent value="history" className="mt-4">
+        <TabsContent value="history" className="mt-4 space-y-4">
+          {/* Dental Chart Summary */}
+          {dentalEntries.length > 0 && (
+            <Card>
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm">Dental Chart Findings</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-2">
+                  {dentalEntries.slice(0, 10).map((e: any) => (
+                    <div key={e.id} className="flex items-center justify-between text-xs p-2 rounded-md bg-muted/30">
+                      <div>
+                        <span className="font-semibold">Tooth #{e.tooth_number}</span>
+                        <span className="text-muted-foreground ml-2">{e.procedure}</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Badge variant="outline" className="text-[9px] capitalize">{e.condition || "healthy"}</Badge>
+                        <span className="text-muted-foreground">{e.entry_date}</span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
           <Card>
             <CardHeader className="pb-3">
               <CardTitle className="text-base">Visit History</CardTitle>
@@ -317,12 +373,13 @@ export default function PatientProfilePage() {
                     </div>
                   ))}
                 </div>
+                {rx.notes && <p className="text-xs text-muted-foreground mt-3 italic">Note: {rx.notes}</p>}
               </CardContent>
             </Card>
           ))}
         </TabsContent>
 
-        {/* Clinical Notes */}
+        {/* Clinical Notes (SOAP) - Dental Chart before Objective */}
         {canViewClinical && (
           <TabsContent value="notes" className="mt-4 space-y-4">
             <div className="flex justify-between items-center">
@@ -337,12 +394,54 @@ export default function PatientProfilePage() {
               <Card><CardContent className="py-10 text-center text-sm text-muted-foreground">No clinical notes found.</CardContent></Card>
             ) : clinicalNotes.map((note: any) => (
               <Card key={note.id}>
-                <CardContent className="py-4 space-y-2">
-                  <p className="text-xs text-muted-foreground">{new Date(note.created_at).toLocaleDateString()}</p>
-                  {note.subjective && <div><span className="text-xs font-semibold text-muted-foreground">S: </span><span className="text-sm">{note.subjective}</span></div>}
-                  {note.objective && <div><span className="text-xs font-semibold text-muted-foreground">O: </span><span className="text-sm">{note.objective}</span></div>}
-                  {note.assessment && <div><span className="text-xs font-semibold text-muted-foreground">A: </span><span className="text-sm">{note.assessment}</span></div>}
-                  {note.plan && <div><span className="text-xs font-semibold text-muted-foreground">P: </span><span className="text-sm">{note.plan}</span></div>}
+                <CardContent className="py-4 space-y-3">
+                  <p className="text-xs text-muted-foreground font-medium">{new Date(note.created_at).toLocaleDateString()}</p>
+
+                  {/* S - Patient Complaint */}
+                  {note.subjective && (
+                    <div className="p-2 rounded-md bg-blue-50 dark:bg-blue-950/20 border border-blue-200 dark:border-blue-800">
+                      <span className="text-xs font-bold text-blue-700 dark:text-blue-400">S — Patient Complaint</span>
+                      <p className="text-sm mt-1">{note.subjective}</p>
+                    </div>
+                  )}
+
+                  {/* Dental Chart findings for this patient */}
+                  {dentalEntries.length > 0 && (
+                    <div className="p-2 rounded-md bg-purple-50 dark:bg-purple-950/20 border border-purple-200 dark:border-purple-800">
+                      <span className="text-xs font-bold text-purple-700 dark:text-purple-400">Dental Chart</span>
+                      <div className="mt-1 space-y-1">
+                        {dentalEntries.slice(0, 5).map((e: any) => (
+                          <p key={e.id} className="text-xs text-muted-foreground">
+                            Tooth #{e.tooth_number}: {e.procedure} ({e.condition || "healthy"})
+                          </p>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* O - Clinical Findings */}
+                  {note.objective && (
+                    <div className="p-2 rounded-md bg-green-50 dark:bg-green-950/20 border border-green-200 dark:border-green-800">
+                      <span className="text-xs font-bold text-green-700 dark:text-green-400">O — Clinical Findings</span>
+                      <p className="text-sm mt-1">{note.objective}</p>
+                    </div>
+                  )}
+
+                  {/* A - Diagnosis */}
+                  {note.assessment && (
+                    <div className="p-2 rounded-md bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-800">
+                      <span className="text-xs font-bold text-amber-700 dark:text-amber-400">A — Diagnosis</span>
+                      <p className="text-sm mt-1">{note.assessment}</p>
+                    </div>
+                  )}
+
+                  {/* P - Treatment Plan */}
+                  {note.plan && (
+                    <div className="p-2 rounded-md bg-red-50 dark:bg-red-950/20 border border-red-200 dark:border-red-800">
+                      <span className="text-xs font-bold text-red-700 dark:text-red-400">P — Treatment Plan</span>
+                      <p className="text-sm mt-1">{note.plan}</p>
+                    </div>
+                  )}
                 </CardContent>
               </Card>
             ))}
@@ -429,15 +528,15 @@ export default function PatientProfilePage() {
 
       <EditPatientDialog patient={patient} open={editOpen} onOpenChange={setEditOpen} />
 
-      {/* Clinical Note Dialog */}
+      {/* Clinical Note Dialog - Enhanced with complaint/diagnosis fields */}
       <Dialog open={noteDialogOpen} onOpenChange={setNoteDialogOpen}>
         <DialogContent>
           <DialogHeader><DialogTitle>Add SOAP Note</DialogTitle></DialogHeader>
           <div className="space-y-3">
-            <div className="space-y-1"><Label className="text-xs">Subjective</Label><Textarea value={noteForm.subjective} onChange={e => setNoteForm(f => ({ ...f, subjective: e.target.value }))} rows={2} placeholder="Patient complaints, symptoms..." /></div>
-            <div className="space-y-1"><Label className="text-xs">Objective</Label><Textarea value={noteForm.objective} onChange={e => setNoteForm(f => ({ ...f, objective: e.target.value }))} rows={2} placeholder="Clinical findings, exam results..." /></div>
-            <div className="space-y-1"><Label className="text-xs">Assessment</Label><Textarea value={noteForm.assessment} onChange={e => setNoteForm(f => ({ ...f, assessment: e.target.value }))} rows={2} placeholder="Diagnosis, clinical impression..." /></div>
-            <div className="space-y-1"><Label className="text-xs">Plan</Label><Textarea value={noteForm.plan} onChange={e => setNoteForm(f => ({ ...f, plan: e.target.value }))} rows={2} placeholder="Treatment plan, follow-up..." /></div>
+            <div className="space-y-1"><Label className="text-xs font-semibold text-blue-700">S — Patient Complaint</Label><Textarea value={noteForm.subjective} onChange={e => setNoteForm(f => ({ ...f, subjective: e.target.value }))} rows={2} placeholder="Patient complaints, symptoms, chief concern..." /></div>
+            <div className="space-y-1"><Label className="text-xs font-semibold text-green-700">O — Clinical Findings</Label><Textarea value={noteForm.objective} onChange={e => setNoteForm(f => ({ ...f, objective: e.target.value }))} rows={2} placeholder="Clinical exam, vitals, dental chart findings..." /></div>
+            <div className="space-y-1"><Label className="text-xs font-semibold text-amber-700">A — Diagnosis</Label><Textarea value={noteForm.assessment} onChange={e => setNoteForm(f => ({ ...f, assessment: e.target.value }))} rows={2} placeholder="Diagnosis, differential diagnosis..." /></div>
+            <div className="space-y-1"><Label className="text-xs font-semibold text-red-700">P — Treatment Plan</Label><Textarea value={noteForm.plan} onChange={e => setNoteForm(f => ({ ...f, plan: e.target.value }))} rows={2} placeholder="Treatment plan, prescriptions, follow-up..." /></div>
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setNoteDialogOpen(false)}>Cancel</Button>
@@ -450,7 +549,7 @@ export default function PatientProfilePage() {
         </DialogContent>
       </Dialog>
 
-      {/* Image Upload Dialog */}
+      {/* Image Upload Dialog - with supporting note */}
       <Dialog open={imageDialogOpen} onOpenChange={setImageDialogOpen}>
         <DialogContent>
           <DialogHeader><DialogTitle>Upload Patient Image</DialogTitle></DialogHeader>
@@ -464,13 +563,14 @@ export default function PatientProfilePage() {
                   <SelectContent>
                     <SelectItem value="x-ray">X-Ray</SelectItem>
                     <SelectItem value="intra-oral">Intra-oral</SelectItem>
+                    <SelectItem value="extra-oral">Extra-oral</SelectItem>
                     <SelectItem value="other">Other</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
               <div className="space-y-1"><Label className="text-xs">Tooth #</Label><Input type="number" value={imageForm.toothNumber} onChange={e => setImageForm(f => ({ ...f, toothNumber: e.target.value }))} /></div>
             </div>
-            <div className="space-y-1"><Label className="text-xs">Description</Label><Input value={imageForm.description} onChange={e => setImageForm(f => ({ ...f, description: e.target.value }))} /></div>
+            <div className="space-y-1"><Label className="text-xs">Supporting Note / Description</Label><Textarea value={imageForm.description} onChange={e => setImageForm(f => ({ ...f, description: e.target.value }))} rows={2} placeholder="Describe findings, context for this image..." /></div>
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setImageDialogOpen(false)}>Cancel</Button>
@@ -501,6 +601,7 @@ export default function PatientProfilePage() {
                     <SelectItem value="referral">Referral</SelectItem>
                     <SelectItem value="consent">Consent</SelectItem>
                     <SelectItem value="lab">Lab</SelectItem>
+                    <SelectItem value="scanned_consent">Scanned Consent</SelectItem>
                     <SelectItem value="other">Other</SelectItem>
                   </SelectContent>
                 </Select>

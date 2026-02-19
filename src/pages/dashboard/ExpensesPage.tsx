@@ -14,7 +14,10 @@ import { Textarea } from "@/components/ui/textarea";
 import { motion } from "framer-motion";
 import { format } from "date-fns";
 
-const expenseCategories = ["supplies", "rent", "utilities", "equipment", "salaries", "marketing", "maintenance", "other"];
+const expenseCategories = [
+  "supplies", "rent", "utilities", "equipment", "salaries", "marketing", "maintenance",
+  "logistics", "lab_outsourcing", "staff_appraisal", "loan_repayment", "dental_consumables", "other",
+];
 
 export default function ExpensesPage() {
   const { data: expenses = [] } = useExpenses();

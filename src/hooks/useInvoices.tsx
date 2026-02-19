@@ -234,3 +234,20 @@ export function useUpdateInvoice() {
     },
   });
 }
+
+export function useDeleteInvoice() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (id: string) => {
+      // Delete items first, then payments, then invoice
+      await (supabase as any).from("invoice_items").delete().eq("invoice_id", id);
+      await (supabase as any).from("payments").delete().eq("invoice_id", id);
+      const { error } = await (supabase as any).from("invoices").delete().eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["invoices"] });
+      queryClient.invalidateQueries({ queryKey: ["billing_stats"] });
+    },
+  });
+}
