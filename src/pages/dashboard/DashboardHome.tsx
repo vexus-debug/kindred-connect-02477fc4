@@ -135,10 +135,10 @@ export default function DashboardHome() {
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold text-foreground tracking-tight">
-            Welcome back, {userName || "Doctor"} <span className="inline-block animate-bounce-subtle">👋</span>
+            Welcome back, {userName || "Doctor"}.
           </h1>
           <p className="text-sm text-muted-foreground mt-0.5">
-            Here's what's happening at your clinic today.
+            Here's an overview of your clinic today.
           </p>
         </div>
         <div className="flex gap-2">
