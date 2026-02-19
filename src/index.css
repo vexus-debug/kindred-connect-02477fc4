@@ -80,7 +80,8 @@
     --sidebar-foreground: 0 0% 100%;
     --sidebar-primary: 0 0% 100%;
     --sidebar-primary-foreground: 185 72% 20%;
-    --sidebar-accent: 185 65% 27%;
+    /* Sidebar accent uses a slate-tinted teal for secondary item hovers */
+    --sidebar-accent: 210 35% 30%;
     --sidebar-accent-foreground: 0 0% 100%;
     --sidebar-border: 185 60% 28%;
     --sidebar-ring: 185 55% 70%;

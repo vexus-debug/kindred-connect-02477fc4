@@ -34,7 +34,10 @@ const TableRow = React.forwardRef<HTMLTableRowElement, React.HTMLAttributes<HTML
   ({ className, ...props }, ref) => (
     <tr
       ref={ref}
-      className={cn("border-b transition-colors data-[state=selected]:bg-muted hover:bg-muted/50", className)}
+      className={cn(
+        "border-b transition-colors duration-150 data-[state=selected]:bg-slate-pale hover:bg-slate-pale/60 dark:hover:bg-slate/10 dark:data-[state=selected]:bg-slate/15",
+        className,
+      )}
       {...props}
     />
   ),
