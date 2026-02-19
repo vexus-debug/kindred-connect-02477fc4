@@ -1759,6 +1759,7 @@ export type Database = {
           last_name: string
           medical_history: string | null
           notes: string | null
+          occupation: string | null
           org_id: string
           phone: string | null
           referral_source: string | null
@@ -1780,6 +1781,7 @@ export type Database = {
           last_name: string
           medical_history?: string | null
           notes?: string | null
+          occupation?: string | null
           org_id: string
           phone?: string | null
           referral_source?: string | null
@@ -1801,6 +1803,7 @@ export type Database = {
           last_name?: string
           medical_history?: string | null
           notes?: string | null
+          occupation?: string | null
           org_id?: string
           phone?: string | null
           referral_source?: string | null

@@ -19,7 +19,7 @@ export function EditPatientDialog({ patient, open, onOpenChange }: EditPatientDi
   const [form, setForm] = useState({
     first_name: "", last_name: "", phone: "", email: "", gender: "", date_of_birth: "",
     address: "", blood_group: "", emergency_contact_name: "", emergency_contact_phone: "",
-    medical_history: "", allergies: "", referral_source: "", status: "active",
+    medical_history: "", allergies: "", referral_source: "", status: "active", occupation: "",
   });
 
   useEffect(() => {
@@ -39,6 +39,7 @@ export function EditPatientDialog({ patient, open, onOpenChange }: EditPatientDi
         allergies: patient.allergies || "",
         referral_source: patient.referral_source || "",
         status: patient.status || "active",
+        occupation: (patient as any).occupation || "",
       });
     }
   }, [patient]);
@@ -95,6 +96,22 @@ export function EditPatientDialog({ patient, open, onOpenChange }: EditPatientDi
               <Input value={form.blood_group} onChange={(e) => setForm({ ...form, blood_group: e.target.value })} />
             </div>
           </div>
+          <div className="grid grid-cols-2 gap-3">
+            <div className="space-y-1">
+              <Label className="text-xs">Occupation</Label>
+              <Input value={form.occupation} onChange={(e) => setForm({ ...form, occupation: e.target.value })} placeholder="e.g. Teacher, Engineer" />
+            </div>
+            <div className="space-y-1">
+              <Label className="text-xs">Status</Label>
+              <Select value={form.status} onValueChange={(v) => setForm({ ...form, status: v })}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="active">Active</SelectItem>
+                  <SelectItem value="inactive">Inactive</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
           <div className="space-y-1">
             <Label className="text-xs">Address</Label>
             <Input value={form.address} onChange={(e) => setForm({ ...form, address: e.target.value })} />
@@ -117,21 +134,9 @@ export function EditPatientDialog({ patient, open, onOpenChange }: EditPatientDi
             <Label className="text-xs">Allergies</Label>
             <Input value={form.allergies} onChange={(e) => setForm({ ...form, allergies: e.target.value })} placeholder="Comma-separated" />
           </div>
-          <div className="grid grid-cols-2 gap-3">
-            <div className="space-y-1">
-              <Label className="text-xs">Referral Source</Label>
-              <Input value={form.referral_source} onChange={(e) => setForm({ ...form, referral_source: e.target.value })} />
-            </div>
-            <div className="space-y-1">
-              <Label className="text-xs">Status</Label>
-              <Select value={form.status} onValueChange={(v) => setForm({ ...form, status: v })}>
-                <SelectTrigger><SelectValue /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="active">Active</SelectItem>
-                  <SelectItem value="inactive">Inactive</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
+          <div className="space-y-1">
+            <Label className="text-xs">Referral Source</Label>
+            <Input value={form.referral_source} onChange={(e) => setForm({ ...form, referral_source: e.target.value })} />
           </div>
         </div>
         <DialogFooter>

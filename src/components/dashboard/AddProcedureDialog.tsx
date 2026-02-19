@@ -10,7 +10,7 @@ import { useStaff } from "@/hooks/useStaff";
 import { toast } from "@/hooks/use-toast";
 import { Badge } from "@/components/ui/badge";
 
-type ToothStatus = "healthy" | "cavity" | "filling" | "crown" | "extraction" | "planned" | "root_canal" | "implant" | "bridge" | "veneer" | "sealant";
+type ToothCondition = "healthy" | "decayed" | "treated" | "missing" | "crowned" | "impacted" | "rotated" | "fractured" | "sensitive" | "bridged" | "veneer" | "root_canal" | "implant" | "erupting" | "other";
 
 interface EditEntry {
   id: string;
@@ -27,7 +27,7 @@ interface AddProcedureDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   toothNumber: number;
-  currentStatus: ToothStatus;
+  currentStatus: string;
   patientId: string;
   editEntry?: EditEntry | null;
 }
@@ -42,22 +42,26 @@ const procedureCategories: Record<string, string[]> = {
   "Orthodontic": ["Bracket Placement", "Wire Adjustment", "Retainer"],
 };
 
-const allStatuses: { value: ToothStatus; label: string; color: string }[] = [
+const allConditions: { value: ToothCondition; label: string; color: string }[] = [
   { value: "healthy", label: "Healthy", color: "bg-emerald-500" },
-  { value: "cavity", label: "Cavity / Caries", color: "bg-red-500" },
-  { value: "filling", label: "Filling", color: "bg-blue-500" },
-  { value: "crown", label: "Crown", color: "bg-amber-500" },
-  { value: "root_canal", label: "Root Canal", color: "bg-orange-500" },
-  { value: "extraction", label: "Extraction", color: "bg-gray-500" },
-  { value: "implant", label: "Implant", color: "bg-cyan-500" },
-  { value: "bridge", label: "Bridge", color: "bg-indigo-500" },
+  { value: "decayed", label: "Decayed", color: "bg-red-500" },
+  { value: "treated", label: "Treated", color: "bg-blue-500" },
+  { value: "missing", label: "Missing", color: "bg-gray-500" },
+  { value: "crowned", label: "Crowned", color: "bg-amber-500" },
+  { value: "impacted", label: "Impacted", color: "bg-purple-500" },
+  { value: "rotated", label: "Rotated", color: "bg-orange-500" },
+  { value: "fractured", label: "Fractured", color: "bg-rose-500" },
+  { value: "sensitive", label: "Sensitive", color: "bg-yellow-500" },
+  { value: "bridged", label: "Bridged", color: "bg-indigo-500" },
   { value: "veneer", label: "Veneer", color: "bg-pink-500" },
-  { value: "sealant", label: "Sealant", color: "bg-teal-500" },
-  { value: "planned", label: "Planned Treatment", color: "bg-violet-500" },
+  { value: "root_canal", label: "Root Canal", color: "bg-orange-600" },
+  { value: "implant", label: "Implant", color: "bg-cyan-500" },
+  { value: "erupting", label: "Erupting", color: "bg-lime-500" },
+  { value: "other", label: "Other/Custom", color: "bg-slate-500" },
 ];
 
 export function AddProcedureDialog({ open, onOpenChange, toothNumber, currentStatus, patientId, editEntry }: AddProcedureDialogProps) {
-  const [status, setStatus] = useState<ToothStatus>(currentStatus);
+  const [condition, setCondition] = useState<ToothCondition>(currentStatus as ToothCondition || "healthy");
   const [procedure, setProcedure] = useState("");
   const [notes, setNotes] = useState("");
   const [date, setDate] = useState(new Date().toISOString().split("T")[0]);
@@ -73,12 +77,11 @@ export function AddProcedureDialog({ open, onOpenChange, toothNumber, currentSta
 
   useEffect(() => {
     if (editEntry) {
-      setStatus(editEntry.status as ToothStatus);
+      setCondition(editEntry.status as ToothCondition);
       setProcedure(editEntry.procedure);
       setNotes(editEntry.notes || "");
       setDate(editEntry.entry_date);
       setDentistId(editEntry.dentist_id || "");
-      // Try to find the category
       for (const [cat, procs] of Object.entries(procedureCategories)) {
         if (procs.includes(editEntry.procedure)) {
           setSelectedCategory(cat);
@@ -86,7 +89,7 @@ export function AddProcedureDialog({ open, onOpenChange, toothNumber, currentSta
         }
       }
     } else {
-      setStatus(currentStatus);
+      setCondition(currentStatus as ToothCondition || "healthy");
       setProcedure("");
       setNotes("");
       setDate(new Date().toISOString().split("T")[0]);
@@ -107,21 +110,19 @@ export function AddProcedureDialog({ open, onOpenChange, toothNumber, currentSta
         patient_id: patientId,
         tooth_number: toothNumber,
         procedure,
-        status,
+        condition,
         entry_date: date,
         notes,
         dentist_id: dentistId || null,
       }, {
-        onSuccess: () => {
-          onOpenChange(false);
-        },
+        onSuccess: () => { onOpenChange(false); },
       });
     } else {
       createEntry.mutate({
         patient_id: patientId,
         tooth_number: toothNumber,
         procedure,
-        status,
+        condition,
         entry_date: date,
         notes,
         dentist_id: dentistId || undefined,
@@ -130,7 +131,7 @@ export function AddProcedureDialog({ open, onOpenChange, toothNumber, currentSta
           onOpenChange(false);
           setProcedure("");
           setNotes("");
-          setStatus(currentStatus);
+          setCondition(currentStatus as ToothCondition || "healthy");
           setDentistId("");
           setSelectedCategory("");
         },
@@ -150,7 +151,6 @@ export function AddProcedureDialog({ open, onOpenChange, toothNumber, currentSta
           </DialogTitle>
         </DialogHeader>
         <div className="space-y-4 py-2">
-          {/* Procedure Category */}
           <div className="space-y-2">
             <Label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Category</Label>
             <Select value={selectedCategory} onValueChange={(v) => { setSelectedCategory(v); setProcedure(""); }}>
@@ -163,7 +163,6 @@ export function AddProcedureDialog({ open, onOpenChange, toothNumber, currentSta
             </Select>
           </div>
 
-          {/* Procedure */}
           <div className="space-y-2">
             <Label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Procedure</Label>
             <Select value={procedure} onValueChange={setProcedure}>
@@ -176,13 +175,12 @@ export function AddProcedureDialog({ open, onOpenChange, toothNumber, currentSta
             </Select>
           </div>
 
-          {/* Tooth Status */}
           <div className="space-y-2">
-            <Label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Update Tooth Status</Label>
-            <Select value={status} onValueChange={(v) => setStatus(v as ToothStatus)}>
+            <Label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Tooth Condition</Label>
+            <Select value={condition} onValueChange={(v) => setCondition(v as ToothCondition)}>
               <SelectTrigger><SelectValue /></SelectTrigger>
               <SelectContent>
-                {allStatuses.map((s) => (
+                {allConditions.map((s) => (
                   <SelectItem key={s.value} value={s.value}>
                     <div className="flex items-center gap-2">
                       <span className={`h-2.5 w-2.5 rounded-full ${s.color}`} />
@@ -194,7 +192,6 @@ export function AddProcedureDialog({ open, onOpenChange, toothNumber, currentSta
             </Select>
           </div>
 
-          {/* Dentist */}
           <div className="space-y-2">
             <Label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Dentist</Label>
             <Select value={dentistId} onValueChange={setDentistId}>
@@ -207,13 +204,11 @@ export function AddProcedureDialog({ open, onOpenChange, toothNumber, currentSta
             </Select>
           </div>
 
-          {/* Date */}
           <div className="space-y-2">
             <Label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Date</Label>
             <Input type="date" value={date} onChange={(e) => setDate(e.target.value)} />
           </div>
 
-          {/* Notes */}
           <div className="space-y-2">
             <Label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Clinical Notes</Label>
             <Textarea value={notes} onChange={(e) => setNotes(e.target.value)} placeholder="Surface affected, material used, shade, observations..." rows={3} />

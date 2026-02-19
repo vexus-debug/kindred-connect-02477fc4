@@ -27,6 +27,7 @@ export default function InventoryPage() {
   const { currentOrg } = useOrg();
   const orgRole = currentOrg?.role || "";
   const isAdmin = orgRole === "owner" || orgRole === "admin";
+  const canManageStock = ["owner", "admin", "receptionist"].includes(orgRole);
 
   const [addOpen, setAddOpen] = useState(false);
   const [restockId, setRestockId] = useState<string | null>(null);
@@ -165,8 +166,11 @@ export default function InventoryPage() {
                           </td>
                           <td className="py-3 px-4">
                             <div className="flex items-center gap-1">
-                              <Button variant="outline" size="sm" className="h-7 text-xs border-border/50 opacity-0 group-hover:opacity-100 transition-opacity" onClick={() => { setRestockId(item.id); setRestockQty(""); }}>
-                                Restock
+                              {canManageStock && (
+                                <Button variant="outline" size="sm" className="h-7 text-xs border-border/50 opacity-0 group-hover:opacity-100 transition-opacity" onClick={() => { setRestockId(item.id); setRestockQty(""); }}>
+                                  Restock
+                                </Button>
+                              )}
                               </Button>
                               <Button variant="ghost" size="icon" className="h-7 w-7 opacity-0 group-hover:opacity-100 transition-opacity" onClick={() => setEditItem(item)}>
                                 <Pencil className="h-3.5 w-3.5" />
