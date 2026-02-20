@@ -125,7 +125,41 @@ export default function SettingsPage() {
 
   return (
     <div className="space-y-6">
-      <PageHeader title="Settings" description="Manage clinic profile and preferences" />
+      <PageHeader
+        title="Settings"
+        description="Manage clinic profile and preferences"
+        tutorial={{
+          title: "Settings — How to Use",
+          description: "Configure your clinic's profile, branding, working hours, and system preferences.",
+          steps: [
+            {
+              title: "Clinic Information",
+              description: "Update your clinic's name, address, phone number, email, and website. This information appears on invoices, prescriptions, and your public website.",
+              tip: "Keep contact details accurate — patients see these on printed documents.",
+            },
+            {
+              title: "Upload your clinic logo",
+              description: "Click the logo upload area to add your clinic logo. It will appear on invoices, the dashboard header, and your public clinic website.",
+            },
+            {
+              title: "Working hours",
+              description: "Set the clinic's operating hours for each day of the week. These are used to suggest appointment slots and restrict bookings to clinic hours only.",
+            },
+            {
+              title: "Notification preferences",
+              description: "Configure which events trigger notifications (new appointments, payments received, low inventory) and who receives them (admin, dentist, receptionist).",
+            },
+            {
+              title: "Save all changes",
+              description: "Always click 'Save' after making any changes. Settings do not auto-save — unsaved changes will be lost if you navigate away.",
+            },
+          ],
+          nextPageHint: {
+            label: "Staff Management",
+            description: "After configuring clinic settings, make sure staff accounts and roles are set up correctly on the Staff page.",
+          },
+        }}
+      />
 
       <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}>
         <Tabs defaultValue="clinic">

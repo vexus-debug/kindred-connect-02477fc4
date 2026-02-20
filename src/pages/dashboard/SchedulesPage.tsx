@@ -48,7 +48,41 @@ export default function SchedulesPage() {
 
   return (
     <div className="space-y-6">
-      <PageHeader title="Staff Schedules" description="Manage working hours and availability">
+      <PageHeader
+        title="Staff Schedules"
+        description="Manage working hours and availability"
+        tutorial={{
+          title: "Schedules — How to Use",
+          description: "Configure each dentist's and hygienist's weekly working hours so the appointment system knows when they are available.",
+          steps: [
+            {
+              title: "Select a staff member",
+              description: "Use the dropdown at the top to choose which staff member's schedule you want to view or edit. Each staff member has their own independent weekly schedule.",
+            },
+            {
+              title: "Set working days",
+              description: "Toggle each day of the week on or off. Days that are toggled off mean the staff member is not available and appointments cannot be booked for them on those days.",
+              tip: "Remember to configure schedules for all dentists before enabling online or staff bookings.",
+            },
+            {
+              title: "Set start and end times",
+              description: "For each working day, set the start time (when the dentist begins seeing patients) and end time (last appointment slot). Appointments will only be bookable within these hours.",
+            },
+            {
+              title: "Add a break period",
+              description: "Set lunch or break times to block out a period mid-day. No appointments will be scheduled during the break window.",
+            },
+            {
+              title: "Save the schedule",
+              description: "Click 'Save Schedule' after making changes. The new schedule takes effect immediately and affects all future appointment booking for that staff member.",
+            },
+          ],
+          nextPageHint: {
+            label: "Appointments",
+            description: "With schedules configured, book appointments within the available hours on the Appointments page.",
+          },
+        }}
+      >
         <Select value={selectedStaff} onValueChange={setSelectedStaff}>
           <SelectTrigger className="w-[200px] bg-muted/30">
             <SelectValue placeholder="Select staff" />

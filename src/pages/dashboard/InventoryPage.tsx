@@ -115,6 +115,41 @@ export default function InventoryPage() {
       <PageHeader
         title="Inventory"
         description={`${inventory.length} items tracked`}
+        tutorial={{
+          title: "Inventory — How to Use",
+          description: "Track dental supplies, consumables, and equipment to avoid running out during procedures.",
+          steps: [
+            {
+              title: "View all inventory items",
+              description: "The table shows all tracked items with their current stock level, minimum stock threshold, category, unit, and supplier. Items are sorted by category.",
+            },
+            {
+              title: "Spot low-stock alerts",
+              description: "Items with quantity at or below their minimum stock are highlighted with a warning banner at the top. Restock these items before they run out.",
+              tip: "Set minimum stock levels conservatively — it's better to reorder too early than to run out mid-procedure.",
+            },
+            {
+              title: "Add a new inventory item",
+              description: "Click 'Add Item'. Enter the item name, category (Consumables, Materials, Medication, Instruments, General), starting quantity, unit (pcs, ml, g), minimum stock level, and unit cost.",
+            },
+            {
+              title: "Restock an item",
+              description: "Click the + button on any item row to add stock when supplies arrive. Enter the quantity received and confirm. This updates the stock level immediately.",
+            },
+            {
+              title: "Reduce stock manually",
+              description: "Click the − button to reduce stock when items are used outside of tracked procedures. This helps keep your records accurate.",
+            },
+            {
+              title: "Edit item details",
+              description: "Click the pencil icon to update an item's name, minimum stock level, supplier, or unit cost. Keep supplier info updated so you can quickly reorder.",
+            },
+          ],
+          nextPageHint: {
+            label: "Purchase Orders",
+            description: "When items need restocking, create a formal Purchase Order to send to your supplier.",
+          },
+        }}
         badge={lowStock.length > 0 ? (
           <Badge variant="outline" className="text-[10px] border-amber-500/30 text-amber-600 bg-amber-500/5">
             {lowStock.length} low stock

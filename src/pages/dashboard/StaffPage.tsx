@@ -37,7 +37,41 @@ export default function StaffPage() {
 
   return (
     <div className="space-y-6">
-      <PageHeader title="Staff Management" description={`${staff.length} team members`}>
+      <PageHeader
+        title="Staff Management"
+        description={`${staff.length} team members`}
+        tutorial={{
+          title: "Staff Management — How to Use",
+          description: "Add, edit, and manage all clinic staff members and their system access roles.",
+          steps: [
+            {
+              title: "View staff cards",
+              description: "Each card shows a staff member's name, role, phone, email, and join date. Roles are color-coded: blue for Dentists, green for Hygienists, amber for Receptionists, and rose for Accountants.",
+            },
+            {
+              title: "Add a new staff member",
+              description: "Click 'Add Staff'. Enter their full name, email, phone, role, and specialty. The role determines which pages and features they can access in the system.",
+              tip: "Choose roles carefully. Dentists see clinical pages. Receptionists see scheduling and patients. Accountants see billing and reports.",
+            },
+            {
+              title: "Edit staff details",
+              description: "Click the pencil icon on any staff card to edit their information or change their role. Changes take effect immediately.",
+            },
+            {
+              title: "Understand roles & access",
+              description: "Owner/Admin: full access to all pages. Dentist: clinical + scheduling. Receptionist: patients + appointments. Accountant: billing + reports. Hygienist/Assistant: limited clinical access.",
+            },
+            {
+              title: "Manage staff accounts",
+              description: "Each staff member has a login account. If a staff member leaves, you can deactivate their access to preserve historical records without deleting their data.",
+            },
+          ],
+          nextPageHint: {
+            label: "Schedules",
+            description: "After adding dentists, configure their working hours on the Schedules page so appointments can be booked correctly.",
+          },
+        }}
+      >
         {isAdmin && (
           <Button size="sm" className="bg-secondary hover:bg-secondary/90 shadow-lg shadow-secondary/20" onClick={() => setAddOpen(true)}>
             <Plus className="mr-2 h-4 w-4" /> Add Staff

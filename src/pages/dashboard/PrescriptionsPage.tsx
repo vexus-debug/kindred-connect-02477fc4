@@ -20,7 +20,41 @@ export default function PrescriptionsPage() {
 
   return (
     <div className="space-y-6">
-      <PageHeader title="Prescriptions" description="Digital prescriptions and medication records">
+      <PageHeader
+        title="Prescriptions"
+        description="Digital prescriptions and medication records"
+        tutorial={{
+          title: "Prescriptions — How to Use",
+          description: "Create, manage, and track digital prescriptions issued to patients after their dental visit.",
+          steps: [
+            {
+              title: "View existing prescriptions",
+              description: "All issued prescriptions are listed here with the patient's name, prescribing dentist, date, and status. Click any row to see the full prescription details including medications.",
+            },
+            {
+              title: "Create a new prescription",
+              description: "Click 'New Prescription'. Select the patient and the prescribing dentist. Add a diagnosis or reason for the prescription.",
+              tip: "Always link prescriptions to a patient so they appear in the patient's complete medical history.",
+            },
+            {
+              title: "Add medications",
+              description: "After creating the prescription, add one or more medications. For each, specify: medication name, dosage (e.g. 500mg), frequency (e.g. twice daily), duration (e.g. 5 days), and special instructions.",
+            },
+            {
+              title: "Issue & print",
+              description: "Once all medications are added, the prescription is saved as 'Active'. You can print it directly from the detail view for the patient to take to a pharmacy.",
+            },
+            {
+              title: "Track prescription status",
+              description: "Prescriptions can be Active, Dispensed (patient has collected), or Cancelled. Update the status as needed to keep records accurate.",
+            },
+          ],
+          nextPageHint: {
+            label: "Billing & Payments",
+            description: "After clinical work and prescriptions are done, create an invoice on the Billing page for the patient's visit.",
+          },
+        }}
+      >
         <Button size="sm" className="bg-secondary hover:bg-secondary/90 shadow-lg shadow-secondary/20" onClick={() => setRxOpen(true)}>
           <Plus className="mr-2 h-4 w-4" />
           New Prescription

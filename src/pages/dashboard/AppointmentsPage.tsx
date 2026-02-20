@@ -111,7 +111,46 @@ export default function AppointmentsPage() {
 
   return (
     <div className="space-y-6">
-      <PageHeader title="Appointments" description="Manage and schedule patient visits">
+      <PageHeader
+        title="Appointments"
+        description="Manage and schedule patient visits"
+        tutorial={{
+          title: "Appointments — How to Use",
+          description: "Schedule, manage, and track all patient appointments from this calendar.",
+          steps: [
+            {
+              title: "Choose your view",
+              description: "Switch between Day, Week, and Month views using the toggle buttons. Day view shows the chair-by-chair schedule for today. Week view shows the whole week. Month view gives an overview with appointment dots on each day.",
+              tip: "Day view is best during clinic hours. Month view is great for planning ahead.",
+            },
+            {
+              title: "Navigate dates",
+              description: "Use the left/right arrows to move between days, weeks, or months. Click 'Today' to jump back to the current date. Use 'Jump to date' to pick a specific date from the calendar picker.",
+            },
+            {
+              title: "Book an appointment",
+              description: "Click 'Book Appointment' (top right). Select the patient, dentist, date, time, chair, and treatment type. Click 'Book' to confirm — it will appear immediately on the schedule.",
+            },
+            {
+              title: "Handle walk-in patients",
+              description: "Click 'Walk-In' to quickly register a patient who has arrived without a prior booking. The system will slot them into the next available chair and time.",
+              tip: "Walk-ins are marked with a special badge so staff can prioritise booked patients.",
+            },
+            {
+              title: "View or update an appointment",
+              description: "Click on any appointment block in the calendar to open its detail view. You can update the status (Scheduled → In Progress → Completed), add notes, or cancel it.",
+            },
+            {
+              title: "Understand appointment statuses",
+              description: "Blue = Scheduled (upcoming), Amber = In Progress (patient is currently being seen), Green = Completed, Red = Cancelled. Update statuses in real time as patients move through their visit.",
+            },
+          ],
+          nextPageHint: {
+            label: "Billing & Payments",
+            description: "After a patient's appointment is completed, create an invoice on the Billing page.",
+          },
+        }}
+      >
         <Button size="sm" variant="outline" onClick={() => setWalkInOpen(true)} className="border-border/50">
           <UserPlus className="mr-2 h-4 w-4" />
           Walk-In

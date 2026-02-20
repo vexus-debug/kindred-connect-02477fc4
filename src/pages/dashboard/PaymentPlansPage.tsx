@@ -74,7 +74,41 @@ export default function PaymentPlansPage() {
 
   return (
     <div className="space-y-6">
-      <PageHeader title="Payment Plans" description="Manage installment-based payment schedules">
+      <PageHeader
+        title="Payment Plans"
+        description="Manage installment-based payment schedules"
+        tutorial={{
+          title: "Payment Plans — How to Use",
+          description: "Set up structured payment schedules for patients who need to pay for their treatment in installments.",
+          steps: [
+            {
+              title: "When to use payment plans",
+              description: "Payment plans are for patients who cannot pay a large invoice in full at once. You agree on a number of installments and a schedule (weekly, bi-weekly, monthly).",
+              tip: "Always create the invoice on the Billing page first, then link it to a payment plan here.",
+            },
+            {
+              title: "Create a new payment plan",
+              description: "Click 'Create Plan'. Select the patient, link an existing invoice, set the total amount, number of installments, frequency (monthly, weekly), and start date.",
+            },
+            {
+              title: "Installment schedule",
+              description: "After creating the plan, the system automatically generates the installment schedule with individual due dates and amounts. Review these with the patient before confirming.",
+            },
+            {
+              title: "Record installment payments",
+              description: "When the patient makes a payment, click on the plan to open it, then mark the relevant installment as paid. Record the payment method and reference number.",
+            },
+            {
+              title: "Monitor plan status",
+              description: "Plans show their overall status: Active (ongoing), Completed (fully paid), or Defaulted (payments are overdue). Follow up with patients whose plans are overdue.",
+            },
+          ],
+          nextPageHint: {
+            label: "Billing & Payments",
+            description: "View the linked invoice on the Billing page to see the complete payment history for the patient.",
+          },
+        }}
+      >
         <Button size="sm" className="bg-secondary hover:bg-secondary/90 shadow-lg shadow-secondary/20" onClick={() => setCreateOpen(true)}>
           <Plus className="mr-2 h-4 w-4" /> Create Plan
         </Button>

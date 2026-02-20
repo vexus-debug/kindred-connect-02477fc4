@@ -84,7 +84,41 @@ export default function AutomationPage() {
 
   return (
     <div className="space-y-6">
-      <PageHeader title="Automation" description="Manage automated workflows, reminders, and follow-ups">
+      <PageHeader
+        title="Automation"
+        description="Manage automated workflows, reminders, and follow-ups"
+        tutorial={{
+          title: "Automation — How to Use",
+          description: "Set up automatic messages and reminders so patients are always informed without manual effort.",
+          steps: [
+            {
+              title: "What is automation?",
+              description: "Automation workflows are rules that automatically send messages (SMS or WhatsApp) to patients when certain events happen — like appointment reminders, birthday greetings, or follow-ups after treatment.",
+              tip: "Well-timed reminders significantly reduce no-shows. Aim to send a reminder 24 hours before every appointment.",
+            },
+            {
+              title: "View existing workflows",
+              description: "The Workflows tab lists all configured automations with their name, trigger, timing, and whether they are currently enabled or disabled.",
+            },
+            {
+              title: "Create a new workflow",
+              description: "Click 'New Workflow'. Choose a trigger event (e.g. Appointment Booked, Appointment Due, Post-Visit), set the timing (e.g. 1 day before, 2 hours after), and write the message template.",
+            },
+            {
+              title: "Personalise message templates",
+              description: "Use template variables like {patient_name}, {appointment_date}, and {clinic_name} in your message. These are automatically replaced with real data when the message is sent.",
+            },
+            {
+              title: "Enable or disable workflows",
+              description: "Toggle any workflow on or off using the switch. Disabled workflows will not send messages but are preserved for future use.",
+            },
+            {
+              title: "View automation history",
+              description: "Switch to the 'Logs' tab to see a history of all automated messages sent, including delivery status and any errors. Use this to verify automation is working correctly.",
+            },
+          ],
+        }}
+      >
         <Badge variant="outline" className="text-xs border-border/50">
           {workflows.filter((w) => w.is_enabled).length} active
         </Badge>

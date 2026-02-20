@@ -183,7 +183,45 @@ export default function DentalChartsPage() {
 
   return (
     <div className="space-y-6">
-      <PageHeader title="Dental Charts" description="Interactive tooth chart per patient">
+      <PageHeader
+        title="Dental Charts"
+        description="Interactive tooth chart per patient"
+        tutorial={{
+          title: "Dental Charts — How to Use",
+          description: "Record and track every tooth's condition, treatments performed, and dental history for each patient.",
+          steps: [
+            {
+              title: "Select a patient",
+              description: "Use the patient dropdown (top right of the chart) to load a specific patient's dental record. The interactive tooth diagram will display their history.",
+            },
+            {
+              title: "Read the tooth diagram",
+              description: "The diagram shows the upper jaw (top) and lower jaw (bottom) with numbered teeth. Each tooth is clickable. Teeth with recorded entries have a color or symbol indicating their condition.",
+            },
+            {
+              title: "Click a tooth to record",
+              description: "Click any tooth number to select it. A form appears where you can record: procedure performed (Filling, Extraction, Crown, etc.), surface, condition, the dentist who performed it, and notes.",
+              tip: "Use the correct FDI tooth numbering system. Upper right starts at 11, upper left at 21, lower left at 31, lower right at 41.",
+            },
+            {
+              title: "Add an entry",
+              description: "After selecting a tooth, fill in the procedure details and click 'Add Entry'. This saves to the patient's permanent dental chart and appears in their history below.",
+            },
+            {
+              title: "View chart history",
+              description: "The history table below the chart shows all entries for the selected patient — sorted by date. You can see which teeth were treated, by whom, and when.",
+            },
+            {
+              title: "Edit or remove entries",
+              description: "Each history entry has edit and delete buttons. Use edit to correct a mistake, and delete only when an entry was added in error (deletions cannot be undone).",
+            },
+          ],
+          nextPageHint: {
+            label: "Prescriptions",
+            description: "After charting, issue any required prescriptions for the patient from the Prescriptions page.",
+          },
+        }}
+      >
         <div className="w-64">
           <Select value={patientId || ""} onValueChange={(v) => { setSelectedPatientId(v); setSelectedTooth(null); }}>
             <SelectTrigger className="bg-muted/30 border-border/40">
