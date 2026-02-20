@@ -62,7 +62,41 @@ export default function ExpensesPage() {
 
   return (
     <div className="space-y-6">
-      <PageHeader title="Expenses" description="Track clinic expenses and outgoings">
+      <PageHeader
+        title="Expenses"
+        description="Track clinic expenses and outgoings"
+        tutorial={{
+          title: "Expenses — How to Use",
+          description: "Record and categorise all clinic expenses to track spending and calculate true profitability.",
+          steps: [
+            {
+              title: "View expense history",
+              description: "All recorded expenses appear in the table sorted by date. Each entry shows the amount, category, vendor, payment method, and description.",
+            },
+            {
+              title: "Add a new expense",
+              description: "Click 'Add Expense'. Select the category (Supplies, Utilities, Salaries, Rent, Lab Fees, etc.), enter the vendor name, amount, payment method, and date.",
+              tip: "Categorise accurately — this powers the expense breakdown charts in the Profitability and Reports pages.",
+            },
+            {
+              title: "Upload receipts",
+              description: "Attach a receipt image or PDF to each expense for auditing and accounting purposes. Click the receipt upload field in the expense form.",
+            },
+            {
+              title: "Filter by category or date",
+              description: "Use the filter controls to view expenses by category (e.g. only Lab Fees) or within a specific date range. This helps with monthly budget reviews.",
+            },
+            {
+              title: "Review totals",
+              description: "The summary at the top shows total expenses for the selected period. Compare this with your revenue on the Reports page to calculate net profit.",
+            },
+          ],
+          nextPageHint: {
+            label: "Profitability",
+            description: "Visit the Profitability page to see revenue vs expenses side by side with profit margin analysis.",
+          },
+        }}
+      >
         <Button onClick={() => setDialogOpen(true)} className="bg-secondary hover:bg-secondary/90">
           <Plus className="mr-2 h-4 w-4" /> Add Expense
         </Button>

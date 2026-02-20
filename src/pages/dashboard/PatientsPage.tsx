@@ -66,6 +66,42 @@ export default function PatientsPage() {
       <PageHeader
         title="Patients"
         description={`${patients.length} total · ${activeCount} active`}
+        tutorial={{
+          title: "Patients — How to Use",
+          description: "Register, search, and manage all your patients from this page.",
+          steps: [
+            {
+              title: "Browse your patient list",
+              description: "All registered patients appear here. You can switch between Table view (rows) and Grid view (cards) using the toggle buttons on the right side of the toolbar.",
+              tip: "Grid view is great for quickly spotting patients by name. Table view shows more details at once.",
+            },
+            {
+              title: "Search for a patient",
+              description: "Use the search bar to find a patient by name, ID, or phone number. Results update instantly as you type.",
+            },
+            {
+              title: "Filter by status",
+              description: "Use the Status dropdown to show only Active or Inactive patients. Active patients are currently receiving care; inactive ones have not visited recently.",
+            },
+            {
+              title: "Register a new patient",
+              description: "Click the 'Add Patient' button (top right). Fill in the patient's name, phone, email, date of birth, and any relevant medical history or allergies.",
+              tip: "Always record allergies carefully — this appears as a warning during prescriptions and treatment.",
+            },
+            {
+              title: "Open a patient profile",
+              description: "Click any patient row or card to open their full profile. You'll see appointments, invoices, dental charts, prescriptions, and more — all in one place.",
+            },
+            {
+              title: "Quick actions per patient",
+              description: "Hover over a row and click the ⋯ menu to quickly book an appointment, call, or send a WhatsApp message to the patient without opening their full profile.",
+            },
+          ],
+          nextPageHint: {
+            label: "Book an Appointment",
+            description: "Once a patient is registered, go to the Appointments page to schedule their first visit.",
+          },
+        }}
       >
         <Button
           size="sm"

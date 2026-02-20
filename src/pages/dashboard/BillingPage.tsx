@@ -99,7 +99,45 @@ export default function BillingPage() {
 
   return (
     <div className="space-y-5">
-      <PageHeader title="Billing & Payments" description="Manage invoices and track payments">
+      <PageHeader
+        title="Billing & Payments"
+        description="Manage invoices and track payments"
+        tutorial={{
+          title: "Billing & Payments — How to Use",
+          description: "Create invoices, record payments, and track outstanding balances for your patients.",
+          steps: [
+            {
+              title: "Understand the summary cards",
+              description: "The three cards at the top show: Collected Today (cash received today), Outstanding Balance (total unpaid across all patients), and Overdue Invoices (invoices past their due date).",
+            },
+            {
+              title: "Create an invoice",
+              description: "Click 'Create Invoice' (top right). Select the patient, then add treatment line items with quantities and prices. The system calculates the subtotal, tax, and total automatically.",
+              tip: "You can add multiple treatments to a single invoice. Apply a discount as a percentage or flat amount.",
+            },
+            {
+              title: "Record a payment",
+              description: "Click any invoice row to open its details. Use the 'Record Payment' section to enter the amount paid, payment method (Cash, Card, Bank Transfer), and reference number.",
+            },
+            {
+              title: "Track partial payments",
+              description: "If a patient pays in parts, the invoice status becomes 'Partial'. Record each installment until the balance reaches zero and the status changes to 'Paid'.",
+            },
+            {
+              title: "Generate a client statement",
+              description: "Click 'Client Statement' to generate a date-range summary of all invoices and payments for a specific patient — useful for sending payment summaries by email.",
+            },
+            {
+              title: "Filter & search invoices",
+              description: "Use the search bar to find invoices by patient name or invoice number. Use the status filter to view only Paid, Pending, or Partial invoices.",
+            },
+          ],
+          nextPageHint: {
+            label: "Payment Plans",
+            description: "For patients who need to spread payments over time, set up a Payment Plan linked to an invoice.",
+          },
+        }}
+      >
         <div className="flex gap-2 flex-wrap">
           <Button size="sm" variant="outline" onClick={() => setStatementOpen(true)} className="gap-1.5">
             <CalendarRange className="h-4 w-4" />

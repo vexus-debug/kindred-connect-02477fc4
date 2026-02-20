@@ -138,7 +138,45 @@ export default function TreatmentsPage() {
 
   return (
     <div className="space-y-6">
-      <PageHeader title="Treatments & Procedures" description="Treatment catalog and patient treatment plans" />
+      <PageHeader
+        title="Treatments & Procedures"
+        description="Treatment catalog and patient treatment plans"
+        tutorial={{
+          title: "Treatments — How to Use",
+          description: "Manage your treatment catalog and create detailed treatment plans for patients.",
+          steps: [
+            {
+              title: "Treatment Catalog tab",
+              description: "The Catalog tab lists all services your clinic offers — check-ups, fillings, crowns, etc. Each shows its price, duration, and category. This is what gets added to invoices and appointments.",
+              tip: "Keep your catalog up to date. Any treatment listed here can be linked to appointments and invoices.",
+            },
+            {
+              title: "Add a new treatment type",
+              description: "In the Catalog tab, click 'Add Treatment'. Enter the treatment name, category (e.g. Restorative, Cosmetic), price, and estimated duration. Save to make it available system-wide.",
+            },
+            {
+              title: "Treatment Plans tab",
+              description: "Switch to the 'Treatment Plans' tab to see multi-session plans created for specific patients. A plan groups multiple treatments that need to be done over several visits.",
+            },
+            {
+              title: "Create a treatment plan",
+              description: "Click 'New Plan', select the patient, then add the individual treatments in the order they should be done. Set a total price and expected start date.",
+            },
+            {
+              title: "Track plan progress",
+              description: "Each treatment in a plan has its own status: Pending → Scheduled → In Progress → Completed. Update these as the patient progresses through their plan. The progress bar shows overall completion.",
+            },
+            {
+              title: "Link plans to invoices",
+              description: "Once treatments in a plan are completed, go to Billing to create an invoice and link the relevant treatment items for accurate billing.",
+            },
+          ],
+          nextPageHint: {
+            label: "Billing & Payments",
+            description: "After completing treatments, create an invoice on the Billing page linked to the treatments performed.",
+          },
+        }}
+      />
 
       <Tabs defaultValue="catalog" className="space-y-4">
         <TabsList className="bg-muted/50">

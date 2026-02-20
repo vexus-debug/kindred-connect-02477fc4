@@ -49,7 +49,41 @@ export default function WaitingListPage() {
 
   return (
     <div className="space-y-6">
-      <PageHeader title="Waiting List" description={`${activeQueue.length} patients in queue`}>
+      <PageHeader
+        title="Waiting List"
+        description={`${activeQueue.length} patients in queue`}
+        tutorial={{
+          title: "Waiting List — How to Use",
+          description: "Manage patients who are waiting at the clinic or queued for a future availability slot.",
+          steps: [
+            {
+              title: "View the queue",
+              description: "The waiting list shows all patients currently checked in and waiting, with their check-in time and assigned dentist (if any). Patients are listed in order of arrival.",
+            },
+            {
+              title: "Check in a patient",
+              description: "Click 'Check In'. Select or register the patient, assign them to a dentist, and add the reason for their visit. They immediately appear in the waiting queue.",
+              tip: "Use this for both walk-in patients and those with appointments who have arrived at the clinic.",
+            },
+            {
+              title: "Call next patient",
+              description: "When a chair becomes available, click 'Call' on the next patient in the queue to move them to 'In Progress'. This removes them from the waiting queue.",
+            },
+            {
+              title: "Remove from queue",
+              description: "If a patient leaves before being seen, click 'Remove' to take them off the queue. Always update the status in real time to avoid confusion.",
+            },
+            {
+              title: "Monitor wait times",
+              description: "Each patient entry shows how long they have been waiting. Aim to keep wait times under 30 minutes by coordinating with the clinical team on chair availability.",
+            },
+          ],
+          nextPageHint: {
+            label: "Appointments",
+            description: "For patients without prior bookings who need follow-up, create a proper appointment on the Appointments page.",
+          },
+        }}
+      >
         <Button size="sm" className="bg-secondary hover:bg-secondary/90 shadow-lg shadow-secondary/20" onClick={() => setAddOpen(true)}>
           <Plus className="mr-2 h-4 w-4" /> Check In
         </Button>

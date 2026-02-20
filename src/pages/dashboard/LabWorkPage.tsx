@@ -37,7 +37,41 @@ export default function LabWorkPage() {
 
   return (
     <div className="space-y-6">
-      <PageHeader title="Lab Work" description="Track dental lab orders and results">
+      <PageHeader
+        title="Lab Work"
+        description="Track dental lab orders and results"
+        tutorial={{
+          title: "Lab Work — How to Use",
+          description: "Create and track lab orders sent to external dental laboratories for prosthetics, orthodontics, and more.",
+          steps: [
+            {
+              title: "View all lab orders",
+              description: "The table shows all lab orders with patient name, lab name, work type, due date, and current status. Orders are sorted by creation date (newest first).",
+            },
+            {
+              title: "Create a new lab order",
+              description: "Click 'New Lab Order'. Select the patient, assign the dentist, choose the lab work type (Crown, Bridge, Denture, etc.), and pick the laboratory.",
+              tip: "Fill in the due date carefully — labs need adequate lead time, typically 5–14 days for most prosthetic work.",
+            },
+            {
+              title: "Add lab specifications",
+              description: "In the order form, add shade/color requirements, material preferences (ceramic, zirconia, metal, etc.), and any special instructions. Clear instructions reduce lab errors and remakes.",
+            },
+            {
+              title: "Track order statuses",
+              description: "Orders progress through: Pending → Sent → In Progress → Completed → Received. Update the status as each stage is reached so the team knows what to expect.",
+            },
+            {
+              title: "Mark as received",
+              description: "When the lab work arrives at the clinic, update the status to 'Received' and record the received date. This triggers a reminder to schedule the patient for fitting.",
+            },
+          ],
+          nextPageHint: {
+            label: "Appointments",
+            description: "Once lab work is received, book the patient's fitting/delivery appointment on the Appointments page.",
+          },
+        }}
+      >
         <Button size="sm" className="bg-secondary hover:bg-secondary/90 shadow-lg shadow-secondary/20" onClick={() => setLabOpen(true)}>
           <Plus className="mr-2 h-4 w-4" />
           New Lab Order

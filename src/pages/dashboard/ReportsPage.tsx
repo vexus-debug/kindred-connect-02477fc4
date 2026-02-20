@@ -75,7 +75,45 @@ export default function ReportsPage() {
 
   return (
     <div className="space-y-5">
-      <PageHeader title="Reports" description="Clinic performance and insights">
+      <PageHeader
+        title="Reports"
+        description="Clinic performance and insights"
+        tutorial={{
+          title: "Reports — How to Use",
+          description: "Analyse your clinic's revenue, patient trends, and staff performance over any date range.",
+          steps: [
+            {
+              title: "Set your date range",
+              description: "Use the 'From' and 'To' date pickers at the top to filter all report data to a specific period. Click 'Apply' to refresh the charts and tables.",
+              tip: "Start with 'This Month' to get a quick overview of recent performance, then compare with last month.",
+            },
+            {
+              title: "KPI summary cards",
+              description: "The top row shows key metrics: Total Revenue, Total Patients, Appointments Completed, and Average Invoice Value. These update based on your selected date range.",
+            },
+            {
+              title: "Revenue Trend chart",
+              description: "The line/bar chart shows revenue over time within your selected range. Peaks and dips indicate busy and slow periods — useful for staffing decisions.",
+            },
+            {
+              title: "Treatment breakdown",
+              description: "The treatment distribution chart shows which procedures generate the most revenue. Use this to identify your most profitable services.",
+            },
+            {
+              title: "Staff performance",
+              description: "The dentist performance section shows how many appointments and how much revenue each dentist generated. Helps with commission calculations and workload balancing.",
+            },
+            {
+              title: "Export reports",
+              description: "Click the export button (top right of each chart) to download data as CSV or print a formatted report for management review.",
+            },
+          ],
+          nextPageHint: {
+            label: "Advanced Analytics",
+            description: "For deeper insights like patient lifetime value and profitability analysis, visit the Advanced Analytics page.",
+          },
+        }}
+      >
         <div className="flex items-center gap-2 flex-wrap">
           <Popover>
             <PopoverTrigger asChild>
