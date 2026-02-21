@@ -60,27 +60,41 @@ serve(async (req) => {
       });
     }
 
-    const response = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:streamGenerateContent?alt=sse&key=${GEMINI_API_KEY}`,
-      {
+    const geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:streamGenerateContent?alt=sse&key=${GEMINI_API_KEY}`;
+    const geminiBody = JSON.stringify({
+      system_instruction: { parts: [{ text: systemPrompt }] },
+      contents: geminiContents,
+      generationConfig: {
+        temperature: 0.7,
+        maxOutputTokens: 2048,
+      },
+    });
+
+    let response = await fetch(geminiUrl, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: geminiBody,
+    });
+
+    // Retry once after a delay if rate limited
+    if (response.status === 429) {
+      console.log("Rate limited, retrying after 2s...");
+      await new Promise((r) => setTimeout(r, 2000));
+      response = await fetch(geminiUrl, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          system_instruction: { parts: [{ text: systemPrompt }] },
-          contents: geminiContents,
-          generationConfig: {
-            temperature: 0.7,
-            maxOutputTokens: 2048,
-          },
-        }),
-      }
-    );
+        body: geminiBody,
+      });
+    }
 
     if (!response.ok) {
       const errorText = await response.text();
       console.error("Gemini API error:", response.status, errorText);
-      return new Response(JSON.stringify({ error: `Gemini API error: ${response.status}` }), {
-        status: 500,
+      const userMsg = response.status === 429
+        ? "AI is temporarily rate-limited. Please wait a moment and try again."
+        : `Gemini API error: ${response.status}`;
+      return new Response(JSON.stringify({ error: userMsg }), {
+        status: response.status === 429 ? 429 : 500,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
