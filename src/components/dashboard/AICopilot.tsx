@@ -86,7 +86,11 @@ export function AICopilot() {
       });
 
       if (!resp.ok || !resp.body) {
-        throw new Error("Failed to get AI response");
+        if (resp.status === 429) {
+          throw new Error("AI is temporarily busy. Please wait a moment and try again.");
+        }
+        const errData = await resp.json().catch(() => ({}));
+        throw new Error(errData.error || "Failed to get AI response");
       }
 
       const reader = resp.body.getReader();
