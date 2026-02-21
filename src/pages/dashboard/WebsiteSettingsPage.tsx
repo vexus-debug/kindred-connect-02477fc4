@@ -9,11 +9,11 @@ import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import {
   Plus, Trash2, ExternalLink, Upload, Image as ImageIcon,
-  Globe, Palette, Clock, Share2, Shield, MessageSquare,
+  Globe, Palette, Clock, Share2, Shield, MessageSquare, Camera,
 } from "lucide-react";
 import {
   useClinicSettings, useUpdateClinicSettings,
-  type SiteSettings, type OperatingHour, type Certification,
+  type SiteSettings, type OperatingHour, type Certification, type GalleryItem,
 } from "@/hooks/useClinicSettings";
 import { PageHeader } from "@/components/dashboard/PageHeader";
 import { motion } from "framer-motion";
@@ -34,7 +34,9 @@ export default function WebsiteSettingsPage() {
   const { data: clinicSettings } = useClinicSettings();
   const updateClinic = useUpdateClinicSettings();
   const heroImageRef = useRef<HTMLInputElement>(null);
+  const galleryImageRef = useRef<HTMLInputElement>(null);
   const [heroUploading, setHeroUploading] = useState(false);
+  const [galleryUploading, setGalleryUploading] = useState(false);
 
   const settings = clinicSettings?.settings || {};
 
@@ -43,12 +45,16 @@ export default function WebsiteSettingsPage() {
   const [hours, setHours] = useState<OperatingHour[]>([]);
   const [certs, setCerts] = useState<Certification[]>([]);
   const [newCert, setNewCert] = useState("");
+  const [gallery, setGallery] = useState<GalleryItem[]>([]);
+  const [newGalleryTitle, setNewGalleryTitle] = useState("");
+  const [newGalleryDesc, setNewGalleryDesc] = useState("");
 
   // Sync from server
   useEffect(() => {
     if (settings) {
       setHours(settings.operating_hours || DEFAULT_HOURS);
       setCerts(settings.certifications || []);
+      setGallery(settings.gallery_items || []);
     }
   }, [clinicSettings]);
 
@@ -67,6 +73,7 @@ export default function WebsiteSettingsPage() {
       ...form,
       operating_hours: hours,
       certifications: certs,
+      gallery_items: gallery,
       ...extraFields,
     };
     updateClinic.mutate({ id: clinicSettings.id, settings: merged });
@@ -93,6 +100,52 @@ export default function WebsiteSettingsPage() {
     } finally {
       setHeroUploading(false);
     }
+  };
+
+  const handleGalleryUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !clinicSettings) return;
+    setGalleryUploading(true);
+    try {
+      const ext = file.name.split(".").pop();
+      const id = crypto.randomUUID();
+      const path = `${clinicSettings.id}/gallery/${id}.${ext}`;
+      const { error: uploadError } = await supabase.storage
+        .from("clinic-logos")
+        .upload(path, file, { upsert: true });
+      if (uploadError) throw uploadError;
+      const { data: urlData } = supabase.storage.from("clinic-logos").getPublicUrl(path);
+      const imageUrl = urlData.publicUrl + "?t=" + Date.now();
+      const newItem: GalleryItem = {
+        id,
+        image_url: imageUrl,
+        title: newGalleryTitle.trim() || undefined,
+        description: newGalleryDesc.trim() || undefined,
+      };
+      const updatedGallery = [...gallery, newItem];
+      setGallery(updatedGallery);
+      setNewGalleryTitle("");
+      setNewGalleryDesc("");
+      // Save immediately
+      const merged: SiteSettings = {
+        ...settings,
+        ...form,
+        operating_hours: hours,
+        certifications: certs,
+        gallery_items: updatedGallery,
+      };
+      updateClinic.mutate({ id: clinicSettings.id, settings: merged });
+      toast({ title: "Gallery image added" });
+    } catch (err: any) {
+      toast({ title: "Upload failed", description: err.message, variant: "destructive" });
+    } finally {
+      setGalleryUploading(false);
+    }
+  };
+
+  const removeGalleryItem = (idx: number) => {
+    const updated = gallery.filter((_, i) => i !== idx);
+    setGallery(updated);
   };
 
   const updateHour = (idx: number, field: keyof OperatingHour, value: any) => {
@@ -136,6 +189,7 @@ export default function WebsiteSettingsPage() {
         <Tabs defaultValue="identity">
           <TabsList className="bg-muted/50 backdrop-blur-sm flex-wrap h-auto gap-1">
             <TabsTrigger value="identity"><Globe className="mr-1.5 h-3.5 w-3.5" />Identity & Hero</TabsTrigger>
+            <TabsTrigger value="gallery"><Camera className="mr-1.5 h-3.5 w-3.5" />Gallery</TabsTrigger>
             <TabsTrigger value="hours"><Clock className="mr-1.5 h-3.5 w-3.5" />Hours</TabsTrigger>
             <TabsTrigger value="appearance"><Palette className="mr-1.5 h-3.5 w-3.5" />Appearance</TabsTrigger>
             <TabsTrigger value="social"><Share2 className="mr-1.5 h-3.5 w-3.5" />Social & Contact</TabsTrigger>
@@ -200,6 +254,66 @@ export default function WebsiteSettingsPage() {
                 </div>
                 <Button className="bg-secondary hover:bg-secondary/90 shadow-lg shadow-secondary/20" onClick={() => handleSave()} disabled={updateClinic.isPending}>
                   {updateClinic.isPending ? "Saving..." : "Save Changes"}
+                </Button>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          {/* Gallery */}
+          <TabsContent value="gallery" className="mt-4">
+            <Card className="glass-card">
+              <CardHeader className="border-b border-border/30">
+                <CardTitle className="text-base">Gallery</CardTitle>
+                <CardDescription>Add procedure photos and clinic images shown in a masonry grid on your website</CardDescription>
+              </CardHeader>
+              <CardContent className="pt-4 space-y-4">
+                {/* Upload new */}
+                <div className="border border-dashed border-border/50 rounded-lg p-4 space-y-3">
+                  <p className="text-sm font-medium">Add Gallery Image</p>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="space-y-1">
+                      <Label className="text-xs">Title (optional)</Label>
+                      <Input className="bg-muted/30 border-border/40 h-8 text-xs" placeholder="e.g. Teeth Whitening" value={newGalleryTitle} onChange={(e) => setNewGalleryTitle(e.target.value)} />
+                    </div>
+                    <div className="space-y-1">
+                      <Label className="text-xs">Description (optional)</Label>
+                      <Input className="bg-muted/30 border-border/40 h-8 text-xs" placeholder="e.g. Before & after" value={newGalleryDesc} onChange={(e) => setNewGalleryDesc(e.target.value)} />
+                    </div>
+                  </div>
+                  <div>
+                    <input ref={galleryImageRef} type="file" accept="image/*" className="hidden" onChange={handleGalleryUpload} />
+                    <Button variant="outline" size="sm" onClick={() => galleryImageRef.current?.click()} disabled={galleryUploading}>
+                      <Upload className="mr-2 h-3.5 w-3.5" />
+                      {galleryUploading ? "Uploading..." : "Upload & Add"}
+                    </Button>
+                  </div>
+                </div>
+
+                {/* Existing gallery items */}
+                {gallery.length === 0 ? (
+                  <p className="text-xs text-muted-foreground text-center py-6">No gallery images yet. Upload your first image above.</p>
+                ) : (
+                  <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
+                    {gallery.map((item, i) => (
+                      <div key={item.id} className="relative group rounded-lg overflow-hidden border border-border/40 bg-card/50">
+                        <img src={item.image_url} alt={item.title || "Gallery"} className="w-full h-32 object-cover" />
+                        <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                          <Button variant="destructive" size="icon" className="h-8 w-8" onClick={() => removeGalleryItem(i)}>
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </div>
+                        {item.title && (
+                          <div className="p-2">
+                            <p className="text-xs font-medium truncate">{item.title}</p>
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                <Button className="bg-secondary hover:bg-secondary/90 shadow-lg shadow-secondary/20" onClick={() => handleSave()} disabled={updateClinic.isPending}>
+                  {updateClinic.isPending ? "Saving..." : "Save Gallery"}
                 </Button>
               </CardContent>
             </Card>

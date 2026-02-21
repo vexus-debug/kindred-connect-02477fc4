@@ -15,6 +15,13 @@ export interface Certification {
   description?: string;
 }
 
+export interface GalleryItem {
+  id: string;
+  image_url: string;
+  title?: string;
+  description?: string;
+}
+
 export interface SiteSettings {
   // Identity
   welcome_text?: string;
@@ -43,6 +50,9 @@ export interface SiteSettings {
 
   // Booking
   booking_confirmation_message?: string;
+
+  // Gallery
+  gallery_items?: GalleryItem[];
 }
 
 export interface ClinicSettings {
