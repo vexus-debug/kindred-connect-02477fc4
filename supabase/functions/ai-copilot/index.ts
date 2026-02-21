@@ -163,6 +163,180 @@ const TOOLS = [
           properties: {},
         },
       },
+      // --- Patient Management Actions ---
+      {
+        name: "register_patient",
+        description: "Register a new patient. Use when the user wants to add a new patient to the system.",
+        parameters: {
+          type: "object",
+          properties: {
+            first_name: { type: "string", description: "Patient's first name" },
+            last_name: { type: "string", description: "Patient's last name" },
+            phone: { type: "string", description: "Phone number" },
+            email: { type: "string", description: "Email address" },
+            gender: { type: "string", description: "Gender: male, female, other" },
+            date_of_birth: { type: "string", description: "Date of birth (YYYY-MM-DD)" },
+            address: { type: "string", description: "Address" },
+            blood_group: { type: "string", description: "Blood group" },
+            allergies: { type: "string", description: "Known allergies" },
+            medical_history: { type: "string", description: "Medical history notes" },
+            emergency_contact_name: { type: "string", description: "Emergency contact name" },
+            emergency_contact_phone: { type: "string", description: "Emergency contact phone" },
+          },
+          required: ["first_name", "last_name"],
+        },
+      },
+      {
+        name: "update_patient",
+        description: "Update an existing patient's information. Use when user wants to change patient details like phone, email, allergies, medical history, etc.",
+        parameters: {
+          type: "object",
+          properties: {
+            patient_id: { type: "string", description: "Patient UUID" },
+            first_name: { type: "string" },
+            last_name: { type: "string" },
+            phone: { type: "string" },
+            email: { type: "string" },
+            gender: { type: "string" },
+            date_of_birth: { type: "string" },
+            address: { type: "string" },
+            blood_group: { type: "string" },
+            allergies: { type: "string" },
+            medical_history: { type: "string" },
+            emergency_contact_name: { type: "string" },
+            emergency_contact_phone: { type: "string" },
+            status: { type: "string", description: "active or inactive" },
+          },
+          required: ["patient_id"],
+        },
+      },
+      // --- Scheduling Actions ---
+      {
+        name: "update_appointment_status",
+        description: "Update an appointment's status (cancel, complete, mark as no-show, reschedule). Use when user wants to change appointment status.",
+        parameters: {
+          type: "object",
+          properties: {
+            appointment_id: { type: "string", description: "Appointment UUID" },
+            status: { type: "string", description: "New status: scheduled, completed, cancelled, no_show" },
+            notes: { type: "string", description: "Optional notes about the status change" },
+          },
+          required: ["appointment_id", "status"],
+        },
+      },
+      {
+        name: "reschedule_appointment",
+        description: "Reschedule an existing appointment to a new date/time. Use when user wants to move an appointment.",
+        parameters: {
+          type: "object",
+          properties: {
+            appointment_id: { type: "string", description: "Appointment UUID" },
+            new_date: { type: "string", description: "New date (YYYY-MM-DD)" },
+            new_time: { type: "string", description: "New time (HH:MM)" },
+            new_staff_id: { type: "string", description: "Optional new dentist UUID" },
+            notes: { type: "string", description: "Reason for rescheduling" },
+          },
+          required: ["appointment_id", "new_date", "new_time"],
+        },
+      },
+      {
+        name: "add_walk_in",
+        description: "Add a walk-in patient to today's schedule. Use when a patient comes in without an appointment.",
+        parameters: {
+          type: "object",
+          properties: {
+            patient_id: { type: "string", description: "Patient UUID" },
+            staff_id: { type: "string", description: "Dentist UUID" },
+            appointment_time: { type: "string", description: "Time (HH:MM)" },
+            notes: { type: "string", description: "Reason for visit" },
+            chair: { type: "string", description: "Chair assignment" },
+          },
+          required: ["patient_id", "staff_id", "appointment_time"],
+        },
+      },
+      {
+        name: "get_available_slots",
+        description: "Check available appointment slots for a dentist on a specific date. Use when user wants to find open times for booking.",
+        parameters: {
+          type: "object",
+          properties: {
+            staff_id: { type: "string", description: "Dentist UUID" },
+            date: { type: "string", description: "Date to check (YYYY-MM-DD)" },
+          },
+          required: ["staff_id", "date"],
+        },
+      },
+      // --- Billing & Finance Actions ---
+      {
+        name: "create_invoice",
+        description: "Create a new invoice for a patient with line items. Use when user wants to bill a patient.",
+        parameters: {
+          type: "object",
+          properties: {
+            patient_id: { type: "string", description: "Patient UUID" },
+            items: {
+              type: "array",
+              description: "Invoice line items",
+              items: {
+                type: "object",
+                properties: {
+                  description: { type: "string" },
+                  quantity: { type: "integer" },
+                  unit_price: { type: "number" },
+                },
+                required: ["description", "unit_price"],
+              },
+            },
+            discount: { type: "number", description: "Discount amount" },
+            tax: { type: "number", description: "Tax amount" },
+            notes: { type: "string", description: "Invoice notes" },
+            due_date: { type: "string", description: "Due date (YYYY-MM-DD)" },
+          },
+          required: ["patient_id", "items"],
+        },
+      },
+      {
+        name: "record_payment",
+        description: "Record a payment against an invoice. Use when user confirms a patient has paid.",
+        parameters: {
+          type: "object",
+          properties: {
+            invoice_id: { type: "string", description: "Invoice UUID" },
+            payment_method: { type: "string", description: "cash, card, bank_transfer, insurance" },
+            notes: { type: "string", description: "Payment notes" },
+          },
+          required: ["invoice_id", "payment_method"],
+        },
+      },
+      {
+        name: "log_expense",
+        description: "Log a clinic expense. Use when user wants to record a business expense.",
+        parameters: {
+          type: "object",
+          properties: {
+            amount: { type: "number", description: "Expense amount" },
+            category: { type: "string", description: "Category: supplies, rent, utilities, equipment, salary, marketing, other" },
+            description: { type: "string", description: "What the expense was for" },
+            vendor: { type: "string", description: "Vendor/supplier name" },
+            payment_method: { type: "string", description: "cash, card, bank_transfer" },
+            expense_date: { type: "string", description: "Date (YYYY-MM-DD). Defaults to today." },
+          },
+          required: ["amount", "category"],
+        },
+      },
+      {
+        name: "update_inventory",
+        description: "Update inventory stock levels (restock or use). Use when user wants to add stock or record usage of supplies.",
+        parameters: {
+          type: "object",
+          properties: {
+            inventory_id: { type: "string", description: "Inventory item UUID" },
+            quantity_change: { type: "integer", description: "Positive to add stock, negative to subtract" },
+            reason: { type: "string", description: "Reason: restock, used, damaged, expired" },
+          },
+          required: ["inventory_id", "quantity_change"],
+        },
+      },
     ],
   },
 ];
@@ -389,6 +563,241 @@ async function executeTool(name: string, args: any, supabaseAdmin: any, orgId: s
         pending_invoices: { count: pendingInvoices?.length || 0, total_amount: pendingTotal },
         inventory_alerts: lowItems.length,
       };
+    }
+
+    // --- Patient Management ---
+    case "register_patient": {
+      const { data, error } = await supabaseAdmin
+        .from("patients")
+        .insert({
+          org_id: orgId,
+          first_name: args.first_name,
+          last_name: args.last_name,
+          phone: args.phone || null,
+          email: args.email || null,
+          gender: args.gender || null,
+          date_of_birth: args.date_of_birth || null,
+          address: args.address || null,
+          blood_group: args.blood_group || null,
+          allergies: args.allergies || null,
+          medical_history: args.medical_history || null,
+          emergency_contact_name: args.emergency_contact_name || null,
+          emergency_contact_phone: args.emergency_contact_phone || null,
+        })
+        .select("id, first_name, last_name")
+        .single();
+      if (error) throw error;
+      return { success: true, patient_id: data.id, message: `Patient ${data.first_name} ${data.last_name} registered successfully.` };
+    }
+
+    case "update_patient": {
+      const { patient_id, ...updates } = args;
+      // Remove undefined/null keys
+      const cleanUpdates: Record<string, any> = {};
+      for (const [k, v] of Object.entries(updates)) {
+        if (v !== undefined && v !== null && v !== "") cleanUpdates[k] = v;
+      }
+      const { data, error } = await supabaseAdmin
+        .from("patients")
+        .update(cleanUpdates)
+        .eq("id", patient_id)
+        .eq("org_id", orgId)
+        .select("id, first_name, last_name")
+        .single();
+      if (error) throw error;
+      return { success: true, message: `Patient ${data.first_name} ${data.last_name} updated. Changed: ${Object.keys(cleanUpdates).join(", ")}` };
+    }
+
+    // --- Scheduling Actions ---
+    case "update_appointment_status": {
+      const updateData: any = { status: args.status };
+      if (args.notes) updateData.notes = args.notes;
+      const { data, error } = await supabaseAdmin
+        .from("appointments")
+        .update(updateData)
+        .eq("id", args.appointment_id)
+        .eq("org_id", orgId)
+        .select("id, status, appointment_date, appointment_time")
+        .single();
+      if (error) throw error;
+      return { success: true, message: `Appointment on ${data.appointment_date} at ${data.appointment_time} marked as ${data.status}.` };
+    }
+
+    case "reschedule_appointment": {
+      const rescheduleData: any = {
+        appointment_date: args.new_date,
+        appointment_time: args.new_time,
+        status: "scheduled",
+      };
+      if (args.new_staff_id) rescheduleData.staff_id = args.new_staff_id;
+      if (args.notes) rescheduleData.notes = args.notes;
+      const { data, error } = await supabaseAdmin
+        .from("appointments")
+        .update(rescheduleData)
+        .eq("id", args.appointment_id)
+        .eq("org_id", orgId)
+        .select("id, appointment_date, appointment_time")
+        .single();
+      if (error) throw error;
+      return { success: true, message: `Appointment rescheduled to ${data.appointment_date} at ${data.appointment_time}.` };
+    }
+
+    case "add_walk_in": {
+      const { data, error } = await supabaseAdmin
+        .from("appointments")
+        .insert({
+          org_id: orgId,
+          patient_id: args.patient_id,
+          staff_id: args.staff_id,
+          appointment_date: today,
+          appointment_time: args.appointment_time,
+          is_walk_in: true,
+          notes: args.notes || "Walk-in patient",
+          chair: args.chair || null,
+          status: "scheduled",
+        })
+        .select("id")
+        .single();
+      if (error) throw error;
+      return { success: true, message: `Walk-in added for today at ${args.appointment_time}.` };
+    }
+
+    case "get_available_slots": {
+      const dayOfWeek = new Date(args.date).getDay();
+      // Get dentist schedule for that day
+      const { data: schedule } = await supabaseAdmin
+        .from("dentist_schedules")
+        .select("start_time, end_time, break_start, break_end, is_available")
+        .eq("staff_id", args.staff_id)
+        .eq("org_id", orgId)
+        .eq("day_of_week", dayOfWeek)
+        .single();
+      if (!schedule || !schedule.is_available) return "Dentist is not available on this day.";
+      // Get existing appointments
+      const { data: existing } = await supabaseAdmin
+        .from("appointments")
+        .select("appointment_time")
+        .eq("staff_id", args.staff_id)
+        .eq("org_id", orgId)
+        .eq("appointment_date", args.date)
+        .neq("status", "cancelled");
+      const bookedTimes = new Set((existing || []).map((a: any) => a.appointment_time?.slice(0, 5)));
+      // Generate 30-min slots
+      const slots: string[] = [];
+      const [startH, startM] = schedule.start_time.split(":").map(Number);
+      const [endH, endM] = schedule.end_time.split(":").map(Number);
+      const breakStart = schedule.break_start?.slice(0, 5);
+      const breakEnd = schedule.break_end?.slice(0, 5);
+      let h = startH, m = startM;
+      while (h < endH || (h === endH && m < endM)) {
+        const slot = `${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}`;
+        const isBreak = breakStart && breakEnd && slot >= breakStart && slot < breakEnd;
+        if (!bookedTimes.has(slot) && !isBreak) slots.push(slot);
+        m += 30;
+        if (m >= 60) { h++; m -= 60; }
+      }
+      return slots.length ? { date: args.date, available_slots: slots } : "No available slots on this date.";
+    }
+
+    // --- Billing & Finance ---
+    case "create_invoice": {
+      const items = args.items || [];
+      const subtotal = items.reduce((s: number, i: any) => s + (i.unit_price * (i.quantity || 1)), 0);
+      const discount = args.discount || 0;
+      const tax = args.tax || 0;
+      const total = subtotal - discount + tax;
+      // Generate invoice number
+      const { count } = await supabaseAdmin.from("invoices").select("*", { count: "exact", head: true }).eq("org_id", orgId);
+      const invoiceNumber = `INV-${String((count || 0) + 1).padStart(5, "0")}`;
+      const { data: invoice, error } = await supabaseAdmin
+        .from("invoices")
+        .insert({
+          org_id: orgId,
+          patient_id: args.patient_id,
+          invoice_number: invoiceNumber,
+          subtotal,
+          discount,
+          tax,
+          total,
+          status: "sent",
+          notes: args.notes || null,
+          due_date: args.due_date || null,
+        })
+        .select("id, invoice_number, total")
+        .single();
+      if (error) throw error;
+      // Insert line items
+      if (items.length) {
+        const lineItems = items.map((i: any) => ({
+          invoice_id: invoice.id,
+          description: i.description,
+          quantity: i.quantity || 1,
+          unit_price: i.unit_price,
+          line_total: i.unit_price * (i.quantity || 1),
+        }));
+        await supabaseAdmin.from("invoice_items").insert(lineItems);
+      }
+      return { success: true, invoice_id: invoice.id, invoice_number: invoice.invoice_number, total: invoice.total, message: `Invoice ${invoiceNumber} created for ${total.toFixed(2)}.` };
+    }
+
+    case "record_payment": {
+      const { data, error } = await supabaseAdmin
+        .from("invoices")
+        .update({ status: "paid", payment_method: args.payment_method, notes: args.notes || null })
+        .eq("id", args.invoice_id)
+        .eq("org_id", orgId)
+        .select("id, invoice_number, total")
+        .single();
+      if (error) throw error;
+      return { success: true, message: `Payment recorded for invoice ${data.invoice_number} (${data.total}). Method: ${args.payment_method}.` };
+    }
+
+    case "log_expense": {
+      const { data, error } = await supabaseAdmin
+        .from("expenses")
+        .insert({
+          org_id: orgId,
+          amount: args.amount,
+          category: args.category,
+          description: args.description || null,
+          vendor: args.vendor || null,
+          payment_method: args.payment_method || null,
+          expense_date: args.expense_date || today,
+        })
+        .select("id, amount, category")
+        .single();
+      if (error) throw error;
+      return { success: true, message: `Expense of ${data.amount} logged under "${data.category}".` };
+    }
+
+    case "update_inventory": {
+      // Get current item
+      const { data: item, error: fetchErr } = await supabaseAdmin
+        .from("inventory")
+        .select("id, name, quantity")
+        .eq("id", args.inventory_id)
+        .eq("org_id", orgId)
+        .single();
+      if (fetchErr || !item) throw new Error("Inventory item not found.");
+      const newQty = item.quantity + args.quantity_change;
+      if (newQty < 0) return { error: `Cannot reduce below 0. Current stock: ${item.quantity}.` };
+      const { error: updateErr } = await supabaseAdmin
+        .from("inventory")
+        .update({
+          quantity: newQty,
+          last_restocked: args.quantity_change > 0 ? today : undefined,
+        })
+        .eq("id", args.inventory_id);
+      if (updateErr) throw updateErr;
+      // Log transaction
+      await supabaseAdmin.from("inventory_transactions").insert({
+        org_id: orgId,
+        inventory_id: args.inventory_id,
+        quantity: Math.abs(args.quantity_change),
+        transaction_type: args.quantity_change > 0 ? "restock" : "usage",
+        notes: args.reason || null,
+      });
+      return { success: true, message: `${item.name}: ${args.quantity_change > 0 ? "added" : "removed"} ${Math.abs(args.quantity_change)}. New stock: ${newQty}.` };
     }
 
     default:
