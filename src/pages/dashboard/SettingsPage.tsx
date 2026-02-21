@@ -84,7 +84,7 @@ export default function SettingsPage() {
   };
 
   const publicSiteUrl = clinicSettings?.slug
-    ? `${window.location.origin}/site/${clinicSettings.slug}`
+    ? `https://clinexus.com.ng/${clinicSettings.slug}`
     : "";
 
   // Notification preferences
