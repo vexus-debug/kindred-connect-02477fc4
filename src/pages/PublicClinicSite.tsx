@@ -15,6 +15,13 @@ import {
 } from "lucide-react";
 import { motion, useInView } from "framer-motion";
 
+interface GalleryItem {
+  id: string;
+  image_url: string;
+  title?: string;
+  description?: string;
+}
+
 interface SiteSettings {
   welcome_text?: string;
   primary_color?: string;
@@ -30,6 +37,7 @@ interface SiteSettings {
   google_review_url?: string;
   certifications?: { title: string; description?: string }[];
   booking_confirmation_message?: string;
+  gallery_items?: GalleryItem[];
 }
 
 interface ClinicInfo {
@@ -82,7 +90,6 @@ function FadeInSection({ children, className = "", delay = 0 }: { children: Reac
   );
 }
 
-// Helper to convert hex to rgba
 function hexToRgba(hex: string, alpha: number) {
   const r = parseInt(hex.slice(1, 3), 16);
   const g = parseInt(hex.slice(3, 5), 16);
@@ -121,7 +128,6 @@ export default function PublicClinicSite() {
     "--site-accent": accentColor,
   } as React.CSSProperties), [primaryColor, accentColor]);
 
-  // Sticky header on scroll
   useEffect(() => {
     const handleScroll = () => setHeaderSolid(window.scrollY > 60);
     window.addEventListener("scroll", handleScroll, { passive: true });
@@ -200,10 +206,10 @@ export default function PublicClinicSite() {
     );
   }
 
-  const categories = [...new Set(treatments.map((t) => t.category || "General"))];
   const avgRating = reviews.length ? (reviews.reduce((s, r) => s + r.rating, 0) / reviews.length).toFixed(1) : null;
   const hours = s.operating_hours || [];
   const certs = s.certifications || [];
+  const gallery = s.gallery_items || [];
   const confirmMsg = s.booking_confirmation_message || "We'll be in touch to confirm your appointment.";
 
   return (
@@ -253,27 +259,15 @@ export default function PublicClinicSite() {
         </div>
       </header>
 
-      {/* ── Hero Section — soft, airy ── */}
+      {/* ── Hero Section ── */}
       <section className="relative min-h-[65vh] flex items-center justify-center overflow-hidden bg-white">
-        {/* Soft background shapes using brand colors at low opacity */}
         <div className="absolute inset-0 overflow-hidden">
-          <div
-            className="absolute -top-32 -right-48 w-[600px] h-[600px] rounded-full blur-3xl"
-            style={{ backgroundColor: hexToRgba(primaryColor, 0.07) }}
-          />
-          <div
-            className="absolute -bottom-32 -left-48 w-[500px] h-[500px] rounded-full blur-3xl"
-            style={{ backgroundColor: hexToRgba(accentColor, 0.06) }}
-          />
+          <div className="absolute -top-32 -right-48 w-[600px] h-[600px] rounded-full blur-3xl" style={{ backgroundColor: hexToRgba(primaryColor, 0.07) }} />
+          <div className="absolute -bottom-32 -left-48 w-[500px] h-[500px] rounded-full blur-3xl" style={{ backgroundColor: hexToRgba(accentColor, 0.06) }} />
         </div>
-
         {s.hero_image_url && (
-          <div
-            className="absolute inset-0 bg-cover bg-center"
-            style={{ backgroundImage: `url(${s.hero_image_url})`, opacity: 0.08 }}
-          />
+          <div className="absolute inset-0 bg-cover bg-center" style={{ backgroundImage: `url(${s.hero_image_url})`, opacity: 0.08 }} />
         )}
-
         <div className="relative z-10 text-center px-4 max-w-3xl mx-auto pt-20">
           <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.8, ease: [0.22, 1, 0.36, 1] }}>
             <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold text-gray-900 mb-4 leading-tight">
@@ -283,12 +277,7 @@ export default function PublicClinicSite() {
               {s.hero_subtitle || s.short_description || "Professional healthcare for you and your family"}
             </p>
             <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
-              <Button
-                size="lg"
-                className="font-semibold px-8 shadow-lg text-base text-white"
-                style={{ backgroundColor: primaryColor }}
-                onClick={scrollToBooking}
-              >
+              <Button size="lg" className="font-semibold px-8 shadow-lg text-base text-white" style={{ backgroundColor: primaryColor }} onClick={scrollToBooking}>
                 <Calendar className="mr-2 h-5 w-5" /> Book Appointment
               </Button>
               {clinic?.phone && (
@@ -298,24 +287,11 @@ export default function PublicClinicSite() {
               )}
             </div>
           </motion.div>
-
-          {/* Stats bar */}
-          <motion.div
-            initial={{ opacity: 0, y: 30 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.4, duration: 0.6 }}
-            className="mt-12 flex flex-wrap items-center justify-center gap-6 sm:gap-10 text-gray-400"
-          >
+          <motion.div initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.4, duration: 0.6 }} className="mt-12 flex flex-wrap items-center justify-center gap-6 sm:gap-10 text-gray-400">
             {staff.length > 0 && (
               <div className="flex items-center gap-2">
                 <Users className="h-5 w-5" style={{ color: primaryColor }} />
                 <span className="text-sm font-medium text-gray-600">{staff.length} Doctor{staff.length > 1 ? "s" : ""}</span>
-              </div>
-            )}
-            {treatments.length > 0 && (
-              <div className="flex items-center gap-2">
-                <Stethoscope className="h-5 w-5" style={{ color: accentColor }} />
-                <span className="text-sm font-medium text-gray-600">{treatments.length} Service{treatments.length > 1 ? "s" : ""}</span>
               </div>
             )}
             {avgRating && (
@@ -326,240 +302,14 @@ export default function PublicClinicSite() {
             )}
           </motion.div>
         </div>
-
-        {/* Scroll indicator */}
-        <motion.div
-          className="absolute bottom-6 left-1/2 -translate-x-1/2"
-          animate={{ y: [0, 8, 0] }}
-          transition={{ repeat: Infinity, duration: 2 }}
-        >
+        <motion.div className="absolute bottom-6 left-1/2 -translate-x-1/2" animate={{ y: [0, 8, 0] }} transition={{ repeat: Infinity, duration: 2 }}>
           <ChevronDown className="h-6 w-6 text-gray-300" />
         </motion.div>
       </section>
 
       <main className="max-w-6xl mx-auto px-4 sm:px-6">
-        {/* ── 1. Contact Info Cards ── */}
-        <FadeInSection className="-mt-8 relative z-20">
-          <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
-            {clinic?.address && (
-              <Card className="shadow-sm border border-gray-100 hover:shadow-md transition-shadow bg-white">
-                <CardContent className="p-5 flex items-start gap-3">
-                  <div className="h-10 w-10 rounded-xl flex items-center justify-center shrink-0" style={{ backgroundColor: hexToRgba(primaryColor, 0.08) }}>
-                    <MapPin className="h-5 w-5" style={{ color: primaryColor }} />
-                  </div>
-                  <div>
-                    <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider">Address</p>
-                    <p className="text-sm text-gray-700 mt-0.5">{clinic.address}</p>
-                  </div>
-                </CardContent>
-              </Card>
-            )}
-            {clinic?.phone && (
-              <Card className="shadow-sm border border-gray-100 hover:shadow-md transition-shadow bg-white">
-                <CardContent className="p-5 flex items-start gap-3">
-                  <div className="h-10 w-10 rounded-xl flex items-center justify-center shrink-0" style={{ backgroundColor: hexToRgba(primaryColor, 0.08) }}>
-                    <Phone className="h-5 w-5" style={{ color: primaryColor }} />
-                  </div>
-                  <div>
-                    <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider">Phone</p>
-                    <a href={`tel:${clinic.phone}`} className="text-sm text-gray-700 mt-0.5 hover:underline block">{clinic.phone}</a>
-                  </div>
-                </CardContent>
-              </Card>
-            )}
-            {clinic?.email && (
-              <Card className="shadow-sm border border-gray-100 hover:shadow-md transition-shadow bg-white">
-                <CardContent className="p-5 flex items-start gap-3">
-                  <div className="h-10 w-10 rounded-xl flex items-center justify-center shrink-0" style={{ backgroundColor: hexToRgba(primaryColor, 0.08) }}>
-                    <Mail className="h-5 w-5" style={{ color: primaryColor }} />
-                  </div>
-                  <div>
-                    <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider">Email</p>
-                    <a href={`mailto:${clinic.email}`} className="text-sm text-gray-700 mt-0.5 hover:underline block">{clinic.email}</a>
-                  </div>
-                </CardContent>
-              </Card>
-            )}
-            {hours.length > 0 && (
-              <Card className="shadow-sm border border-gray-100 hover:shadow-md transition-shadow bg-white">
-                <CardContent className="p-5 flex items-start gap-3">
-                  <div className="h-10 w-10 rounded-xl flex items-center justify-center shrink-0" style={{ backgroundColor: hexToRgba(primaryColor, 0.08) }}>
-                    <Clock className="h-5 w-5" style={{ color: primaryColor }} />
-                  </div>
-                  <div>
-                    <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider">Hours</p>
-                    <p className="text-sm text-gray-700 mt-0.5">
-                      {(() => {
-                        const today = new Date().toLocaleDateString("en-US", { weekday: "long" });
-                        const todayHour = hours.find((h) => h.day === today);
-                        if (!todayHour || todayHour.closed) return "Closed Today";
-                        return `Today: ${todayHour.open} - ${todayHour.close}`;
-                      })()}
-                    </p>
-                  </div>
-                </CardContent>
-              </Card>
-            )}
-          </div>
-        </FadeInSection>
-
-        {/* ── 2. Services ── */}
-        {treatments.length > 0 && (
-          <FadeInSection className="mt-20">
-            <div className="text-center mb-10">
-              <h2 className="text-3xl font-bold text-gray-900">Our Services</h2>
-              <p className="text-gray-500 mt-2 max-w-md mx-auto">Professional treatments tailored to your needs</p>
-            </div>
-            {categories.map((cat) => {
-              const catTreatments = treatments.filter((t) => (t.category || "General") === cat);
-              return (
-                <div key={cat} className="mb-8">
-                  <Badge variant="outline" className="mb-4 text-xs font-semibold uppercase tracking-wider border-gray-200" style={{ color: primaryColor }}>
-                    {cat}
-                  </Badge>
-                  <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                    {catTreatments.map((t, i) => (
-                      <FadeInSection key={t.id} delay={i * 0.05}>
-                        <Card className="group hover:shadow-md transition-all duration-300 border border-gray-100 bg-white">
-                          <CardContent className="p-5">
-                            <div className="flex justify-between items-start gap-3">
-                              <div className="flex-1">
-                                <p className="font-semibold text-gray-900">{t.name}</p>
-                                {t.description && <p className="text-sm text-gray-500 mt-1 line-clamp-2">{t.description}</p>}
-                              </div>
-                              <span className="text-lg font-bold shrink-0" style={{ color: primaryColor }}>
-                                ₦{t.price.toLocaleString()}
-                              </span>
-                            </div>
-                            {t.duration && (
-                              <div className="flex items-center gap-1.5 mt-3 text-xs text-gray-400">
-                                <Clock className="h-3.5 w-3.5" />
-                                <span>{t.duration} minutes</span>
-                              </div>
-                            )}
-                          </CardContent>
-                        </Card>
-                      </FadeInSection>
-                    ))}
-                  </div>
-                </div>
-              );
-            })}
-          </FadeInSection>
-        )}
-
-        {/* ── 3. Doctors ── */}
-        {staff.length > 0 && (
-          <FadeInSection className="mt-20">
-            <div className="text-center mb-10">
-              <h2 className="text-3xl font-bold text-gray-900">Our Doctors</h2>
-              <p className="text-gray-500 mt-2">Experienced professionals dedicated to your care</p>
-            </div>
-            <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-              {staff.map((doc, i) => (
-                <FadeInSection key={doc.id} delay={i * 0.08}>
-                  <Card className="text-center p-6 hover:shadow-md transition-all duration-300 border border-gray-100 bg-white">
-                    <div
-                      className="h-20 w-20 rounded-full mx-auto mb-4 flex items-center justify-center text-2xl font-bold text-white shadow-sm"
-                      style={{ backgroundColor: primaryColor }}
-                    >
-                      {doc.full_name.split(" ").map((n) => n[0]).join("").slice(0, 2)}
-                    </div>
-                    <h3 className="font-semibold text-gray-900 text-lg">{doc.full_name}</h3>
-                    {doc.specialty && <p className="text-sm mt-1" style={{ color: primaryColor }}>{doc.specialty}</p>}
-                    <Badge variant="secondary" className="mt-3 text-xs capitalize bg-gray-100 text-gray-600">{doc.role}</Badge>
-                  </Card>
-                </FadeInSection>
-              ))}
-            </div>
-          </FadeInSection>
-        )}
-
-        {/* ── 4. Reviews ── */}
-        {reviews.length > 0 && (
-          <FadeInSection className="mt-20">
-            <div className="text-center mb-10">
-              <h2 className="text-3xl font-bold text-gray-900">Patient Reviews</h2>
-              {avgRating && (
-                <div className="flex items-center justify-center gap-2 mt-3">
-                  <div className="flex">
-                    {[1, 2, 3, 4, 5].map((i) => (
-                      <Star key={i} className={`h-5 w-5 ${i <= Math.round(Number(avgRating)) ? "fill-yellow-400 text-yellow-400" : "text-gray-200"}`} />
-                    ))}
-                  </div>
-                  <span className="text-lg font-bold text-gray-900">{avgRating}</span>
-                  <span className="text-sm text-gray-500">({reviews.length} review{reviews.length > 1 ? "s" : ""})</span>
-                </div>
-              )}
-            </div>
-            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-              {reviews.map((r, i) => (
-                <FadeInSection key={r.id} delay={i * 0.06}>
-                  <Card className="p-5 border border-gray-100 hover:shadow-md transition-shadow bg-white">
-                    <div className="flex mb-2">
-                      {[1, 2, 3, 4, 5].map((i) => (
-                        <Star key={i} className={`h-4 w-4 ${i <= r.rating ? "fill-yellow-400 text-yellow-400" : "text-gray-200"}`} />
-                      ))}
-                    </div>
-                    {r.comment && <p className="text-sm text-gray-600 line-clamp-3">{r.comment}</p>}
-                    <p className="text-xs text-gray-400 mt-3">
-                      {r.patients ? `${r.patients.first_name} ${r.patients.last_name.charAt(0)}.` : "Patient"}
-                    </p>
-                  </Card>
-                </FadeInSection>
-              ))}
-            </div>
-          </FadeInSection>
-        )}
-
-        {/* ── 5. Operating Hours ── */}
-        {hours.length > 0 && (
-          <FadeInSection className="mt-20">
-            <div className="text-center mb-10">
-              <h2 className="text-3xl font-bold text-gray-900">Operating Hours</h2>
-            </div>
-            <Card className="max-w-md mx-auto shadow-sm border border-gray-100 bg-white">
-              <CardContent className="p-0">
-                {hours.map((h, i) => {
-                  const isToday = new Date().toLocaleDateString("en-US", { weekday: "long" }) === h.day;
-                  return (
-                    <div
-                      key={h.day}
-                      className={`flex items-center justify-between px-6 py-3.5 ${i < hours.length - 1 ? "border-b border-gray-50" : ""} ${isToday ? "bg-gray-50/50" : ""}`}
-                    >
-                      <span className={`text-sm ${isToday ? "font-bold text-gray-900" : "text-gray-600"}`}>
-                        {h.day} {isToday && <span className="text-xs ml-1" style={{ color: primaryColor }}>(Today)</span>}
-                      </span>
-                      <span className={`text-sm ${h.closed ? "text-gray-400" : "font-medium text-gray-900"}`}>
-                        {h.closed ? "Closed" : `${h.open} – ${h.close}`}
-                      </span>
-                    </div>
-                  );
-                })}
-              </CardContent>
-            </Card>
-          </FadeInSection>
-        )}
-
-        {/* ── 6. Certifications ── */}
-        {certs.length > 0 && (
-          <FadeInSection className="mt-20">
-            <div className="text-center mb-10">
-              <h2 className="text-3xl font-bold text-gray-900">Certifications & Licenses</h2>
-            </div>
-            <div className="flex flex-wrap justify-center gap-4">
-              {certs.map((cert, i) => (
-                <div key={i} className="flex items-center gap-2 px-5 py-3 rounded-full border border-gray-200 bg-gray-50/50">
-                  <Award className="h-4 w-4" style={{ color: primaryColor }} />
-                  <span className="text-sm font-medium text-gray-700">{cert.title}</span>
-                </div>
-              ))}
-            </div>
-          </FadeInSection>
-        )}
-
-        {/* ── 7. Booking Section ── */}
-        <FadeInSection className="mt-20 mb-20">
+        {/* ── 1. Booking Section (First) ── */}
+        <FadeInSection className="mt-12 mb-16">
           <div ref={bookingRef} className="scroll-mt-24">
             <Card className="shadow-md border border-gray-100 overflow-hidden bg-white">
               <div className="p-6 border-b border-gray-100">
@@ -570,11 +320,7 @@ export default function PublicClinicSite() {
               </div>
               <CardContent className="p-6">
                 {booked ? (
-                  <motion.div
-                    initial={{ scale: 0.9, opacity: 0 }}
-                    animate={{ scale: 1, opacity: 1 }}
-                    className="text-center py-10 space-y-4"
-                  >
+                  <motion.div initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} className="text-center py-10 space-y-4">
                     <div className="h-16 w-16 rounded-full mx-auto flex items-center justify-center" style={{ backgroundColor: hexToRgba(primaryColor, 0.1) }}>
                       <CheckCircle className="h-8 w-8" style={{ color: primaryColor }} />
                     </div>
@@ -625,12 +371,7 @@ export default function PublicClinicSite() {
                       <Input type="time" value={time} onChange={(e) => setTime(e.target.value)} className="h-11 border-gray-200" />
                     </div>
                     <div className="sm:col-span-2">
-                      <Button
-                        className="w-full h-12 text-white text-base font-semibold shadow-sm transition-all hover:shadow-md"
-                        style={{ backgroundColor: primaryColor }}
-                        onClick={handleBook}
-                        disabled={booking}
-                      >
+                      <Button className="w-full h-12 text-white text-base font-semibold shadow-sm transition-all hover:shadow-md" style={{ backgroundColor: primaryColor }} onClick={handleBook} disabled={booking}>
                         {booking ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Booking...</> : "Book Appointment"}
                       </Button>
                     </div>
@@ -640,6 +381,164 @@ export default function PublicClinicSite() {
             </Card>
           </div>
         </FadeInSection>
+
+        {/* ── 2. Gallery (Masonry Grid) ── */}
+        {gallery.length > 0 && (
+          <FadeInSection className="mb-20">
+            <div className="text-center mb-10">
+              <h2 className="text-3xl font-bold text-gray-900">Our Gallery</h2>
+              <p className="text-gray-500 mt-2">See our procedures and facilities</p>
+            </div>
+            <div className="columns-2 sm:columns-3 lg:columns-4 gap-4 space-y-4">
+              {gallery.map((item, i) => (
+                <FadeInSection key={item.id} delay={i * 0.05}>
+                  <div className="break-inside-avoid group relative overflow-hidden rounded-xl border border-gray-100 bg-white shadow-sm hover:shadow-md transition-shadow">
+                    <img
+                      src={item.image_url}
+                      alt={item.title || "Gallery image"}
+                      className="w-full h-auto object-cover"
+                      loading="lazy"
+                    />
+                    {(item.title || item.description) && (
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-end p-4">
+                        <div>
+                          {item.title && <p className="text-white font-semibold text-sm">{item.title}</p>}
+                          {item.description && <p className="text-white/80 text-xs mt-0.5">{item.description}</p>}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </FadeInSection>
+              ))}
+            </div>
+          </FadeInSection>
+        )}
+
+        {/* ── 3. Our Doctors ── */}
+        {staff.length > 0 && (
+          <FadeInSection className="mb-20">
+            <div className="text-center mb-10">
+              <h2 className="text-3xl font-bold text-gray-900">Our Doctors</h2>
+              <p className="text-gray-500 mt-2">Experienced professionals dedicated to your care</p>
+            </div>
+            <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+              {staff.map((doc, i) => (
+                <FadeInSection key={doc.id} delay={i * 0.08}>
+                  <Card className="text-center p-6 hover:shadow-md transition-all duration-300 border border-gray-100 bg-white">
+                    <div className="h-20 w-20 rounded-full mx-auto mb-4 flex items-center justify-center text-2xl font-bold text-white shadow-sm" style={{ backgroundColor: primaryColor }}>
+                      {doc.full_name.split(" ").map((n) => n[0]).join("").slice(0, 2)}
+                    </div>
+                    <h3 className="font-semibold text-gray-900 text-lg">{doc.full_name}</h3>
+                    {doc.specialty && <p className="text-sm mt-1" style={{ color: primaryColor }}>{doc.specialty}</p>}
+                    <Badge variant="secondary" className="mt-3 text-xs capitalize bg-gray-100 text-gray-600">{doc.role}</Badge>
+                  </Card>
+                </FadeInSection>
+              ))}
+            </div>
+          </FadeInSection>
+        )}
+
+        {/* ── 4. Operating Hours ── */}
+        {hours.length > 0 && (
+          <FadeInSection className="mb-20">
+            <div className="text-center mb-10">
+              <h2 className="text-3xl font-bold text-gray-900">Operating Hours</h2>
+            </div>
+            <Card className="max-w-md mx-auto shadow-sm border border-gray-100 bg-white">
+              <CardContent className="p-0">
+                {hours.map((h, i) => {
+                  const isToday = new Date().toLocaleDateString("en-US", { weekday: "long" }) === h.day;
+                  return (
+                    <div key={h.day} className={`flex items-center justify-between px-6 py-3.5 ${i < hours.length - 1 ? "border-b border-gray-50" : ""} ${isToday ? "bg-gray-50/50" : ""}`}>
+                      <span className={`text-sm ${isToday ? "font-bold text-gray-900" : "text-gray-600"}`}>
+                        {h.day} {isToday && <span className="text-xs ml-1" style={{ color: primaryColor }}>(Today)</span>}
+                      </span>
+                      <span className={`text-sm ${h.closed ? "text-gray-400" : "font-medium text-gray-900"}`}>
+                        {h.closed ? "Closed" : `${h.open} – ${h.close}`}
+                      </span>
+                    </div>
+                  );
+                })}
+              </CardContent>
+            </Card>
+          </FadeInSection>
+        )}
+
+        {/* ── 5. Contact & Address ── */}
+        <FadeInSection className="mb-20">
+          <div className="text-center mb-10">
+            <h2 className="text-3xl font-bold text-gray-900">Contact & Address</h2>
+            <p className="text-gray-500 mt-2">Get in touch with us</p>
+          </div>
+          <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            {clinic?.address && (
+              <Card className="shadow-sm border border-gray-100 hover:shadow-md transition-shadow bg-white">
+                <CardContent className="p-5 flex items-start gap-3">
+                  <div className="h-10 w-10 rounded-xl flex items-center justify-center shrink-0" style={{ backgroundColor: hexToRgba(primaryColor, 0.08) }}>
+                    <MapPin className="h-5 w-5" style={{ color: primaryColor }} />
+                  </div>
+                  <div>
+                    <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider">Address</p>
+                    <p className="text-sm text-gray-700 mt-0.5">{clinic.address}</p>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+            {clinic?.phone && (
+              <Card className="shadow-sm border border-gray-100 hover:shadow-md transition-shadow bg-white">
+                <CardContent className="p-5 flex items-start gap-3">
+                  <div className="h-10 w-10 rounded-xl flex items-center justify-center shrink-0" style={{ backgroundColor: hexToRgba(primaryColor, 0.08) }}>
+                    <Phone className="h-5 w-5" style={{ color: primaryColor }} />
+                  </div>
+                  <div>
+                    <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider">Phone</p>
+                    <a href={`tel:${clinic.phone}`} className="text-sm text-gray-700 mt-0.5 hover:underline block">{clinic.phone}</a>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+            {clinic?.email && (
+              <Card className="shadow-sm border border-gray-100 hover:shadow-md transition-shadow bg-white">
+                <CardContent className="p-5 flex items-start gap-3">
+                  <div className="h-10 w-10 rounded-xl flex items-center justify-center shrink-0" style={{ backgroundColor: hexToRgba(primaryColor, 0.08) }}>
+                    <Mail className="h-5 w-5" style={{ color: primaryColor }} />
+                  </div>
+                  <div>
+                    <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider">Email</p>
+                    <a href={`mailto:${clinic.email}`} className="text-sm text-gray-700 mt-0.5 hover:underline block">{clinic.email}</a>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+            {s.whatsapp_number && (
+              <Card className="shadow-sm border border-gray-100 hover:shadow-md transition-shadow bg-white">
+                <CardContent className="p-5 flex items-start gap-3">
+                  <div className="h-10 w-10 rounded-xl flex items-center justify-center shrink-0 bg-green-50">
+                    <MessageCircle className="h-5 w-5 text-green-600" />
+                  </div>
+                  <div>
+                    <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider">WhatsApp</p>
+                    <a href={`https://wa.me/${s.whatsapp_number}`} target="_blank" rel="noopener noreferrer" className="text-sm text-gray-700 mt-0.5 hover:underline block">Chat with us</a>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+          </div>
+        </FadeInSection>
+
+        {/* ── Certifications ── */}
+        {certs.length > 0 && (
+          <FadeInSection className="mb-20">
+            <div className="flex flex-wrap justify-center gap-4">
+              {certs.map((cert, i) => (
+                <div key={i} className="flex items-center gap-2 px-5 py-3 rounded-full border border-gray-200 bg-gray-50/50">
+                  <Award className="h-4 w-4" style={{ color: primaryColor }} />
+                  <span className="text-sm font-medium text-gray-700">{cert.title}</span>
+                </div>
+              ))}
+            </div>
+          </FadeInSection>
+        )}
       </main>
 
       {/* ── Footer ── */}
