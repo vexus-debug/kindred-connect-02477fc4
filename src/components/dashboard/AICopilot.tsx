@@ -123,16 +123,12 @@ export function AICopilot() {
       });
 
       if (!resp.ok) {
-        if (resp.status === 429) {
-          throw new Error("AI is temporarily busy. Please wait a moment and try again.");
-        }
-        const errData = await resp.json().catch(() => ({}));
-        throw new Error(errData.error || "Failed to get AI response");
+        throw new Error("maintenance");
       }
 
       const data = await resp.json();
       if (data.error) {
-        throw new Error(data.error);
+        throw new Error("maintenance");
       }
 
       setMessages(prev => [...prev, { role: "assistant", content: data.reply || "I couldn't generate a response." }]);
@@ -140,7 +136,7 @@ export function AICopilot() {
       console.error("AI Copilot error:", e);
       setMessages((prev) => [
         ...prev,
-        { role: "assistant", content: e instanceof Error ? e.message : "Sorry, I encountered an error. Please try again." },
+        { role: "assistant", content: "Hey! Your assistant AI is currently having a routine upgrade/maintenance. Check back later! 🛠️" },
       ]);
     } finally {
       setIsLoading(false);
