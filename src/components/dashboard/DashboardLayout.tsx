@@ -2,6 +2,7 @@ import { ReactNode, useRef } from "react";
 import { SidebarProvider } from "@/components/ui/sidebar";
 import { DashboardSidebar } from "./DashboardSidebar";
 import { DashboardHeader } from "./DashboardHeader";
+import { AICopilot } from "./AICopilot";
 import { motion, AnimatePresence } from "framer-motion";
 import { useLocation, useNavigationType } from "react-router-dom";
 
@@ -61,6 +62,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
             </AnimatePresence>
           </main>
         </div>
+        <AICopilot />
       </div>
     </SidebarProvider>
   );
