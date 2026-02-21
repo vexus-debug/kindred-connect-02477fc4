@@ -4,7 +4,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Bot, Send, X, Sparkles, Trash2, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { ScrollArea } from "@/components/ui/scroll-area";
+import { useOrg } from "@/hooks/useOrg";
 import ReactMarkdown from "react-markdown";
 
 type Msg = { role: "user" | "assistant"; content: string };
@@ -28,10 +28,12 @@ const PAGE_CONTEXT_MAP: Record<string, string> = {
 };
 
 const QUICK_PROMPTS = [
-  "What can I do on this page?",
-  "Generate SOAP notes template",
-  "Suggest a diagnosis for tooth pain",
-  "Help me optimize today's schedule",
+  "Give me a clinic summary",
+  "Who's coming in today?",
+  "Any low inventory alerts?",
+  "Show overdue patients needing follow-up",
+  "What's our revenue this month?",
+  "Find unpaid invoices",
 ];
 
 const CHAT_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/ai-copilot`;
@@ -44,6 +46,7 @@ export function AICopilot() {
   const scrollRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const location = useLocation();
+  const { currentOrg } = useOrg();
 
   const currentPage = Object.entries(PAGE_CONTEXT_MAP).find(([path]) =>
     location.pathname.startsWith(path)
@@ -70,8 +73,6 @@ export function AICopilot() {
     setInput("");
     setIsLoading(true);
 
-    let assistantSoFar = "";
-
     try {
       const resp = await fetch(CHAT_URL, {
         method: "POST",
@@ -82,10 +83,11 @@ export function AICopilot() {
         body: JSON.stringify({
           messages: allMessages,
           context: { page: currentPage },
+          orgId: currentOrg?.org_id,
         }),
       });
 
-      if (!resp.ok || !resp.body) {
+      if (!resp.ok) {
         if (resp.status === 429) {
           throw new Error("AI is temporarily busy. Please wait a moment and try again.");
         }
@@ -93,59 +95,22 @@ export function AICopilot() {
         throw new Error(errData.error || "Failed to get AI response");
       }
 
-      const reader = resp.body.getReader();
-      const decoder = new TextDecoder();
-      let buffer = "";
-
-      while (true) {
-        const { done, value } = await reader.read();
-        if (done) break;
-        buffer += decoder.decode(value, { stream: true });
-
-        let newlineIndex: number;
-        while ((newlineIndex = buffer.indexOf("\n")) !== -1) {
-          let line = buffer.slice(0, newlineIndex);
-          buffer = buffer.slice(newlineIndex + 1);
-
-          if (line.endsWith("\r")) line = line.slice(0, -1);
-          if (line.startsWith(":") || line.trim() === "") continue;
-          if (!line.startsWith("data: ")) continue;
-
-          const jsonStr = line.slice(6).trim();
-          if (jsonStr === "[DONE]") break;
-
-          try {
-            const parsed = JSON.parse(jsonStr);
-            // Gemini SSE format
-            const text = parsed.candidates?.[0]?.content?.parts?.[0]?.text;
-            if (text) {
-              assistantSoFar += text;
-              setMessages((prev) => {
-                const last = prev[prev.length - 1];
-                if (last?.role === "assistant") {
-                  return prev.map((m, i) =>
-                    i === prev.length - 1 ? { ...m, content: assistantSoFar } : m
-                  );
-                }
-                return [...prev, { role: "assistant", content: assistantSoFar }];
-              });
-            }
-          } catch {
-            buffer = line + "\n" + buffer;
-            break;
-          }
-        }
+      const data = await resp.json();
+      if (data.error) {
+        throw new Error(data.error);
       }
+
+      setMessages(prev => [...prev, { role: "assistant", content: data.reply || "I couldn't generate a response." }]);
     } catch (e) {
       console.error("AI Copilot error:", e);
       setMessages((prev) => [
         ...prev,
-        { role: "assistant", content: "Sorry, I encountered an error. Please try again." },
+        { role: "assistant", content: e instanceof Error ? e.message : "Sorry, I encountered an error. Please try again." },
       ]);
     } finally {
       setIsLoading(false);
     }
-  }, [messages, isLoading, currentPage]);
+  }, [messages, isLoading, currentPage, currentOrg?.org_id]);
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === "Enter" && !e.shiftKey) {
@@ -191,6 +156,7 @@ export function AICopilot() {
               <div className="flex items-center gap-2">
                 <Bot className="w-5 h-5 text-primary" />
                 <span className="font-semibold text-sm">ClineXus AI Copilot</span>
+                <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-primary/10 text-primary font-medium">Live Data</span>
               </div>
               <div className="flex items-center gap-1">
                 <Button
@@ -223,7 +189,7 @@ export function AICopilot() {
                   <div>
                     <p className="font-medium text-sm">Hi! I'm your AI dental assistant</p>
                     <p className="text-xs text-muted-foreground mt-1">
-                      I can see you're on: <span className="font-medium">{currentPage}</span>
+                      I can query your clinic data, book appointments, and provide insights.
                     </p>
                   </div>
                   <div className="grid grid-cols-1 gap-2">
@@ -263,10 +229,11 @@ export function AICopilot() {
                 </div>
               ))}
 
-              {isLoading && messages[messages.length - 1]?.role !== "assistant" && (
+              {isLoading && (
                 <div className="flex justify-start">
-                  <div className="bg-muted rounded-xl px-3 py-2">
+                  <div className="bg-muted rounded-xl px-3 py-2 flex items-center gap-2">
                     <Loader2 className="w-4 h-4 animate-spin" />
+                    <span className="text-xs text-muted-foreground">Querying clinic data...</span>
                   </div>
                 </div>
               )}
@@ -280,7 +247,7 @@ export function AICopilot() {
                   value={input}
                   onChange={(e) => setInput(e.target.value)}
                   onKeyDown={handleKeyDown}
-                  placeholder="Ask about patients, treatments, scheduling..."
+                  placeholder="Ask about patients, revenue, schedule..."
                   className="min-h-[40px] max-h-[100px] resize-none text-sm"
                   rows={1}
                 />
@@ -294,7 +261,7 @@ export function AICopilot() {
                 </Button>
               </div>
               <p className="text-[10px] text-muted-foreground mt-1.5 text-center">
-                AI assistant — always verify clinical suggestions
+                AI assistant with live data — always verify clinical suggestions
               </p>
             </div>
           </motion.div>
