@@ -7,15 +7,28 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
-const SYSTEM_PROMPT = `You are ClineXus AI — the intelligent copilot embedded in a dental clinic management dashboard. You assist dentists, clinic staff, and managers.
+const SYSTEM_PROMPT = `You are ClineXus AI — the intelligent copilot embedded in a dental clinic management dashboard. You have FULL ACCESS to every clinic feature.
 
 Your capabilities:
-1. **Data Queries**: You can look up real clinic data — patients, appointments, invoices, inventory, staff — using the tools provided.
-2. **Actions**: You can create appointments, add clinical notes, and register patients using tools.
-3. **Smart Alerts**: You can check inventory levels, find overdue patients, and surface insights.
-4. **Clinical Notes (SOAP)**: Generate structured S/O/A/P notes.
-5. **Diagnosis Suggestions**: Based on symptoms, suggest possible diagnoses with confidence levels.
-6. **Treatment Plan Advice**: Recommend treatment sequences and priorities.
+1. **Patient Management**: Search, register, update patients. View patient history, documents, images, consent forms.
+2. **Appointments**: View, create, reschedule, cancel appointments. Check available slots. Add walk-ins.
+3. **Dental Charts**: View and add dental chart entries for patients.
+4. **Treatments**: View treatment catalog, treatment plans, treatment estimates, treatment materials.
+5. **Prescriptions**: View and create prescriptions with medications.
+6. **Clinical Notes (SOAP)**: Create structured S/O/A/P notes. Generate notes from symptoms.
+7. **Lab Management**: Create, view, update lab cases and lab orders.
+8. **Billing & Finance**: Create invoices, record payments, view payment plans, log expenses, view expenses, manage commissions.
+9. **Inventory**: Check stock levels, update inventory, view suppliers, manage purchase orders.
+10. **Staff Management**: View, add, update staff members. View and manage dentist schedules.
+11. **Waiting List**: View, add, remove patients from waiting list.
+12. **Consent Forms**: View templates, create patient consent forms.
+13. **Documents**: View patient documents, clinic documents, patient images.
+14. **Reviews**: View patient reviews and ratings.
+15. **Notifications**: View and send notifications.
+16. **Automation**: View automation workflows.
+17. **Clinic Overview**: Get comprehensive summaries, chairs, revenue allocation.
+18. **Diagnosis Suggestions**: Based on symptoms, suggest possible diagnoses with confidence levels.
+19. **Treatment Plan Advice**: Recommend treatment sequences and priorities.
 
 Guidelines:
 - Be concise and professional. Use bullet points and headers.
@@ -24,780 +37,1304 @@ Guidelines:
 - Always clarify when something requires clinical judgment.
 - Use tools proactively when the user asks about data. Don't say "I can't access data" — use the tools!
 - After performing actions, confirm what was done with key details.
-- Format responses in markdown.`;
+- You can chain multiple tools to answer complex queries.
+- Format responses in markdown.
+- IMPORTANT: You can ONLY access data for the current clinic. You cannot access other clinics' data.`;
 
-// Tool definitions for Gemini function calling
 const TOOLS = [
   {
     function_declarations: [
+      // ==================== PATIENT MANAGEMENT ====================
       {
         name: "search_patients",
-        description: "Search for patients by name, phone, or email. Use this when the user asks about a specific patient or wants to find patients.",
+        description: "Search for patients by name, phone, or email.",
         parameters: {
           type: "object",
           properties: {
             query: { type: "string", description: "Search term (name, phone, or email)" },
-            limit: { type: "integer", description: "Max results to return (default 10)" },
+            limit: { type: "integer", description: "Max results (default 10)" },
           },
           required: ["query"],
         },
       },
       {
-        name: "get_todays_appointments",
-        description: "Get today's appointments with patient and staff details. Use when user asks about today's schedule, who's coming in, or the day's workload.",
-        parameters: {
-          type: "object",
-          properties: {
-            status: { type: "string", description: "Filter by status: scheduled, completed, cancelled, no_show. Leave empty for all." },
-          },
-        },
-      },
-      {
-        name: "get_appointment_stats",
-        description: "Get appointment statistics for a date range. Use when user asks about appointment volume, no-show rates, or scheduling patterns.",
-        parameters: {
-          type: "object",
-          properties: {
-            start_date: { type: "string", description: "Start date (YYYY-MM-DD). Defaults to 30 days ago." },
-            end_date: { type: "string", description: "End date (YYYY-MM-DD). Defaults to today." },
-          },
-        },
-      },
-      {
-        name: "get_revenue_summary",
-        description: "Get revenue summary from invoices for a period. Use when user asks about income, revenue, billing, or financial performance.",
-        parameters: {
-          type: "object",
-          properties: {
-            start_date: { type: "string", description: "Start date (YYYY-MM-DD)" },
-            end_date: { type: "string", description: "End date (YYYY-MM-DD)" },
-          },
-        },
-      },
-      {
-        name: "check_low_inventory",
-        description: "Check inventory items that are at or below minimum stock levels. Use when user asks about supplies, stock alerts, or inventory status.",
-        parameters: {
-          type: "object",
-          properties: {},
-        },
-      },
-      {
-        name: "get_overdue_patients",
-        description: "Find patients who haven't had an appointment in a specified number of days. Use for follow-up reminders or patient retention.",
-        parameters: {
-          type: "object",
-          properties: {
-            days: { type: "integer", description: "Number of days since last appointment (default 90)" },
-          },
-        },
-      },
-      {
-        name: "get_patient_history",
-        description: "Get a patient's appointment history, clinical notes, and treatment details. Use when discussing a specific patient's care.",
-        parameters: {
-          type: "object",
-          properties: {
-            patient_id: { type: "string", description: "Patient UUID" },
-          },
-          required: ["patient_id"],
-        },
-      },
-      {
-        name: "create_appointment",
-        description: "Book a new appointment for a patient. Use when the user wants to schedule a visit.",
-        parameters: {
-          type: "object",
-          properties: {
-            patient_id: { type: "string", description: "Patient UUID" },
-            staff_id: { type: "string", description: "Dentist/staff UUID" },
-            appointment_date: { type: "string", description: "Date (YYYY-MM-DD)" },
-            appointment_time: { type: "string", description: "Time (HH:MM)" },
-            treatment_id: { type: "string", description: "Optional treatment UUID" },
-            notes: { type: "string", description: "Appointment notes" },
-          },
-          required: ["patient_id", "staff_id", "appointment_date", "appointment_time"],
-        },
-      },
-      {
-        name: "create_clinical_note",
-        description: "Create a SOAP clinical note for a patient. Use when the user wants to save clinical notes.",
-        parameters: {
-          type: "object",
-          properties: {
-            patient_id: { type: "string", description: "Patient UUID" },
-            appointment_id: { type: "string", description: "Optional appointment UUID" },
-            subjective: { type: "string", description: "Subjective findings" },
-            objective: { type: "string", description: "Objective findings" },
-            assessment: { type: "string", description: "Assessment/diagnosis" },
-            plan: { type: "string", description: "Treatment plan" },
-          },
-          required: ["patient_id", "subjective", "assessment", "plan"],
-        },
-      },
-      {
-        name: "get_pending_invoices",
-        description: "Get unpaid/overdue invoices. Use when user asks about outstanding payments or collections.",
-        parameters: {
-          type: "object",
-          properties: {
-            status: { type: "string", description: "Invoice status filter: draft, sent, overdue, paid. Default: shows unpaid." },
-          },
-        },
-      },
-      {
-        name: "get_staff_list",
-        description: "Get the list of staff/dentists. Use when the user needs to find a dentist for booking or asks about the team.",
-        parameters: {
-          type: "object",
-          properties: {
-            role: { type: "string", description: "Filter by role: dentist, hygienist, receptionist, etc." },
-          },
-        },
-      },
-      {
-        name: "get_clinic_summary",
-        description: "Get a comprehensive clinic dashboard summary including patient count, today's appointments, pending invoices, and low inventory alerts. Use when user asks for an overview or summary.",
-        parameters: {
-          type: "object",
-          properties: {},
-        },
-      },
-      // --- Patient Management Actions ---
-      {
         name: "register_patient",
-        description: "Register a new patient. Use when the user wants to add a new patient to the system.",
+        description: "Register a new patient.",
         parameters: {
           type: "object",
           properties: {
-            first_name: { type: "string", description: "Patient's first name" },
-            last_name: { type: "string", description: "Patient's last name" },
-            phone: { type: "string", description: "Phone number" },
-            email: { type: "string", description: "Email address" },
-            gender: { type: "string", description: "Gender: male, female, other" },
-            date_of_birth: { type: "string", description: "Date of birth (YYYY-MM-DD)" },
-            address: { type: "string", description: "Address" },
-            blood_group: { type: "string", description: "Blood group" },
-            allergies: { type: "string", description: "Known allergies" },
-            medical_history: { type: "string", description: "Medical history notes" },
-            emergency_contact_name: { type: "string", description: "Emergency contact name" },
-            emergency_contact_phone: { type: "string", description: "Emergency contact phone" },
+            first_name: { type: "string" }, last_name: { type: "string" },
+            phone: { type: "string" }, email: { type: "string" },
+            gender: { type: "string" }, date_of_birth: { type: "string" },
+            address: { type: "string" }, blood_group: { type: "string" },
+            allergies: { type: "string" }, medical_history: { type: "string" },
+            emergency_contact_name: { type: "string" }, emergency_contact_phone: { type: "string" },
           },
           required: ["first_name", "last_name"],
         },
       },
       {
         name: "update_patient",
-        description: "Update an existing patient's information. Use when user wants to change patient details like phone, email, allergies, medical history, etc.",
+        description: "Update an existing patient's information.",
         parameters: {
           type: "object",
           properties: {
-            patient_id: { type: "string", description: "Patient UUID" },
-            first_name: { type: "string" },
-            last_name: { type: "string" },
-            phone: { type: "string" },
-            email: { type: "string" },
-            gender: { type: "string" },
-            date_of_birth: { type: "string" },
-            address: { type: "string" },
-            blood_group: { type: "string" },
-            allergies: { type: "string" },
-            medical_history: { type: "string" },
-            emergency_contact_name: { type: "string" },
-            emergency_contact_phone: { type: "string" },
+            patient_id: { type: "string" },
+            first_name: { type: "string" }, last_name: { type: "string" },
+            phone: { type: "string" }, email: { type: "string" },
+            gender: { type: "string" }, date_of_birth: { type: "string" },
+            address: { type: "string" }, blood_group: { type: "string" },
+            allergies: { type: "string" }, medical_history: { type: "string" },
+            emergency_contact_name: { type: "string" }, emergency_contact_phone: { type: "string" },
             status: { type: "string", description: "active or inactive" },
           },
           required: ["patient_id"],
         },
       },
-      // --- Scheduling Actions ---
       {
-        name: "update_appointment_status",
-        description: "Update an appointment's status (cancel, complete, mark as no-show, reschedule). Use when user wants to change appointment status.",
+        name: "get_patient_history",
+        description: "Get a patient's appointment history, clinical notes, treatments, prescriptions, and dental chart.",
+        parameters: {
+          type: "object",
+          properties: { patient_id: { type: "string" } },
+          required: ["patient_id"],
+        },
+      },
+      {
+        name: "get_patient_documents",
+        description: "Get documents uploaded for a patient (x-rays, reports, etc.).",
+        parameters: {
+          type: "object",
+          properties: { patient_id: { type: "string" } },
+          required: ["patient_id"],
+        },
+      },
+      {
+        name: "get_patient_images",
+        description: "Get clinical images for a patient.",
+        parameters: {
+          type: "object",
+          properties: { patient_id: { type: "string" } },
+          required: ["patient_id"],
+        },
+      },
+      {
+        name: "get_overdue_patients",
+        description: "Find patients who haven't visited in N days. Good for follow-up reminders.",
+        parameters: {
+          type: "object",
+          properties: { days: { type: "integer", description: "Days since last visit (default 90)" } },
+        },
+      },
+
+      // ==================== APPOINTMENTS ====================
+      {
+        name: "get_todays_appointments",
+        description: "Get today's appointments with patient and staff details.",
+        parameters: {
+          type: "object",
+          properties: { status: { type: "string", description: "Filter: scheduled, completed, cancelled, no_show" } },
+        },
+      },
+      {
+        name: "get_appointments_by_date",
+        description: "Get appointments for a specific date.",
+        parameters: {
+          type: "object",
+          properties: { date: { type: "string", description: "Date (YYYY-MM-DD)" }, status: { type: "string" } },
+          required: ["date"],
+        },
+      },
+      {
+        name: "get_appointment_stats",
+        description: "Get appointment statistics for a date range.",
         parameters: {
           type: "object",
           properties: {
-            appointment_id: { type: "string", description: "Appointment UUID" },
-            status: { type: "string", description: "New status: scheduled, completed, cancelled, no_show" },
-            notes: { type: "string", description: "Optional notes about the status change" },
+            start_date: { type: "string" }, end_date: { type: "string" },
+          },
+        },
+      },
+      {
+        name: "create_appointment",
+        description: "Book a new appointment.",
+        parameters: {
+          type: "object",
+          properties: {
+            patient_id: { type: "string" }, staff_id: { type: "string" },
+            appointment_date: { type: "string" }, appointment_time: { type: "string" },
+            treatment_id: { type: "string" }, notes: { type: "string" }, chair: { type: "string" },
+          },
+          required: ["patient_id", "staff_id", "appointment_date", "appointment_time"],
+        },
+      },
+      {
+        name: "update_appointment_status",
+        description: "Update an appointment's status.",
+        parameters: {
+          type: "object",
+          properties: {
+            appointment_id: { type: "string" },
+            status: { type: "string", description: "scheduled, completed, cancelled, no_show" },
+            notes: { type: "string" },
           },
           required: ["appointment_id", "status"],
         },
       },
       {
         name: "reschedule_appointment",
-        description: "Reschedule an existing appointment to a new date/time. Use when user wants to move an appointment.",
+        description: "Reschedule an appointment to a new date/time.",
         parameters: {
           type: "object",
           properties: {
-            appointment_id: { type: "string", description: "Appointment UUID" },
-            new_date: { type: "string", description: "New date (YYYY-MM-DD)" },
-            new_time: { type: "string", description: "New time (HH:MM)" },
-            new_staff_id: { type: "string", description: "Optional new dentist UUID" },
-            notes: { type: "string", description: "Reason for rescheduling" },
+            appointment_id: { type: "string" },
+            new_date: { type: "string" }, new_time: { type: "string" },
+            new_staff_id: { type: "string" }, notes: { type: "string" },
           },
           required: ["appointment_id", "new_date", "new_time"],
         },
       },
       {
         name: "add_walk_in",
-        description: "Add a walk-in patient to today's schedule. Use when a patient comes in without an appointment.",
+        description: "Add a walk-in patient to today's schedule.",
         parameters: {
           type: "object",
           properties: {
-            patient_id: { type: "string", description: "Patient UUID" },
-            staff_id: { type: "string", description: "Dentist UUID" },
-            appointment_time: { type: "string", description: "Time (HH:MM)" },
-            notes: { type: "string", description: "Reason for visit" },
-            chair: { type: "string", description: "Chair assignment" },
+            patient_id: { type: "string" }, staff_id: { type: "string" },
+            appointment_time: { type: "string" }, notes: { type: "string" }, chair: { type: "string" },
           },
           required: ["patient_id", "staff_id", "appointment_time"],
         },
       },
       {
         name: "get_available_slots",
-        description: "Check available appointment slots for a dentist on a specific date. Use when user wants to find open times for booking.",
+        description: "Check available appointment slots for a dentist on a date.",
         parameters: {
           type: "object",
-          properties: {
-            staff_id: { type: "string", description: "Dentist UUID" },
-            date: { type: "string", description: "Date to check (YYYY-MM-DD)" },
-          },
+          properties: { staff_id: { type: "string" }, date: { type: "string" } },
           required: ["staff_id", "date"],
         },
       },
-      // --- Billing & Finance Actions ---
+
+      // ==================== DENTAL CHARTS ====================
       {
-        name: "create_invoice",
-        description: "Create a new invoice for a patient with line items. Use when user wants to bill a patient.",
+        name: "get_dental_chart",
+        description: "Get dental chart entries for a patient.",
+        parameters: {
+          type: "object",
+          properties: { patient_id: { type: "string" } },
+          required: ["patient_id"],
+        },
+      },
+      {
+        name: "add_dental_chart_entry",
+        description: "Add a dental chart entry (procedure, condition) for a patient's tooth.",
         parameters: {
           type: "object",
           properties: {
-            patient_id: { type: "string", description: "Patient UUID" },
-            items: {
-              type: "array",
-              description: "Invoice line items",
+            patient_id: { type: "string" }, tooth_number: { type: "string" },
+            procedure: { type: "string" }, surface: { type: "string" },
+            condition: { type: "string" }, notes: { type: "string" },
+            dentist_id: { type: "string" },
+          },
+          required: ["patient_id", "tooth_number", "procedure"],
+        },
+      },
+
+      // ==================== CLINICAL NOTES ====================
+      {
+        name: "create_clinical_note",
+        description: "Create a SOAP clinical note for a patient.",
+        parameters: {
+          type: "object",
+          properties: {
+            patient_id: { type: "string" }, appointment_id: { type: "string" },
+            subjective: { type: "string" }, objective: { type: "string" },
+            assessment: { type: "string" }, plan: { type: "string" },
+          },
+          required: ["patient_id", "subjective", "assessment", "plan"],
+        },
+      },
+
+      // ==================== TREATMENTS ====================
+      {
+        name: "get_treatments",
+        description: "Get the treatment catalog (available procedures with prices).",
+        parameters: {
+          type: "object",
+          properties: { category: { type: "string", description: "Filter by category" } },
+        },
+      },
+      {
+        name: "get_treatment_plans",
+        description: "Get treatment plans for a patient.",
+        parameters: {
+          type: "object",
+          properties: { patient_id: { type: "string" } },
+          required: ["patient_id"],
+        },
+      },
+      {
+        name: "get_treatment_estimates",
+        description: "Get treatment estimates/quotes for a patient.",
+        parameters: {
+          type: "object",
+          properties: { patient_id: { type: "string" } },
+          required: ["patient_id"],
+        },
+      },
+      {
+        name: "get_treatment_materials",
+        description: "Get materials/supplies linked to treatments.",
+        parameters: { type: "object", properties: {} },
+      },
+
+      // ==================== PRESCRIPTIONS ====================
+      {
+        name: "get_prescriptions",
+        description: "Get prescriptions for a patient.",
+        parameters: {
+          type: "object",
+          properties: { patient_id: { type: "string" } },
+          required: ["patient_id"],
+        },
+      },
+      {
+        name: "create_prescription",
+        description: "Create a prescription for a patient with medications.",
+        parameters: {
+          type: "object",
+          properties: {
+            patient_id: { type: "string" }, dentist_id: { type: "string" },
+            diagnosis: { type: "string" }, notes: { type: "string" },
+            medications: {
+              type: "array", description: "Medications list",
               items: {
                 type: "object",
                 properties: {
-                  description: { type: "string" },
-                  quantity: { type: "integer" },
-                  unit_price: { type: "number" },
+                  medication_name: { type: "string" }, dosage: { type: "string" },
+                  frequency: { type: "string" }, duration: { type: "string" },
+                  instructions: { type: "string" },
                 },
+                required: ["medication_name"],
+              },
+            },
+          },
+          required: ["patient_id", "dentist_id", "medications"],
+        },
+      },
+
+      // ==================== LAB MANAGEMENT ====================
+      {
+        name: "get_lab_cases",
+        description: "Get lab cases. Can filter by status.",
+        parameters: {
+          type: "object",
+          properties: { status: { type: "string", description: "pending, in-progress, ready, delivered" }, limit: { type: "integer" } },
+        },
+      },
+      {
+        name: "create_lab_case",
+        description: "Create a new lab case.",
+        parameters: {
+          type: "object",
+          properties: {
+            patient_id: { type: "string" }, dentist_id: { type: "string" },
+            work_type: { type: "string", description: "e.g., Crown, Bridge, Denture, Veneer" },
+            material: { type: "string" }, shade: { type: "string" },
+            instructions: { type: "string" }, due_date: { type: "string" },
+            urgency: { type: "string", description: "normal or urgent" },
+            technician_id: { type: "string" },
+          },
+          required: ["work_type"],
+        },
+      },
+      {
+        name: "update_lab_case",
+        description: "Update a lab case (status, notes, etc.).",
+        parameters: {
+          type: "object",
+          properties: {
+            lab_case_id: { type: "string" },
+            status: { type: "string", description: "pending, in-progress, ready, delivered" },
+            notes: { type: "string" }, technician_id: { type: "string" },
+            lab_fee: { type: "number" }, clinic_fee: { type: "number" },
+          },
+          required: ["lab_case_id"],
+        },
+      },
+      {
+        name: "get_lab_orders",
+        description: "Get external lab orders.",
+        parameters: {
+          type: "object",
+          properties: { status: { type: "string" } },
+        },
+      },
+      {
+        name: "create_lab_order",
+        description: "Create an external lab order.",
+        parameters: {
+          type: "object",
+          properties: {
+            patient_id: { type: "string" }, dentist_id: { type: "string" },
+            lab_work_type: { type: "string" }, lab_name: { type: "string" },
+            due_date: { type: "string" }, notes: { type: "string" },
+            treatment_id: { type: "string" },
+          },
+          required: ["patient_id", "dentist_id", "lab_work_type", "lab_name"],
+        },
+      },
+      {
+        name: "update_lab_order",
+        description: "Update a lab order status.",
+        parameters: {
+          type: "object",
+          properties: {
+            lab_order_id: { type: "string" },
+            status: { type: "string", description: "pending, sent, received, cancelled" },
+            sent_date: { type: "string" }, received_date: { type: "string" },
+            notes: { type: "string" },
+          },
+          required: ["lab_order_id"],
+        },
+      },
+
+      // ==================== BILLING & FINANCE ====================
+      {
+        name: "get_revenue_summary",
+        description: "Get revenue summary from invoices for a period.",
+        parameters: {
+          type: "object",
+          properties: { start_date: { type: "string" }, end_date: { type: "string" } },
+        },
+      },
+      {
+        name: "get_pending_invoices",
+        description: "Get unpaid/overdue invoices.",
+        parameters: {
+          type: "object",
+          properties: { status: { type: "string" } },
+        },
+      },
+      {
+        name: "create_invoice",
+        description: "Create a new invoice for a patient.",
+        parameters: {
+          type: "object",
+          properties: {
+            patient_id: { type: "string" },
+            items: {
+              type: "array", items: {
+                type: "object",
+                properties: { description: { type: "string" }, quantity: { type: "integer" }, unit_price: { type: "number" } },
                 required: ["description", "unit_price"],
               },
             },
-            discount: { type: "number", description: "Discount amount" },
-            tax: { type: "number", description: "Tax amount" },
-            notes: { type: "string", description: "Invoice notes" },
-            due_date: { type: "string", description: "Due date (YYYY-MM-DD)" },
+            discount: { type: "number" }, tax: { type: "number" },
+            notes: { type: "string" }, due_date: { type: "string" },
           },
           required: ["patient_id", "items"],
         },
       },
       {
         name: "record_payment",
-        description: "Record a payment against an invoice. Use when user confirms a patient has paid.",
+        description: "Record a payment against an invoice.",
         parameters: {
           type: "object",
           properties: {
-            invoice_id: { type: "string", description: "Invoice UUID" },
+            invoice_id: { type: "string" },
             payment_method: { type: "string", description: "cash, card, bank_transfer, insurance" },
-            notes: { type: "string", description: "Payment notes" },
+            notes: { type: "string" },
           },
           required: ["invoice_id", "payment_method"],
         },
       },
       {
-        name: "log_expense",
-        description: "Log a clinic expense. Use when user wants to record a business expense.",
+        name: "get_expenses",
+        description: "Get clinic expenses for a date range.",
         parameters: {
           type: "object",
           properties: {
-            amount: { type: "number", description: "Expense amount" },
-            category: { type: "string", description: "Category: supplies, rent, utilities, equipment, salary, marketing, other" },
-            description: { type: "string", description: "What the expense was for" },
-            vendor: { type: "string", description: "Vendor/supplier name" },
-            payment_method: { type: "string", description: "cash, card, bank_transfer" },
-            expense_date: { type: "string", description: "Date (YYYY-MM-DD). Defaults to today." },
+            start_date: { type: "string" }, end_date: { type: "string" },
+            category: { type: "string" },
+          },
+        },
+      },
+      {
+        name: "log_expense",
+        description: "Log a clinic expense.",
+        parameters: {
+          type: "object",
+          properties: {
+            amount: { type: "number" },
+            category: { type: "string", description: "supplies, rent, utilities, equipment, salary, marketing, other" },
+            description: { type: "string" }, vendor: { type: "string" },
+            payment_method: { type: "string" }, expense_date: { type: "string" },
           },
           required: ["amount", "category"],
         },
       },
       {
+        name: "get_payment_plans",
+        description: "Get payment plans, optionally for a specific patient.",
+        parameters: {
+          type: "object",
+          properties: { patient_id: { type: "string" }, status: { type: "string" } },
+        },
+      },
+      {
+        name: "get_commission_payouts",
+        description: "Get commission payouts for staff.",
+        parameters: {
+          type: "object",
+          properties: { staff_id: { type: "string" }, status: { type: "string" } },
+        },
+      },
+
+      // ==================== INVENTORY & SUPPLY CHAIN ====================
+      {
+        name: "check_low_inventory",
+        description: "Check inventory items at or below minimum stock.",
+        parameters: { type: "object", properties: {} },
+      },
+      {
+        name: "get_inventory",
+        description: "Get full inventory list with quantities and details.",
+        parameters: {
+          type: "object",
+          properties: { category: { type: "string" } },
+        },
+      },
+      {
         name: "update_inventory",
-        description: "Update inventory stock levels (restock or use). Use when user wants to add stock or record usage of supplies.",
+        description: "Update inventory stock levels (restock or use).",
         parameters: {
           type: "object",
           properties: {
-            inventory_id: { type: "string", description: "Inventory item UUID" },
-            quantity_change: { type: "integer", description: "Positive to add stock, negative to subtract" },
-            reason: { type: "string", description: "Reason: restock, used, damaged, expired" },
+            inventory_id: { type: "string" },
+            quantity_change: { type: "integer", description: "Positive to add, negative to subtract" },
+            reason: { type: "string" },
           },
           required: ["inventory_id", "quantity_change"],
         },
+      },
+      {
+        name: "get_suppliers",
+        description: "Get the list of suppliers.",
+        parameters: { type: "object", properties: {} },
+      },
+      {
+        name: "get_purchase_orders",
+        description: "Get purchase orders.",
+        parameters: {
+          type: "object",
+          properties: { status: { type: "string" } },
+        },
+      },
+      {
+        name: "create_purchase_order",
+        description: "Create a purchase order for a supplier.",
+        parameters: {
+          type: "object",
+          properties: {
+            supplier_id: { type: "string" },
+            items: {
+              type: "array", items: {
+                type: "object",
+                properties: { inventory_id: { type: "string" }, quantity: { type: "integer" }, unit_cost: { type: "number" }, description: { type: "string" } },
+                required: ["quantity"],
+              },
+            },
+            notes: { type: "string" }, expected_date: { type: "string" },
+          },
+          required: ["supplier_id", "items"],
+        },
+      },
+
+      // ==================== STAFF MANAGEMENT ====================
+      {
+        name: "get_staff_list",
+        description: "Get the list of staff/dentists.",
+        parameters: {
+          type: "object",
+          properties: { role: { type: "string" } },
+        },
+      },
+      {
+        name: "add_staff",
+        description: "Add a new staff member.",
+        parameters: {
+          type: "object",
+          properties: {
+            full_name: { type: "string" }, role: { type: "string", description: "dentist, hygienist, receptionist, assistant, accountant, lab_technician" },
+            phone: { type: "string" }, email: { type: "string" },
+            specialty: { type: "string" },
+          },
+          required: ["full_name", "role"],
+        },
+      },
+      {
+        name: "update_staff",
+        description: "Update a staff member's details.",
+        parameters: {
+          type: "object",
+          properties: {
+            staff_id: { type: "string" },
+            full_name: { type: "string" }, role: { type: "string" },
+            phone: { type: "string" }, email: { type: "string" },
+            specialty: { type: "string" }, status: { type: "string" },
+          },
+          required: ["staff_id"],
+        },
+      },
+      {
+        name: "get_dentist_schedules",
+        description: "Get dentist schedules/availability.",
+        parameters: {
+          type: "object",
+          properties: { staff_id: { type: "string" } },
+        },
+      },
+
+      // ==================== WAITING LIST ====================
+      {
+        name: "get_waiting_list",
+        description: "Get the current waiting list.",
+        parameters: { type: "object", properties: {} },
+      },
+      {
+        name: "add_to_waiting_list",
+        description: "Add a patient to the waiting list.",
+        parameters: {
+          type: "object",
+          properties: {
+            patient_id: { type: "string" }, priority: { type: "string", description: "low, normal, high, urgent" },
+            notes: { type: "string" }, preferred_dentist_id: { type: "string" },
+          },
+          required: ["patient_id"],
+        },
+      },
+      {
+        name: "remove_from_waiting_list",
+        description: "Remove a patient from the waiting list.",
+        parameters: {
+          type: "object",
+          properties: { waiting_list_id: { type: "string" } },
+          required: ["waiting_list_id"],
+        },
+      },
+
+      // ==================== CONSENT FORMS ====================
+      {
+        name: "get_consent_forms",
+        description: "Get consent forms for a patient or all templates.",
+        parameters: {
+          type: "object",
+          properties: { patient_id: { type: "string" }, templates_only: { type: "boolean" } },
+        },
+      },
+      {
+        name: "create_consent_form",
+        description: "Create a consent form for a patient from a template.",
+        parameters: {
+          type: "object",
+          properties: {
+            patient_id: { type: "string" }, template_id: { type: "string" },
+            title: { type: "string" }, content: { type: "string" },
+          },
+          required: ["patient_id", "title"],
+        },
+      },
+
+      // ==================== REVIEWS ====================
+      {
+        name: "get_reviews",
+        description: "Get patient reviews and ratings.",
+        parameters: {
+          type: "object",
+          properties: { limit: { type: "integer" } },
+        },
+      },
+
+      // ==================== NOTIFICATIONS ====================
+      {
+        name: "send_notification",
+        description: "Send an in-app notification to a user.",
+        parameters: {
+          type: "object",
+          properties: {
+            user_id: { type: "string" }, title: { type: "string" },
+            message: { type: "string" }, type: { type: "string", description: "info, warning, success, error" },
+            link: { type: "string" },
+          },
+          required: ["user_id", "title", "message"],
+        },
+      },
+
+      // ==================== CLINIC OVERVIEW ====================
+      {
+        name: "get_clinic_summary",
+        description: "Comprehensive dashboard summary: patients, appointments, invoices, inventory alerts, lab cases.",
+        parameters: { type: "object", properties: {} },
+      },
+      {
+        name: "get_clinic_chairs",
+        description: "Get clinic chairs and their status.",
+        parameters: { type: "object", properties: {} },
+      },
+      {
+        name: "get_clinic_documents",
+        description: "Get clinic-level documents (licenses, certificates, etc.).",
+        parameters: { type: "object", properties: {} },
+      },
+      {
+        name: "get_automation_workflows",
+        description: "Get automation workflows configured for the clinic.",
+        parameters: { type: "object", properties: {} },
       },
     ],
   },
 ];
 
-// Tool execution functions
-async function executeTool(name: string, args: any, supabaseAdmin: any, orgId: string) {
+// ==================== TOOL EXECUTION ====================
+async function executeTool(name: string, args: any, db: any, orgId: string) {
   const today = new Date().toISOString().split("T")[0];
 
   switch (name) {
+    // ---- PATIENTS ----
     case "search_patients": {
-      const limit = args.limit || 10;
       const q = `%${args.query}%`;
-      const { data, error } = await supabaseAdmin
-        .from("patients")
+      const { data, error } = await db.from("patients")
         .select("id, first_name, last_name, phone, email, gender, date_of_birth, status, allergies, medical_history")
         .eq("org_id", orgId)
         .or(`first_name.ilike.${q},last_name.ilike.${q},phone.ilike.${q},email.ilike.${q}`)
-        .limit(limit);
+        .limit(args.limit || 10);
       if (error) throw error;
       return data?.length ? data : "No patients found matching that search.";
     }
 
-    case "get_todays_appointments": {
-      let query = supabaseAdmin
-        .from("appointments")
-        .select("id, appointment_date, appointment_time, status, notes, chair, is_walk_in, patient_id, staff_id")
-        .eq("org_id", orgId)
-        .eq("appointment_date", today)
-        .order("appointment_time");
-      if (args.status) query = query.eq("status", args.status);
-      const { data: appts, error } = await query;
+    case "register_patient": {
+      const { data, error } = await db.from("patients").insert({
+        org_id: orgId, first_name: args.first_name, last_name: args.last_name,
+        phone: args.phone || null, email: args.email || null, gender: args.gender || null,
+        date_of_birth: args.date_of_birth || null, address: args.address || null,
+        blood_group: args.blood_group || null, allergies: args.allergies || null,
+        medical_history: args.medical_history || null,
+        emergency_contact_name: args.emergency_contact_name || null,
+        emergency_contact_phone: args.emergency_contact_phone || null,
+      }).select("id, first_name, last_name").single();
       if (error) throw error;
-      if (!appts?.length) return "No appointments scheduled for today.";
+      return { success: true, patient_id: data.id, message: `Patient ${data.first_name} ${data.last_name} registered.` };
+    }
 
-      // Fetch patient and staff names
-      const patientIds = [...new Set(appts.map((a: any) => a.patient_id))];
-      const staffIds = [...new Set(appts.map((a: any) => a.staff_id))];
+    case "update_patient": {
+      const { patient_id, ...updates } = args;
+      const clean: Record<string, any> = {};
+      for (const [k, v] of Object.entries(updates)) { if (v !== undefined && v !== null && v !== "") clean[k] = v; }
+      const { data, error } = await db.from("patients").update(clean).eq("id", patient_id).eq("org_id", orgId).select("id, first_name, last_name").single();
+      if (error) throw error;
+      return { success: true, message: `Patient ${data.first_name} ${data.last_name} updated: ${Object.keys(clean).join(", ")}` };
+    }
 
-      const [{ data: patients }, { data: staff }] = await Promise.all([
-        supabaseAdmin.from("patients").select("id, first_name, last_name").in("id", patientIds),
-        supabaseAdmin.from("staff").select("id, full_name").in("id", staffIds),
+    case "get_patient_history": {
+      const [{ data: patient }, { data: appointments }, { data: notes }, { data: prescriptions }, { data: chartEntries }] = await Promise.all([
+        db.from("patients").select("*").eq("id", args.patient_id).single(),
+        db.from("appointments").select("appointment_date, appointment_time, status, notes").eq("patient_id", args.patient_id).eq("org_id", orgId).order("appointment_date", { ascending: false }).limit(10),
+        db.from("clinical_notes").select("subjective, objective, assessment, plan, created_at").eq("patient_id", args.patient_id).eq("org_id", orgId).order("created_at", { ascending: false }).limit(5),
+        db.from("prescriptions").select("id, diagnosis, notes, created_at").eq("patient_id", args.patient_id).eq("org_id", orgId).order("created_at", { ascending: false }).limit(5),
+        db.from("dental_chart_entries").select("tooth_number, procedure, surface, condition, notes, entry_date").eq("patient_id", args.patient_id).eq("org_id", orgId).order("entry_date", { ascending: false }).limit(20),
       ]);
-
-      const patientMap = Object.fromEntries((patients || []).map((p: any) => [p.id, `${p.first_name} ${p.last_name}`]));
-      const staffMap = Object.fromEntries((staff || []).map((s: any) => [s.id, s.full_name]));
-
-      return appts.map((a: any) => ({
-        time: a.appointment_time,
-        patient: patientMap[a.patient_id] || "Unknown",
-        dentist: staffMap[a.staff_id] || "Unknown",
-        status: a.status,
-        chair: a.chair,
-        notes: a.notes,
-        is_walk_in: a.is_walk_in,
-      }));
+      return { patient: patient || "Patient not found", recent_appointments: appointments || [], recent_notes: notes || [], recent_prescriptions: prescriptions || [], dental_chart: chartEntries || [] };
     }
 
-    case "get_appointment_stats": {
-      const startDate = args.start_date || new Date(Date.now() - 30 * 86400000).toISOString().split("T")[0];
-      const endDate = args.end_date || today;
-      const { data, error } = await supabaseAdmin
-        .from("appointments")
-        .select("status")
-        .eq("org_id", orgId)
-        .gte("appointment_date", startDate)
-        .lte("appointment_date", endDate);
+    case "get_patient_documents": {
+      const { data, error } = await db.from("patient_documents").select("id, title, category, file_type, created_at").eq("patient_id", args.patient_id).eq("org_id", orgId).order("created_at", { ascending: false });
       if (error) throw error;
-      const total = data?.length || 0;
-      const stats: Record<string, number> = {};
-      (data || []).forEach((a: any) => { stats[a.status] = (stats[a.status] || 0) + 1; });
-      return { period: `${startDate} to ${endDate}`, total, breakdown: stats, no_show_rate: total ? `${((stats["no_show"] || 0) / total * 100).toFixed(1)}%` : "0%" };
+      return data?.length ? data : "No documents found for this patient.";
     }
 
-    case "get_revenue_summary": {
-      const startDate = args.start_date || new Date(Date.now() - 30 * 86400000).toISOString().split("T")[0];
-      const endDate = args.end_date || today;
-      const { data, error } = await supabaseAdmin
-        .from("invoices")
-        .select("total, status, payment_method")
-        .eq("org_id", orgId)
-        .gte("invoice_date", startDate)
-        .lte("invoice_date", endDate);
+    case "get_patient_images": {
+      const { data, error } = await db.from("patient_images").select("id, image_type, tooth_number, description, created_at").eq("patient_id", args.patient_id).eq("org_id", orgId).order("created_at", { ascending: false });
       if (error) throw error;
-      const totalRevenue = (data || []).filter((i: any) => i.status === "paid").reduce((sum: number, i: any) => sum + Number(i.total), 0);
-      const pending = (data || []).filter((i: any) => i.status !== "paid" && i.status !== "cancelled").reduce((sum: number, i: any) => sum + Number(i.total), 0);
-      return { period: `${startDate} to ${endDate}`, total_invoices: data?.length || 0, collected: totalRevenue, pending, by_method: {} };
-    }
-
-    case "check_low_inventory": {
-      const { data, error } = await supabaseAdmin
-        .from("inventory")
-        .select("name, quantity, min_stock, unit, category, expiry_date")
-        .eq("org_id", orgId)
-        .order("quantity");
-      if (error) throw error;
-      const lowStock = (data || []).filter((i: any) => i.quantity <= i.min_stock);
-      const expiringSoon = (data || []).filter((i: any) => {
-        if (!i.expiry_date) return false;
-        const diff = (new Date(i.expiry_date).getTime() - Date.now()) / 86400000;
-        return diff <= 30 && diff >= 0;
-      });
-      return { low_stock_items: lowStock.length ? lowStock : "All items above minimum stock levels.", expiring_within_30_days: expiringSoon.length ? expiringSoon : "No items expiring soon." };
+      return data?.length ? data : "No images found for this patient.";
     }
 
     case "get_overdue_patients": {
       const days = args.days || 90;
       const cutoff = new Date(Date.now() - days * 86400000).toISOString().split("T")[0];
-      // Get patients with their last appointment
-      const { data: patients, error } = await supabaseAdmin
-        .from("patients")
-        .select("id, first_name, last_name, phone, email, status")
-        .eq("org_id", orgId)
-        .eq("status", "active");
+      const { data: patients, error } = await db.from("patients").select("id, first_name, last_name, phone, email").eq("org_id", orgId).eq("status", "active");
       if (error) throw error;
-      if (!patients?.length) return "No active patients found.";
-
-      const { data: recentAppts } = await supabaseAdmin
-        .from("appointments")
-        .select("patient_id, appointment_date")
-        .eq("org_id", orgId)
-        .gte("appointment_date", cutoff);
-
-      const recentPatientIds = new Set((recentAppts || []).map((a: any) => a.patient_id));
-      const overdue = patients.filter((p: any) => !recentPatientIds.has(p.id)).slice(0, 20);
-      return overdue.length ? { count: overdue.length, days_threshold: days, patients: overdue.map((p: any) => ({ name: `${p.first_name} ${p.last_name}`, phone: p.phone, email: p.email })) } : `All active patients have visited within the last ${days} days.`;
+      if (!patients?.length) return "No active patients.";
+      const { data: recentAppts } = await db.from("appointments").select("patient_id").eq("org_id", orgId).gte("appointment_date", cutoff);
+      const recentIds = new Set((recentAppts || []).map((a: any) => a.patient_id));
+      const overdue = patients.filter((p: any) => !recentIds.has(p.id)).slice(0, 20);
+      return overdue.length ? { count: overdue.length, days_threshold: days, patients: overdue } : `All patients visited within ${days} days.`;
     }
 
-    case "get_patient_history": {
-      const [{ data: patient }, { data: appointments }, { data: notes }] = await Promise.all([
-        supabaseAdmin.from("patients").select("*").eq("id", args.patient_id).single(),
-        supabaseAdmin.from("appointments").select("appointment_date, appointment_time, status, notes").eq("patient_id", args.patient_id).eq("org_id", orgId).order("appointment_date", { ascending: false }).limit(10),
-        supabaseAdmin.from("clinical_notes").select("subjective, objective, assessment, plan, created_at").eq("patient_id", args.patient_id).eq("org_id", orgId).order("created_at", { ascending: false }).limit(5),
+    // ---- APPOINTMENTS ----
+    case "get_todays_appointments":
+    case "get_appointments_by_date": {
+      const date = name === "get_todays_appointments" ? today : args.date;
+      let query = db.from("appointments").select("id, appointment_date, appointment_time, status, notes, chair, is_walk_in, patient_id, staff_id").eq("org_id", orgId).eq("appointment_date", date).order("appointment_time");
+      if (args.status) query = query.eq("status", args.status);
+      const { data: appts, error } = await query;
+      if (error) throw error;
+      if (!appts?.length) return `No appointments for ${date}.`;
+      const pIds = [...new Set(appts.map((a: any) => a.patient_id))];
+      const sIds = [...new Set(appts.map((a: any) => a.staff_id))];
+      const [{ data: patients }, { data: staff }] = await Promise.all([
+        db.from("patients").select("id, first_name, last_name").in("id", pIds),
+        db.from("staff").select("id, full_name").in("id", sIds),
       ]);
-      return { patient: patient || "Patient not found", recent_appointments: appointments || [], recent_notes: notes || [] };
+      const pMap = Object.fromEntries((patients || []).map((p: any) => [p.id, `${p.first_name} ${p.last_name}`]));
+      const sMap = Object.fromEntries((staff || []).map((s: any) => [s.id, s.full_name]));
+      return appts.map((a: any) => ({ id: a.id, time: a.appointment_time, patient: pMap[a.patient_id] || "Unknown", dentist: sMap[a.staff_id] || "Unknown", status: a.status, chair: a.chair, notes: a.notes, is_walk_in: a.is_walk_in }));
+    }
+
+    case "get_appointment_stats": {
+      const start = args.start_date || new Date(Date.now() - 30 * 86400000).toISOString().split("T")[0];
+      const end = args.end_date || today;
+      const { data, error } = await db.from("appointments").select("status").eq("org_id", orgId).gte("appointment_date", start).lte("appointment_date", end);
+      if (error) throw error;
+      const total = data?.length || 0;
+      const stats: Record<string, number> = {};
+      (data || []).forEach((a: any) => { stats[a.status] = (stats[a.status] || 0) + 1; });
+      return { period: `${start} to ${end}`, total, breakdown: stats, no_show_rate: total ? `${((stats["no_show"] || 0) / total * 100).toFixed(1)}%` : "0%" };
     }
 
     case "create_appointment": {
-      const { data, error } = await supabaseAdmin
-        .from("appointments")
-        .insert({
-          org_id: orgId,
-          patient_id: args.patient_id,
-          staff_id: args.staff_id,
-          appointment_date: args.appointment_date,
-          appointment_time: args.appointment_time,
-          treatment_id: args.treatment_id || null,
-          notes: args.notes || null,
-          status: "scheduled",
-        })
-        .select()
-        .single();
+      const { data, error } = await db.from("appointments").insert({
+        org_id: orgId, patient_id: args.patient_id, staff_id: args.staff_id,
+        appointment_date: args.appointment_date, appointment_time: args.appointment_time,
+        treatment_id: args.treatment_id || null, notes: args.notes || null, chair: args.chair || null, status: "scheduled",
+      }).select("id").single();
       if (error) throw error;
-      return { success: true, appointment_id: data.id, message: `Appointment booked for ${args.appointment_date} at ${args.appointment_time}` };
+      return { success: true, appointment_id: data.id, message: `Appointment booked for ${args.appointment_date} at ${args.appointment_time}.` };
     }
 
-    case "create_clinical_note": {
-      const { data, error } = await supabaseAdmin
-        .from("clinical_notes")
-        .insert({
-          org_id: orgId,
-          patient_id: args.patient_id,
-          appointment_id: args.appointment_id || null,
-          subjective: args.subjective,
-          objective: args.objective || null,
-          assessment: args.assessment,
-          plan: args.plan,
-        })
-        .select()
-        .single();
+    case "update_appointment_status": {
+      const upd: any = { status: args.status };
+      if (args.notes) upd.notes = args.notes;
+      const { data, error } = await db.from("appointments").update(upd).eq("id", args.appointment_id).eq("org_id", orgId).select("id, status, appointment_date, appointment_time").single();
       if (error) throw error;
-      return { success: true, note_id: data.id, message: "Clinical note saved successfully." };
+      return { success: true, message: `Appointment on ${data.appointment_date} at ${data.appointment_time} → ${data.status}.` };
+    }
+
+    case "reschedule_appointment": {
+      const upd: any = { appointment_date: args.new_date, appointment_time: args.new_time, status: "scheduled" };
+      if (args.new_staff_id) upd.staff_id = args.new_staff_id;
+      if (args.notes) upd.notes = args.notes;
+      const { data, error } = await db.from("appointments").update(upd).eq("id", args.appointment_id).eq("org_id", orgId).select("id, appointment_date, appointment_time").single();
+      if (error) throw error;
+      return { success: true, message: `Rescheduled to ${data.appointment_date} at ${data.appointment_time}.` };
+    }
+
+    case "add_walk_in": {
+      const { data, error } = await db.from("appointments").insert({
+        org_id: orgId, patient_id: args.patient_id, staff_id: args.staff_id,
+        appointment_date: today, appointment_time: args.appointment_time,
+        is_walk_in: true, notes: args.notes || "Walk-in", chair: args.chair || null, status: "scheduled",
+      }).select("id").single();
+      if (error) throw error;
+      return { success: true, message: `Walk-in added at ${args.appointment_time}.` };
+    }
+
+    case "get_available_slots": {
+      const dow = new Date(args.date).getDay();
+      const { data: sched } = await db.from("dentist_schedules").select("start_time, end_time, break_start, break_end, is_available").eq("staff_id", args.staff_id).eq("org_id", orgId).eq("day_of_week", dow).single();
+      if (!sched?.is_available) return "Dentist not available on this day.";
+      const { data: existing } = await db.from("appointments").select("appointment_time").eq("staff_id", args.staff_id).eq("org_id", orgId).eq("appointment_date", args.date).neq("status", "cancelled");
+      const booked = new Set((existing || []).map((a: any) => a.appointment_time?.slice(0, 5)));
+      const slots: string[] = [];
+      const [sH, sM] = sched.start_time.split(":").map(Number);
+      const [eH, eM] = sched.end_time.split(":").map(Number);
+      const bS = sched.break_start?.slice(0, 5), bE = sched.break_end?.slice(0, 5);
+      let h = sH, m = sM;
+      while (h < eH || (h === eH && m < eM)) {
+        const slot = `${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}`;
+        if (!booked.has(slot) && !(bS && bE && slot >= bS && slot < bE)) slots.push(slot);
+        m += 30; if (m >= 60) { h++; m -= 60; }
+      }
+      return slots.length ? { date: args.date, available_slots: slots } : "No available slots.";
+    }
+
+    // ---- DENTAL CHARTS ----
+    case "get_dental_chart": {
+      const { data, error } = await db.from("dental_chart_entries").select("id, tooth_number, procedure, surface, condition, notes, entry_date, dentist_id").eq("patient_id", args.patient_id).eq("org_id", orgId).order("entry_date", { ascending: false });
+      if (error) throw error;
+      return data?.length ? data : "No dental chart entries for this patient.";
+    }
+
+    case "add_dental_chart_entry": {
+      const { data, error } = await db.from("dental_chart_entries").insert({
+        org_id: orgId, patient_id: args.patient_id, tooth_number: args.tooth_number,
+        procedure: args.procedure, surface: args.surface || null, condition: args.condition || null,
+        notes: args.notes || null, dentist_id: args.dentist_id || null,
+      }).select("id").single();
+      if (error) throw error;
+      return { success: true, message: `Chart entry added for tooth ${args.tooth_number}: ${args.procedure}.` };
+    }
+
+    // ---- CLINICAL NOTES ----
+    case "create_clinical_note": {
+      const { data, error } = await db.from("clinical_notes").insert({
+        org_id: orgId, patient_id: args.patient_id, appointment_id: args.appointment_id || null,
+        subjective: args.subjective, objective: args.objective || null, assessment: args.assessment, plan: args.plan,
+      }).select("id").single();
+      if (error) throw error;
+      return { success: true, note_id: data.id, message: "Clinical note saved." };
+    }
+
+    // ---- TREATMENTS ----
+    case "get_treatments": {
+      let query = db.from("treatments").select("id, name, category, price, duration, description, status").eq("org_id", orgId).order("name");
+      if (args.category) query = query.eq("category", args.category);
+      const { data, error } = await query;
+      if (error) throw error;
+      return data?.length ? data : "No treatments found.";
+    }
+
+    case "get_treatment_plans": {
+      const { data, error } = await db.from("treatment_plans").select("id, title, status, total_cost, notes, created_at").eq("patient_id", args.patient_id).eq("org_id", orgId).order("created_at", { ascending: false });
+      if (error) throw error;
+      if (!data?.length) return "No treatment plans for this patient.";
+      // Get items for each plan
+      const planIds = data.map((p: any) => p.id);
+      const { data: items } = await db.from("treatment_plan_items").select("*").in("plan_id", planIds);
+      return data.map((p: any) => ({ ...p, items: (items || []).filter((i: any) => i.plan_id === p.id) }));
+    }
+
+    case "get_treatment_estimates": {
+      const { data, error } = await db.from("treatment_estimates").select("id, title, status, total, notes, created_at, valid_until").eq("patient_id", args.patient_id).eq("org_id", orgId).order("created_at", { ascending: false });
+      if (error) throw error;
+      if (!data?.length) return "No treatment estimates for this patient.";
+      const estIds = data.map((e: any) => e.id);
+      const { data: items } = await db.from("treatment_estimate_items").select("*").in("estimate_id", estIds);
+      return data.map((e: any) => ({ ...e, items: (items || []).filter((i: any) => i.estimate_id === e.id) }));
+    }
+
+    case "get_treatment_materials": {
+      const { data, error } = await db.from("treatment_materials").select("*").eq("org_id", orgId);
+      if (error) throw error;
+      return data?.length ? data : "No treatment materials configured.";
+    }
+
+    // ---- PRESCRIPTIONS ----
+    case "get_prescriptions": {
+      const { data, error } = await db.from("prescriptions").select("id, diagnosis, notes, status, created_at, dentist_id").eq("patient_id", args.patient_id).eq("org_id", orgId).order("created_at", { ascending: false });
+      if (error) throw error;
+      if (!data?.length) return "No prescriptions for this patient.";
+      const rxIds = data.map((r: any) => r.id);
+      const { data: meds } = await db.from("prescription_medications").select("*").in("prescription_id", rxIds);
+      return data.map((r: any) => ({ ...r, medications: (meds || []).filter((m: any) => m.prescription_id === r.id) }));
+    }
+
+    case "create_prescription": {
+      const { data: rx, error } = await db.from("prescriptions").insert({
+        org_id: orgId, patient_id: args.patient_id, dentist_id: args.dentist_id,
+        diagnosis: args.diagnosis || null, notes: args.notes || null,
+      }).select("id").single();
+      if (error) throw error;
+      if (args.medications?.length) {
+        const meds = args.medications.map((m: any) => ({
+          prescription_id: rx.id, medication_name: m.medication_name,
+          dosage: m.dosage || null, frequency: m.frequency || null,
+          duration: m.duration || null, instructions: m.instructions || null,
+        }));
+        await db.from("prescription_medications").insert(meds);
+      }
+      return { success: true, prescription_id: rx.id, message: `Prescription created with ${args.medications?.length || 0} medications.` };
+    }
+
+    // ---- LAB MANAGEMENT ----
+    case "get_lab_cases": {
+      let query = db.from("lab_cases").select("id, case_number, work_type, status, urgency, material, shade, due_date, lab_fee, clinic_fee, patient_id, dentist_id, technician_id, notes, created_at").eq("org_id", orgId).order("created_at", { ascending: false });
+      if (args.status) query = query.eq("status", args.status);
+      const { data, error } = await query.limit(args.limit || 30);
+      if (error) throw error;
+      if (!data?.length) return "No lab cases found.";
+      // Enrich with names
+      const pIds = [...new Set(data.map((c: any) => c.patient_id).filter(Boolean))];
+      const sIds = [...new Set([...data.map((c: any) => c.dentist_id), ...data.map((c: any) => c.technician_id)].filter(Boolean))];
+      const [{ data: patients }, { data: staff }] = await Promise.all([
+        pIds.length ? db.from("patients").select("id, first_name, last_name").in("id", pIds) : { data: [] },
+        sIds.length ? db.from("staff").select("id, full_name").in("id", sIds) : { data: [] },
+      ]);
+      const pMap = Object.fromEntries((patients || []).map((p: any) => [p.id, `${p.first_name} ${p.last_name}`]));
+      const sMap = Object.fromEntries((staff || []).map((s: any) => [s.id, s.full_name]));
+      return data.map((c: any) => ({ ...c, patient_name: pMap[c.patient_id] || null, dentist_name: sMap[c.dentist_id] || null, technician_name: sMap[c.technician_id] || null }));
+    }
+
+    case "create_lab_case": {
+      const { count } = await db.from("lab_cases").select("*", { count: "exact", head: true }).eq("org_id", orgId);
+      const caseNumber = `LC-${String((count || 0) + 1).padStart(5, "0")}`;
+      const { data, error } = await db.from("lab_cases").insert({
+        org_id: orgId, case_number: caseNumber, work_type: args.work_type,
+        patient_id: args.patient_id || null, dentist_id: args.dentist_id || null,
+        technician_id: args.technician_id || null, material: args.material || null,
+        shade: args.shade || null, instructions: args.instructions || null,
+        due_date: args.due_date || null, urgency: args.urgency || "normal",
+      }).select("id, case_number").single();
+      if (error) throw error;
+      return { success: true, case_number: data.case_number, message: `Lab case ${data.case_number} created.` };
+    }
+
+    case "update_lab_case": {
+      const { lab_case_id, ...updates } = args;
+      const clean: Record<string, any> = {};
+      for (const [k, v] of Object.entries(updates)) { if (v !== undefined && v !== null) clean[k] = v; }
+      if (clean.status === "delivered") clean.completed_date = today;
+      if (clean.status === "in-progress" && !clean.start_date) clean.start_date = today;
+      const { data, error } = await db.from("lab_cases").update(clean).eq("id", lab_case_id).eq("org_id", orgId).select("id, case_number, status").single();
+      if (error) throw error;
+      return { success: true, message: `Lab case ${data.case_number} updated → ${data.status}.` };
+    }
+
+    case "get_lab_orders": {
+      let query = db.from("lab_orders").select("id, lab_work_type, lab_name, status, due_date, sent_date, received_date, notes, patient_id, dentist_id, created_at").eq("org_id", orgId).order("created_at", { ascending: false });
+      if (args.status) query = query.eq("status", args.status);
+      const { data, error } = await query.limit(30);
+      if (error) throw error;
+      return data?.length ? data : "No lab orders found.";
+    }
+
+    case "create_lab_order": {
+      const { data, error } = await db.from("lab_orders").insert({
+        org_id: orgId, patient_id: args.patient_id, dentist_id: args.dentist_id,
+        lab_work_type: args.lab_work_type, lab_name: args.lab_name,
+        due_date: args.due_date || null, notes: args.notes || null,
+        treatment_id: args.treatment_id || null,
+      }).select("id").single();
+      if (error) throw error;
+      return { success: true, message: `Lab order created for ${args.lab_work_type} at ${args.lab_name}.` };
+    }
+
+    case "update_lab_order": {
+      const { lab_order_id, ...updates } = args;
+      const clean: Record<string, any> = {};
+      for (const [k, v] of Object.entries(updates)) { if (v !== undefined && v !== null) clean[k] = v; }
+      const { data, error } = await db.from("lab_orders").update(clean).eq("id", lab_order_id).eq("org_id", orgId).select("id, status").single();
+      if (error) throw error;
+      return { success: true, message: `Lab order updated → ${data.status}.` };
+    }
+
+    // ---- BILLING & FINANCE ----
+    case "get_revenue_summary": {
+      const start = args.start_date || new Date(Date.now() - 30 * 86400000).toISOString().split("T")[0];
+      const end = args.end_date || today;
+      const { data, error } = await db.from("invoices").select("total, status, payment_method").eq("org_id", orgId).gte("invoice_date", start).lte("invoice_date", end);
+      if (error) throw error;
+      const collected = (data || []).filter((i: any) => i.status === "paid").reduce((s: number, i: any) => s + Number(i.total), 0);
+      const pending = (data || []).filter((i: any) => !["paid", "cancelled"].includes(i.status)).reduce((s: number, i: any) => s + Number(i.total), 0);
+      return { period: `${start} to ${end}`, total_invoices: data?.length || 0, collected, pending };
     }
 
     case "get_pending_invoices": {
-      let query = supabaseAdmin
-        .from("invoices")
-        .select("id, invoice_number, invoice_date, due_date, total, status, patient_id")
-        .eq("org_id", orgId)
-        .order("due_date");
-      if (args.status) {
-        query = query.eq("status", args.status);
-      } else {
-        query = query.in("status", ["draft", "sent", "overdue"]);
-      }
+      let query = db.from("invoices").select("id, invoice_number, invoice_date, due_date, total, status, patient_id").eq("org_id", orgId).order("due_date");
+      query = args.status ? query.eq("status", args.status) : query.in("status", ["draft", "sent", "overdue"]);
       const { data, error } = await query.limit(20);
       if (error) throw error;
-      if (!data?.length) return "No pending invoices found.";
-      const patientIds = [...new Set(data.map((i: any) => i.patient_id).filter(Boolean))];
-      const { data: patients } = patientIds.length
-        ? await supabaseAdmin.from("patients").select("id, first_name, last_name").in("id", patientIds)
-        : { data: [] };
+      if (!data?.length) return "No pending invoices.";
+      const pIds = [...new Set(data.map((i: any) => i.patient_id).filter(Boolean))];
+      const { data: patients } = pIds.length ? await db.from("patients").select("id, first_name, last_name").in("id", pIds) : { data: [] };
       const pMap = Object.fromEntries((patients || []).map((p: any) => [p.id, `${p.first_name} ${p.last_name}`]));
       return data.map((i: any) => ({ invoice: i.invoice_number, patient: pMap[i.patient_id] || "N/A", total: i.total, status: i.status, due_date: i.due_date }));
     }
 
-    case "get_staff_list": {
-      let query = supabaseAdmin.from("staff").select("id, full_name, role, specialty, phone, email, status").eq("org_id", orgId).eq("status", "active").order("full_name");
-      if (args.role) query = query.eq("role", args.role);
-      const { data, error } = await query;
-      if (error) throw error;
-      return data?.length ? data : "No staff members found.";
-    }
-
-    case "get_clinic_summary": {
-      const [
-        { count: patientCount },
-        { data: todayAppts },
-        { data: pendingInvoices },
-        { data: lowStock },
-      ] = await Promise.all([
-        supabaseAdmin.from("patients").select("*", { count: "exact", head: true }).eq("org_id", orgId).eq("status", "active"),
-        supabaseAdmin.from("appointments").select("status").eq("org_id", orgId).eq("appointment_date", today),
-        supabaseAdmin.from("invoices").select("total, status").eq("org_id", orgId).in("status", ["draft", "sent", "overdue"]),
-        supabaseAdmin.from("inventory").select("name, quantity, min_stock").eq("org_id", orgId),
-      ]);
-      const lowItems = (lowStock || []).filter((i: any) => i.quantity <= i.min_stock);
-      const pendingTotal = (pendingInvoices || []).reduce((s: number, i: any) => s + Number(i.total), 0);
-      const apptBreakdown: Record<string, number> = {};
-      (todayAppts || []).forEach((a: any) => { apptBreakdown[a.status] = (apptBreakdown[a.status] || 0) + 1; });
-
-      return {
-        active_patients: patientCount || 0,
-        todays_appointments: { total: todayAppts?.length || 0, breakdown: apptBreakdown },
-        pending_invoices: { count: pendingInvoices?.length || 0, total_amount: pendingTotal },
-        inventory_alerts: lowItems.length,
-      };
-    }
-
-    // --- Patient Management ---
-    case "register_patient": {
-      const { data, error } = await supabaseAdmin
-        .from("patients")
-        .insert({
-          org_id: orgId,
-          first_name: args.first_name,
-          last_name: args.last_name,
-          phone: args.phone || null,
-          email: args.email || null,
-          gender: args.gender || null,
-          date_of_birth: args.date_of_birth || null,
-          address: args.address || null,
-          blood_group: args.blood_group || null,
-          allergies: args.allergies || null,
-          medical_history: args.medical_history || null,
-          emergency_contact_name: args.emergency_contact_name || null,
-          emergency_contact_phone: args.emergency_contact_phone || null,
-        })
-        .select("id, first_name, last_name")
-        .single();
-      if (error) throw error;
-      return { success: true, patient_id: data.id, message: `Patient ${data.first_name} ${data.last_name} registered successfully.` };
-    }
-
-    case "update_patient": {
-      const { patient_id, ...updates } = args;
-      // Remove undefined/null keys
-      const cleanUpdates: Record<string, any> = {};
-      for (const [k, v] of Object.entries(updates)) {
-        if (v !== undefined && v !== null && v !== "") cleanUpdates[k] = v;
-      }
-      const { data, error } = await supabaseAdmin
-        .from("patients")
-        .update(cleanUpdates)
-        .eq("id", patient_id)
-        .eq("org_id", orgId)
-        .select("id, first_name, last_name")
-        .single();
-      if (error) throw error;
-      return { success: true, message: `Patient ${data.first_name} ${data.last_name} updated. Changed: ${Object.keys(cleanUpdates).join(", ")}` };
-    }
-
-    // --- Scheduling Actions ---
-    case "update_appointment_status": {
-      const updateData: any = { status: args.status };
-      if (args.notes) updateData.notes = args.notes;
-      const { data, error } = await supabaseAdmin
-        .from("appointments")
-        .update(updateData)
-        .eq("id", args.appointment_id)
-        .eq("org_id", orgId)
-        .select("id, status, appointment_date, appointment_time")
-        .single();
-      if (error) throw error;
-      return { success: true, message: `Appointment on ${data.appointment_date} at ${data.appointment_time} marked as ${data.status}.` };
-    }
-
-    case "reschedule_appointment": {
-      const rescheduleData: any = {
-        appointment_date: args.new_date,
-        appointment_time: args.new_time,
-        status: "scheduled",
-      };
-      if (args.new_staff_id) rescheduleData.staff_id = args.new_staff_id;
-      if (args.notes) rescheduleData.notes = args.notes;
-      const { data, error } = await supabaseAdmin
-        .from("appointments")
-        .update(rescheduleData)
-        .eq("id", args.appointment_id)
-        .eq("org_id", orgId)
-        .select("id, appointment_date, appointment_time")
-        .single();
-      if (error) throw error;
-      return { success: true, message: `Appointment rescheduled to ${data.appointment_date} at ${data.appointment_time}.` };
-    }
-
-    case "add_walk_in": {
-      const { data, error } = await supabaseAdmin
-        .from("appointments")
-        .insert({
-          org_id: orgId,
-          patient_id: args.patient_id,
-          staff_id: args.staff_id,
-          appointment_date: today,
-          appointment_time: args.appointment_time,
-          is_walk_in: true,
-          notes: args.notes || "Walk-in patient",
-          chair: args.chair || null,
-          status: "scheduled",
-        })
-        .select("id")
-        .single();
-      if (error) throw error;
-      return { success: true, message: `Walk-in added for today at ${args.appointment_time}.` };
-    }
-
-    case "get_available_slots": {
-      const dayOfWeek = new Date(args.date).getDay();
-      // Get dentist schedule for that day
-      const { data: schedule } = await supabaseAdmin
-        .from("dentist_schedules")
-        .select("start_time, end_time, break_start, break_end, is_available")
-        .eq("staff_id", args.staff_id)
-        .eq("org_id", orgId)
-        .eq("day_of_week", dayOfWeek)
-        .single();
-      if (!schedule || !schedule.is_available) return "Dentist is not available on this day.";
-      // Get existing appointments
-      const { data: existing } = await supabaseAdmin
-        .from("appointments")
-        .select("appointment_time")
-        .eq("staff_id", args.staff_id)
-        .eq("org_id", orgId)
-        .eq("appointment_date", args.date)
-        .neq("status", "cancelled");
-      const bookedTimes = new Set((existing || []).map((a: any) => a.appointment_time?.slice(0, 5)));
-      // Generate 30-min slots
-      const slots: string[] = [];
-      const [startH, startM] = schedule.start_time.split(":").map(Number);
-      const [endH, endM] = schedule.end_time.split(":").map(Number);
-      const breakStart = schedule.break_start?.slice(0, 5);
-      const breakEnd = schedule.break_end?.slice(0, 5);
-      let h = startH, m = startM;
-      while (h < endH || (h === endH && m < endM)) {
-        const slot = `${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}`;
-        const isBreak = breakStart && breakEnd && slot >= breakStart && slot < breakEnd;
-        if (!bookedTimes.has(slot) && !isBreak) slots.push(slot);
-        m += 30;
-        if (m >= 60) { h++; m -= 60; }
-      }
-      return slots.length ? { date: args.date, available_slots: slots } : "No available slots on this date.";
-    }
-
-    // --- Billing & Finance ---
     case "create_invoice": {
       const items = args.items || [];
       const subtotal = items.reduce((s: number, i: any) => s + (i.unit_price * (i.quantity || 1)), 0);
-      const discount = args.discount || 0;
-      const tax = args.tax || 0;
+      const discount = args.discount || 0, tax = args.tax || 0;
       const total = subtotal - discount + tax;
-      // Generate invoice number
-      const { count } = await supabaseAdmin.from("invoices").select("*", { count: "exact", head: true }).eq("org_id", orgId);
-      const invoiceNumber = `INV-${String((count || 0) + 1).padStart(5, "0")}`;
-      const { data: invoice, error } = await supabaseAdmin
-        .from("invoices")
-        .insert({
-          org_id: orgId,
-          patient_id: args.patient_id,
-          invoice_number: invoiceNumber,
-          subtotal,
-          discount,
-          tax,
-          total,
-          status: "sent",
-          notes: args.notes || null,
-          due_date: args.due_date || null,
-        })
-        .select("id, invoice_number, total")
-        .single();
+      const { count } = await db.from("invoices").select("*", { count: "exact", head: true }).eq("org_id", orgId);
+      const num = `INV-${String((count || 0) + 1).padStart(5, "0")}`;
+      const { data: inv, error } = await db.from("invoices").insert({
+        org_id: orgId, patient_id: args.patient_id, invoice_number: num,
+        subtotal, discount, tax, total, status: "sent", notes: args.notes || null, due_date: args.due_date || null,
+      }).select("id, invoice_number, total").single();
       if (error) throw error;
-      // Insert line items
       if (items.length) {
-        const lineItems = items.map((i: any) => ({
-          invoice_id: invoice.id,
-          description: i.description,
-          quantity: i.quantity || 1,
-          unit_price: i.unit_price,
-          line_total: i.unit_price * (i.quantity || 1),
-        }));
-        await supabaseAdmin.from("invoice_items").insert(lineItems);
+        await db.from("invoice_items").insert(items.map((i: any) => ({
+          invoice_id: inv.id, description: i.description, quantity: i.quantity || 1,
+          unit_price: i.unit_price, line_total: i.unit_price * (i.quantity || 1),
+        })));
       }
-      return { success: true, invoice_id: invoice.id, invoice_number: invoice.invoice_number, total: invoice.total, message: `Invoice ${invoiceNumber} created for ${total.toFixed(2)}.` };
+      return { success: true, invoice_number: inv.invoice_number, total: inv.total, message: `Invoice ${num} created.` };
     }
 
     case "record_payment": {
-      const { data, error } = await supabaseAdmin
-        .from("invoices")
-        .update({ status: "paid", payment_method: args.payment_method, notes: args.notes || null })
-        .eq("id", args.invoice_id)
-        .eq("org_id", orgId)
-        .select("id, invoice_number, total")
-        .single();
+      const { data, error } = await db.from("invoices").update({ status: "paid", payment_method: args.payment_method }).eq("id", args.invoice_id).eq("org_id", orgId).select("id, invoice_number, total").single();
       if (error) throw error;
-      return { success: true, message: `Payment recorded for invoice ${data.invoice_number} (${data.total}). Method: ${args.payment_method}.` };
+      return { success: true, message: `Payment recorded for ${data.invoice_number} (${data.total}).` };
+    }
+
+    case "get_expenses": {
+      const start = args.start_date || new Date(Date.now() - 30 * 86400000).toISOString().split("T")[0];
+      const end = args.end_date || today;
+      let query = db.from("expenses").select("id, amount, category, description, vendor, expense_date, payment_method").eq("org_id", orgId).gte("expense_date", start).lte("expense_date", end).order("expense_date", { ascending: false });
+      if (args.category) query = query.eq("category", args.category);
+      const { data, error } = await query.limit(50);
+      if (error) throw error;
+      const totalAmt = (data || []).reduce((s: number, e: any) => s + Number(e.amount), 0);
+      return { period: `${start} to ${end}`, total_expenses: totalAmt, count: data?.length || 0, expenses: data || [] };
     }
 
     case "log_expense": {
-      const { data, error } = await supabaseAdmin
-        .from("expenses")
-        .insert({
-          org_id: orgId,
-          amount: args.amount,
-          category: args.category,
-          description: args.description || null,
-          vendor: args.vendor || null,
-          payment_method: args.payment_method || null,
-          expense_date: args.expense_date || today,
-        })
-        .select("id, amount, category")
-        .single();
+      const { data, error } = await db.from("expenses").insert({
+        org_id: orgId, amount: args.amount, category: args.category,
+        description: args.description || null, vendor: args.vendor || null,
+        payment_method: args.payment_method || null, expense_date: args.expense_date || today,
+      }).select("id, amount, category").single();
       if (error) throw error;
       return { success: true, message: `Expense of ${data.amount} logged under "${data.category}".` };
     }
 
+    case "get_payment_plans": {
+      let query = db.from("payment_plans").select("id, plan_name, total_amount, installment_count, installment_amount, frequency, start_date, status, patient_id, invoice_id").eq("org_id", orgId).order("created_at", { ascending: false });
+      if (args.patient_id) query = query.eq("patient_id", args.patient_id);
+      if (args.status) query = query.eq("status", args.status);
+      const { data, error } = await query.limit(20);
+      if (error) throw error;
+      return data?.length ? data : "No payment plans found.";
+    }
+
+    case "get_commission_payouts": {
+      let query = db.from("commission_payouts").select("id, staff_id, period_start, period_end, calculated_amount, paid_amount, status, payment_date").eq("org_id", orgId).order("period_start", { ascending: false });
+      if (args.staff_id) query = query.eq("staff_id", args.staff_id);
+      if (args.status) query = query.eq("status", args.status);
+      const { data, error } = await query.limit(20);
+      if (error) throw error;
+      if (!data?.length) return "No commission payouts found.";
+      const sIds = [...new Set(data.map((c: any) => c.staff_id))];
+      const { data: staff } = await db.from("staff").select("id, full_name").in("id", sIds);
+      const sMap = Object.fromEntries((staff || []).map((s: any) => [s.id, s.full_name]));
+      return data.map((c: any) => ({ ...c, staff_name: sMap[c.staff_id] || "Unknown" }));
+    }
+
+    // ---- INVENTORY & SUPPLY CHAIN ----
+    case "check_low_inventory": {
+      const { data, error } = await db.from("inventory").select("name, quantity, min_stock, unit, category, expiry_date").eq("org_id", orgId).order("quantity");
+      if (error) throw error;
+      const low = (data || []).filter((i: any) => i.quantity <= i.min_stock);
+      const expiring = (data || []).filter((i: any) => i.expiry_date && (new Date(i.expiry_date).getTime() - Date.now()) / 86400000 <= 30 && (new Date(i.expiry_date).getTime() - Date.now()) >= 0);
+      return { low_stock: low.length ? low : "All above minimum.", expiring_30d: expiring.length ? expiring : "None expiring soon." };
+    }
+
+    case "get_inventory": {
+      let query = db.from("inventory").select("id, name, category, quantity, min_stock, unit, unit_cost, supplier, expiry_date, last_restocked").eq("org_id", orgId).order("name");
+      if (args.category) query = query.eq("category", args.category);
+      const { data, error } = await query;
+      if (error) throw error;
+      return data?.length ? data : "No inventory items.";
+    }
+
     case "update_inventory": {
-      // Get current item
-      const { data: item, error: fetchErr } = await supabaseAdmin
-        .from("inventory")
-        .select("id, name, quantity")
-        .eq("id", args.inventory_id)
-        .eq("org_id", orgId)
-        .single();
-      if (fetchErr || !item) throw new Error("Inventory item not found.");
+      const { data: item, error: fe } = await db.from("inventory").select("id, name, quantity").eq("id", args.inventory_id).eq("org_id", orgId).single();
+      if (fe || !item) throw new Error("Inventory item not found.");
       const newQty = item.quantity + args.quantity_change;
-      if (newQty < 0) return { error: `Cannot reduce below 0. Current stock: ${item.quantity}.` };
-      const { error: updateErr } = await supabaseAdmin
-        .from("inventory")
-        .update({
-          quantity: newQty,
-          last_restocked: args.quantity_change > 0 ? today : undefined,
-        })
-        .eq("id", args.inventory_id);
-      if (updateErr) throw updateErr;
-      // Log transaction
-      await supabaseAdmin.from("inventory_transactions").insert({
-        org_id: orgId,
-        inventory_id: args.inventory_id,
-        quantity: Math.abs(args.quantity_change),
-        transaction_type: args.quantity_change > 0 ? "restock" : "usage",
-        notes: args.reason || null,
+      if (newQty < 0) return { error: `Cannot go below 0. Current: ${item.quantity}.` };
+      await db.from("inventory").update({ quantity: newQty, ...(args.quantity_change > 0 ? { last_restocked: today } : {}) }).eq("id", args.inventory_id);
+      await db.from("inventory_transactions").insert({
+        org_id: orgId, inventory_id: args.inventory_id, quantity: Math.abs(args.quantity_change),
+        transaction_type: args.quantity_change > 0 ? "restock" : "usage", notes: args.reason || null,
       });
-      return { success: true, message: `${item.name}: ${args.quantity_change > 0 ? "added" : "removed"} ${Math.abs(args.quantity_change)}. New stock: ${newQty}.` };
+      return { success: true, message: `${item.name}: ${args.quantity_change > 0 ? "+" : ""}${args.quantity_change}. New stock: ${newQty}.` };
+    }
+
+    case "get_suppliers": {
+      const { data, error } = await db.from("suppliers").select("*").eq("org_id", orgId).order("name");
+      if (error) throw error;
+      return data?.length ? data : "No suppliers found.";
+    }
+
+    case "get_purchase_orders": {
+      let query = db.from("purchase_orders").select("*").eq("org_id", orgId).order("created_at", { ascending: false });
+      if (args.status) query = query.eq("status", args.status);
+      const { data, error } = await query.limit(20);
+      if (error) throw error;
+      return data?.length ? data : "No purchase orders found.";
+    }
+
+    case "create_purchase_order": {
+      const { count } = await db.from("purchase_orders").select("*", { count: "exact", head: true }).eq("org_id", orgId);
+      const poNum = `PO-${String((count || 0) + 1).padStart(5, "0")}`;
+      const totalAmount = (args.items || []).reduce((s: number, i: any) => s + ((i.unit_cost || 0) * (i.quantity || 1)), 0);
+      const { data: po, error } = await db.from("purchase_orders").insert({
+        org_id: orgId, supplier_id: args.supplier_id, order_number: poNum,
+        total_amount: totalAmount, notes: args.notes || null, expected_date: args.expected_date || null,
+      }).select("id, order_number").single();
+      if (error) throw error;
+      if (args.items?.length) {
+        await db.from("purchase_order_items").insert(args.items.map((i: any) => ({
+          purchase_order_id: po.id, inventory_id: i.inventory_id || null,
+          quantity: i.quantity || 1, unit_cost: i.unit_cost || 0,
+          description: i.description || null,
+        })));
+      }
+      return { success: true, order_number: po.order_number, message: `Purchase order ${poNum} created.` };
+    }
+
+    // ---- STAFF ----
+    case "get_staff_list": {
+      let query = db.from("staff").select("id, full_name, role, specialty, phone, email, status").eq("org_id", orgId).order("full_name");
+      if (args.role) query = query.eq("role", args.role);
+      const { data, error } = await query;
+      if (error) throw error;
+      return data?.length ? data : "No staff found.";
+    }
+
+    case "add_staff": {
+      const { data, error } = await db.from("staff").insert({
+        org_id: orgId, full_name: args.full_name, role: args.role,
+        phone: args.phone || null, email: args.email || null, specialty: args.specialty || null,
+      }).select("id, full_name, role").single();
+      if (error) throw error;
+      return { success: true, message: `Staff member ${data.full_name} (${data.role}) added.` };
+    }
+
+    case "update_staff": {
+      const { staff_id, ...updates } = args;
+      const clean: Record<string, any> = {};
+      for (const [k, v] of Object.entries(updates)) { if (v !== undefined && v !== null && v !== "") clean[k] = v; }
+      const { data, error } = await db.from("staff").update(clean).eq("id", staff_id).eq("org_id", orgId).select("id, full_name").single();
+      if (error) throw error;
+      return { success: true, message: `Staff ${data.full_name} updated: ${Object.keys(clean).join(", ")}.` };
+    }
+
+    case "get_dentist_schedules": {
+      let query = db.from("dentist_schedules").select("id, staff_id, day_of_week, start_time, end_time, break_start, break_end, is_available").eq("org_id", orgId).order("day_of_week");
+      if (args.staff_id) query = query.eq("staff_id", args.staff_id);
+      const { data, error } = await query;
+      if (error) throw error;
+      if (!data?.length) return "No schedules found.";
+      const sIds = [...new Set(data.map((s: any) => s.staff_id))];
+      const { data: staff } = await db.from("staff").select("id, full_name").in("id", sIds);
+      const sMap = Object.fromEntries((staff || []).map((s: any) => [s.id, s.full_name]));
+      const dayNames = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+      return data.map((s: any) => ({ ...s, staff_name: sMap[s.staff_id] || "Unknown", day_name: dayNames[s.day_of_week] }));
+    }
+
+    // ---- WAITING LIST ----
+    case "get_waiting_list": {
+      const { data, error } = await db.from("waiting_list").select("*").eq("org_id", orgId).order("created_at");
+      if (error) throw error;
+      if (!data?.length) return "Waiting list is empty.";
+      const pIds = [...new Set(data.map((w: any) => w.patient_id).filter(Boolean))];
+      const { data: patients } = pIds.length ? await db.from("patients").select("id, first_name, last_name").in("id", pIds) : { data: [] };
+      const pMap = Object.fromEntries((patients || []).map((p: any) => [p.id, `${p.first_name} ${p.last_name}`]));
+      return data.map((w: any) => ({ ...w, patient_name: pMap[w.patient_id] || "Unknown" }));
+    }
+
+    case "add_to_waiting_list": {
+      const { data, error } = await db.from("waiting_list").insert({
+        org_id: orgId, patient_id: args.patient_id, priority: args.priority || "normal",
+        notes: args.notes || null, preferred_dentist_id: args.preferred_dentist_id || null,
+      }).select("id").single();
+      if (error) throw error;
+      return { success: true, message: "Patient added to waiting list." };
+    }
+
+    case "remove_from_waiting_list": {
+      const { error } = await db.from("waiting_list").delete().eq("id", args.waiting_list_id).eq("org_id", orgId);
+      if (error) throw error;
+      return { success: true, message: "Removed from waiting list." };
+    }
+
+    // ---- CONSENT FORMS ----
+    case "get_consent_forms": {
+      if (args.templates_only) {
+        const { data, error } = await db.from("consent_form_templates").select("id, title, category, is_active").eq("org_id", orgId).order("title");
+        if (error) throw error;
+        return data?.length ? data : "No consent form templates.";
+      }
+      if (args.patient_id) {
+        const { data, error } = await db.from("patient_consent_forms").select("id, title, status, signed_date, signed_by, created_at").eq("patient_id", args.patient_id).eq("org_id", orgId).order("created_at", { ascending: false });
+        if (error) throw error;
+        return data?.length ? data : "No consent forms for this patient.";
+      }
+      return "Please provide patient_id or set templates_only=true.";
+    }
+
+    case "create_consent_form": {
+      let content = args.content || null;
+      if (args.template_id && !content) {
+        const { data: tmpl } = await db.from("consent_form_templates").select("content, title").eq("id", args.template_id).single();
+        if (tmpl) content = tmpl.content;
+      }
+      const { data, error } = await db.from("patient_consent_forms").insert({
+        org_id: orgId, patient_id: args.patient_id, title: args.title,
+        content, template_id: args.template_id || null,
+      }).select("id").single();
+      if (error) throw error;
+      return { success: true, message: `Consent form "${args.title}" created for patient.` };
+    }
+
+    // ---- REVIEWS ----
+    case "get_reviews": {
+      const { data, error } = await db.from("patient_reviews").select("id, rating, comment, patient_id, staff_id, created_at").eq("org_id", orgId).order("created_at", { ascending: false }).limit(args.limit || 20);
+      if (error) throw error;
+      if (!data?.length) return "No reviews yet.";
+      const pIds = [...new Set(data.map((r: any) => r.patient_id).filter(Boolean))];
+      const sIds = [...new Set(data.map((r: any) => r.staff_id).filter(Boolean))];
+      const [{ data: patients }, { data: staff }] = await Promise.all([
+        pIds.length ? db.from("patients").select("id, first_name, last_name").in("id", pIds) : { data: [] },
+        sIds.length ? db.from("staff").select("id, full_name").in("id", sIds) : { data: [] },
+      ]);
+      const pMap = Object.fromEntries((patients || []).map((p: any) => [p.id, `${p.first_name} ${p.last_name}`]));
+      const sMap = Object.fromEntries((staff || []).map((s: any) => [s.id, s.full_name]));
+      const avgRating = data.reduce((s: number, r: any) => s + r.rating, 0) / data.length;
+      return { average_rating: avgRating.toFixed(1), total: data.length, reviews: data.map((r: any) => ({ ...r, patient_name: pMap[r.patient_id] || null, staff_name: sMap[r.staff_id] || null })) };
+    }
+
+    // ---- NOTIFICATIONS ----
+    case "send_notification": {
+      const { data, error } = await db.from("notifications").insert({
+        org_id: orgId, user_id: args.user_id, title: args.title,
+        message: args.message, type: args.type || "info", link: args.link || null,
+      }).select("id").single();
+      if (error) throw error;
+      return { success: true, message: `Notification "${args.title}" sent.` };
+    }
+
+    // ---- CLINIC OVERVIEW ----
+    case "get_clinic_summary": {
+      const [{ count: patientCount }, { data: todayAppts }, { data: pendingInv }, { data: invItems }, { data: labCases }] = await Promise.all([
+        db.from("patients").select("*", { count: "exact", head: true }).eq("org_id", orgId).eq("status", "active"),
+        db.from("appointments").select("status").eq("org_id", orgId).eq("appointment_date", today),
+        db.from("invoices").select("total, status").eq("org_id", orgId).in("status", ["draft", "sent", "overdue"]),
+        db.from("inventory").select("name, quantity, min_stock").eq("org_id", orgId),
+        db.from("lab_cases").select("status").eq("org_id", orgId).in("status", ["pending", "in-progress"]),
+      ]);
+      const lowStock = (invItems || []).filter((i: any) => i.quantity <= i.min_stock);
+      const pendingTotal = (pendingInv || []).reduce((s: number, i: any) => s + Number(i.total), 0);
+      const apptStats: Record<string, number> = {};
+      (todayAppts || []).forEach((a: any) => { apptStats[a.status] = (apptStats[a.status] || 0) + 1; });
+      return {
+        active_patients: patientCount || 0,
+        todays_appointments: { total: todayAppts?.length || 0, breakdown: apptStats },
+        pending_invoices: { count: pendingInv?.length || 0, total: pendingTotal },
+        inventory_alerts: lowStock.length,
+        active_lab_cases: labCases?.length || 0,
+      };
+    }
+
+    case "get_clinic_chairs": {
+      const { data, error } = await db.from("clinic_chairs").select("id, name, room, status").eq("org_id", orgId).order("name");
+      if (error) throw error;
+      return data?.length ? data : "No chairs configured.";
+    }
+
+    case "get_clinic_documents": {
+      const { data, error } = await db.from("clinic_documents").select("id, title, category, file_type, expiry_date, created_at").eq("org_id", orgId).order("created_at", { ascending: false });
+      if (error) throw error;
+      return data?.length ? data : "No clinic documents.";
+    }
+
+    case "get_automation_workflows": {
+      const { data, error } = await db.from("automation_workflows").select("id, name, workflow_type, channel, timing_value, timing_unit, is_enabled, trigger_event, description").eq("org_id", orgId).order("name");
+      if (error) throw error;
+      return data?.length ? data : "No automation workflows configured.";
     }
 
     default:
@@ -805,6 +1342,7 @@ async function executeTool(name: string, args: any, supabaseAdmin: any, orgId: s
   }
 }
 
+// ==================== SERVER ====================
 serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -815,138 +1353,109 @@ serve(async (req) => {
 
     const GEMINI_API_KEY = Deno.env.get("GEMINI_API_KEY");
     if (!GEMINI_API_KEY) {
-      return new Response(JSON.stringify({ error: "GEMINI_API_KEY is not configured" }), {
-        status: 500,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      return new Response(JSON.stringify({ error: "GEMINI_API_KEY not configured" }), {
+        status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
-    // Create Supabase admin client for data queries
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-    const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey);
+    const db = createClient(supabaseUrl, supabaseServiceKey);
 
     if (!orgId) {
-      return new Response(JSON.stringify({ error: "Organization ID is required" }), {
-        status: 400,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      return new Response(JSON.stringify({ error: "Organization ID required" }), {
+        status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
-    // Build context-enhanced system prompt
     let systemPrompt = SYSTEM_PROMPT;
     if (context) {
-      systemPrompt += `\n\n--- CURRENT SCREEN CONTEXT ---\nThe user is currently viewing: ${context.page || "unknown page"}\n`;
-      if (context.data) {
-        systemPrompt += `Relevant data on screen:\n${JSON.stringify(context.data, null, 2)}\n`;
-      }
+      systemPrompt += `\n\n--- CURRENT CONTEXT ---\nPage: ${context.page || "unknown"}\n`;
+      if (context.data) systemPrompt += `Screen data:\n${JSON.stringify(context.data, null, 2)}\n`;
     }
-    systemPrompt += `\n\nToday's date: ${new Date().toISOString().split("T")[0]}`;
+    systemPrompt += `\nToday: ${today()}`;
 
-    // Convert messages to Gemini format
     const geminiContents = messages.map((msg: any) => ({
       role: msg.role === "assistant" ? "model" : "user",
       parts: [{ text: msg.content }],
     }));
 
     const geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${GEMINI_API_KEY}`;
-
-    // Non-streaming for tool calling loop
     let currentContents = [...geminiContents];
-    let maxToolRounds = 5;
+    let rounds = 8; // Allow more rounds for complex multi-tool queries
 
-    while (maxToolRounds-- > 0) {
-      const geminiBody = {
+    while (rounds-- > 0) {
+      const body = {
         system_instruction: { parts: [{ text: systemPrompt }] },
         contents: currentContents,
         tools: TOOLS,
-        generationConfig: { temperature: 0.7, maxOutputTokens: 4096 },
+        generationConfig: { temperature: 0.7, maxOutputTokens: 8192 },
       };
 
       let response = await fetch(geminiUrl, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(geminiBody),
+        method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body),
       });
 
       if (response.status === 429) {
         await new Promise((r) => setTimeout(r, 2000));
         response = await fetch(geminiUrl, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(geminiBody),
+          method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body),
         });
       }
 
       if (!response.ok) {
-        const errorText = await response.text();
-        console.error("Gemini API error:", response.status, errorText);
-        const userMsg = response.status === 429
-          ? "AI is temporarily rate-limited. Please wait a moment and try again."
-          : `AI error: ${response.status}`;
-        return new Response(JSON.stringify({ error: userMsg }), {
-          status: response.status === 429 ? 429 : 500,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        const err = await response.text();
+        console.error("Gemini error:", response.status, err);
+        return new Response(JSON.stringify({ error: response.status === 429 ? "Rate limited, try again." : `AI error: ${response.status}` }), {
+          status: response.status === 429 ? 429 : 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
 
       const result = await response.json();
       const candidate = result.candidates?.[0];
       if (!candidate) {
-        return new Response(JSON.stringify({ error: "No response from AI" }), {
-          status: 500,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        return new Response(JSON.stringify({ error: "No AI response" }), {
+          status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
 
       const parts = candidate.content?.parts || [];
-      const functionCalls = parts.filter((p: any) => p.functionCall);
+      const fcs = parts.filter((p: any) => p.functionCall);
 
-      if (functionCalls.length === 0) {
-        // No tool calls — return the text response
-        const textContent = parts.map((p: any) => p.text || "").join("");
-        return new Response(JSON.stringify({ reply: textContent }), {
+      if (fcs.length === 0) {
+        const text = parts.map((p: any) => p.text || "").join("");
+        return new Response(JSON.stringify({ reply: text }), {
           headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
 
-      // Execute tool calls
       currentContents.push({ role: "model", parts });
 
       const toolResults: any[] = [];
-      for (const fc of functionCalls) {
+      for (const fc of fcs) {
         const { name, args } = fc.functionCall;
-        console.log(`Executing tool: ${name}`, args);
+        console.log(`Tool: ${name}`, args);
         try {
-          const result = await executeTool(name, args || {}, supabaseAdmin, orgId);
-          toolResults.push({
-            functionResponse: {
-              name,
-              response: { result: typeof result === "string" ? result : JSON.stringify(result) },
-            },
-          });
+          const result = await executeTool(name, args || {}, db, orgId);
+          toolResults.push({ functionResponse: { name, response: { result: typeof result === "string" ? result : JSON.stringify(result) } } });
         } catch (e) {
           console.error(`Tool ${name} error:`, e);
-          toolResults.push({
-            functionResponse: {
-              name,
-              response: { error: e instanceof Error ? e.message : "Tool execution failed" },
-            },
-          });
+          toolResults.push({ functionResponse: { name, response: { error: e instanceof Error ? e.message : "Tool failed" } } });
         }
       }
 
       currentContents.push({ role: "user", parts: toolResults });
     }
 
-    return new Response(JSON.stringify({ reply: "I ran out of steps processing your request. Please try a simpler query." }), {
+    return new Response(JSON.stringify({ reply: "Ran out of processing steps. Try a simpler query." }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   } catch (e) {
     console.error("ai-copilot error:", e);
     return new Response(JSON.stringify({ error: e instanceof Error ? e.message : "Unknown error" }), {
-      status: 500,
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
+      status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   }
 });
+
+function today() { return new Date().toISOString().split("T")[0]; }
