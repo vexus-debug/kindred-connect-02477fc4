@@ -1936,9 +1936,9 @@ serve(async (req) => {
   try {
     const { messages, context, orgId } = await req.json();
 
-    const GEMINI_API_KEY = Deno.env.get("GEMINI_API_KEY");
-    if (!GEMINI_API_KEY) {
-      return new Response(JSON.stringify({ error: "GEMINI_API_KEY not configured" }), {
+    const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
+    if (!LOVABLE_API_KEY) {
+      return new Response(JSON.stringify({ error: "LOVABLE_API_KEY not configured" }), {
         status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
@@ -1960,76 +1960,100 @@ serve(async (req) => {
     }
     systemPrompt += `\nToday: ${today()}`;
 
-    const geminiContents = messages.map((msg: any) => ({
-      role: msg.role === "assistant" ? "model" : "user",
-      parts: [{ text: msg.content }],
+    // Convert Gemini tool format to OpenAI tool format
+    const openaiTools = TOOLS[0].function_declarations.map((fd: any) => ({
+      type: "function" as const,
+      function: { name: fd.name, description: fd.description, parameters: fd.parameters },
     }));
 
-    const geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${GEMINI_API_KEY}`;
-    let currentContents = [...geminiContents];
-    let rounds = 8; // Allow more rounds for complex multi-tool queries
+    // Build OpenAI-compatible messages
+    const openaiMessages: any[] = [
+      { role: "system", content: systemPrompt },
+      ...messages.map((msg: any) => ({ role: msg.role, content: msg.content })),
+    ];
+
+    const gatewayUrl = "https://ai.gateway.lovable.dev/v1/chat/completions";
+    let rounds = 8;
 
     while (rounds-- > 0) {
       const body = {
-        system_instruction: { parts: [{ text: systemPrompt }] },
-        contents: currentContents,
-        tools: TOOLS,
-        generationConfig: { temperature: 0.7, maxOutputTokens: 8192 },
+        model: "google/gemini-3-flash-preview",
+        messages: openaiMessages,
+        tools: openaiTools,
+        temperature: 0.7,
+        max_tokens: 8192,
       };
 
-      let response = await fetch(geminiUrl, {
-        method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body),
+      const response = await fetch(gatewayUrl, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${LOVABLE_API_KEY}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(body),
       });
-
-      if (response.status === 429) {
-        await new Promise((r) => setTimeout(r, 2000));
-        response = await fetch(geminiUrl, {
-          method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body),
-        });
-      }
 
       if (!response.ok) {
         const err = await response.text();
-        console.error("Gemini error:", response.status, err);
-        return new Response(JSON.stringify({ error: response.status === 429 ? "Rate limited, try again." : `AI error: ${response.status}` }), {
-          status: response.status === 429 ? 429 : 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        console.error("AI gateway error:", response.status, err);
+        if (response.status === 429) {
+          return new Response(JSON.stringify({ error: "Rate limited. Please try again in a moment." }), {
+            status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" },
+          });
+        }
+        if (response.status === 402) {
+          return new Response(JSON.stringify({ error: "AI credits exhausted. Please add credits to your workspace." }), {
+            status: 402, headers: { ...corsHeaders, "Content-Type": "application/json" },
+          });
+        }
+        return new Response(JSON.stringify({ error: `AI error: ${response.status}` }), {
+          status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
 
       const result = await response.json();
-      const candidate = result.candidates?.[0];
-      if (!candidate) {
+      const choice = result.choices?.[0];
+      if (!choice) {
         return new Response(JSON.stringify({ error: "No AI response" }), {
           status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
 
-      const parts = candidate.content?.parts || [];
-      const fcs = parts.filter((p: any) => p.functionCall);
+      const message = choice.message;
+      const toolCalls = message.tool_calls;
 
-      if (fcs.length === 0) {
-        const text = parts.map((p: any) => p.text || "").join("");
-        return new Response(JSON.stringify({ reply: text }), {
+      // No tool calls — return the text reply
+      if (!toolCalls || toolCalls.length === 0) {
+        return new Response(JSON.stringify({ reply: message.content || "" }), {
           headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
 
-      currentContents.push({ role: "model", parts });
+      // Add the assistant message with tool calls to conversation
+      openaiMessages.push(message);
 
-      const toolResults: any[] = [];
-      for (const fc of fcs) {
-        const { name, args } = fc.functionCall;
-        console.log(`Tool: ${name}`, args);
+      // Execute each tool call and add results
+      for (const tc of toolCalls) {
+        const fnName = tc.function.name;
+        let fnArgs: any = {};
+        try { fnArgs = JSON.parse(tc.function.arguments || "{}"); } catch { /* empty */ }
+        console.log(`Tool: ${fnName}`, fnArgs);
         try {
-          const result = await executeTool(name, args || {}, db, orgId);
-          toolResults.push({ functionResponse: { name, response: { result: typeof result === "string" ? result : JSON.stringify(result) } } });
+          const result = await executeTool(fnName, fnArgs, db, orgId);
+          openaiMessages.push({
+            role: "tool",
+            tool_call_id: tc.id,
+            content: typeof result === "string" ? result : JSON.stringify(result),
+          });
         } catch (e) {
-          console.error(`Tool ${name} error:`, e);
-          toolResults.push({ functionResponse: { name, response: { error: e instanceof Error ? e.message : "Tool failed" } } });
+          console.error(`Tool ${fnName} error:`, e);
+          openaiMessages.push({
+            role: "tool",
+            tool_call_id: tc.id,
+            content: JSON.stringify({ error: e instanceof Error ? e.message : "Tool failed" }),
+          });
         }
       }
-
-      currentContents.push({ role: "user", parts: toolResults });
     }
 
     return new Response(JSON.stringify({ reply: "Ran out of processing steps. Try a simpler query." }), {
