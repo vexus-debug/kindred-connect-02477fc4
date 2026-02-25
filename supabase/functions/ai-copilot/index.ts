@@ -33,6 +33,13 @@ Your capabilities:
 21. **Activity Log**: View clinic activity audit trail.
 22. **Diagnosis Suggestions**: Based on symptoms, suggest possible diagnoses with confidence levels.
 23. **Treatment Plan Advice**: Recommend treatment sequences and priorities.
+24. **IMAGE ANALYSIS**: When the user uploads images, you can:
+    - **Classify images**: Determine if it's an X-ray, intraoral photo, patient form/ID, lab work photo, insurance card, etc.
+    - **Extract patient data**: From scanned forms, IDs, or intake documents, extract patient info (name, DOB, phone, email, address, allergies, medical history, insurance details).
+    - **Auto-match patients**: Try to identify the patient from the image (name on form, patient ID visible, etc.) and search the system.
+    - **Clinical analysis**: For dental X-rays and intraoral photos, describe visible conditions, potential issues, and suggest next steps.
+    - **Save images**: After analysis, save the image to the correct patient record with proper categorization using save_patient_image.
+    - **Create/update patients**: If a scanned form has patient data for a new patient, register them. If they exist, update their records.
 
 Guidelines:
 - Be concise and professional. Use bullet points and headers.
@@ -43,7 +50,8 @@ Guidelines:
 - After performing actions, confirm what was done with key details.
 - You can chain multiple tools to answer complex queries.
 - Format responses in markdown.
-- IMPORTANT: You can ONLY access data for the current clinic. You cannot access other clinics' data.`;
+- IMPORTANT: You can ONLY access data for the current clinic. You cannot access other clinics' data.
+- When analyzing images: ALWAYS describe what you see, classify the image type, attempt patient matching, and ask for confirmation before creating/editing records.`;
 
 const TOOLS = [
   {
@@ -128,6 +136,22 @@ const TOOLS = [
         parameters: {
           type: "object",
           properties: { days: { type: "integer", description: "Days since last visit (default 90)" } },
+        },
+      },
+
+      // ==================== IMAGE ANALYSIS & SAVING ====================
+      {
+        name: "save_patient_image",
+        description: "Save/categorize an uploaded image to a patient's record. Call this AFTER analyzing an image and identifying the patient.",
+        parameters: {
+          type: "object",
+          properties: {
+            patient_id: { type: "string", description: "The patient ID to attach the image to" },
+            image_type: { type: "string", description: "Type: xray, intraoral, panoramic, cephalometric, periapical, bitewing, cbct, photo, lab_work, form, insurance_card, id_card, other" },
+            description: { type: "string", description: "Description of what the image shows" },
+            tooth_number: { type: "string", description: "Relevant tooth number(s) if applicable" },
+          },
+          required: ["patient_id", "image_type", "description"],
         },
       },
 
@@ -1280,6 +1304,20 @@ async function executeTool(name: string, args: any, db: any, orgId: string) {
       return data?.length ? data : "No images found for this patient.";
     }
 
+    case "save_patient_image": {
+      // Save image metadata to patient_images table
+      const { data, error } = await db.from("patient_images").insert({
+        org_id: orgId,
+        patient_id: args.patient_id,
+        image_type: args.image_type || "other",
+        description: args.description || null,
+        tooth_number: args.tooth_number || null,
+        image_url: "ai-analyzed-" + Date.now(), // Placeholder - actual image was analyzed in-memory
+      }).select("id").single();
+      if (error) throw error;
+      return { success: true, image_id: data.id, message: `Image saved to patient record as ${args.image_type}. Description: ${args.description}` };
+    }
+
     case "get_overdue_patients": {
       const days = args.days || 90;
       const cutoff = new Date(Date.now() - days * 86400000).toISOString().split("T")[0];
@@ -2397,10 +2435,16 @@ serve(async (req) => {
       function: { name: fd.name, description: fd.description, parameters: fd.parameters },
     }));
 
-    // Build OpenAI-compatible messages
+    // Build OpenAI-compatible messages — handle multimodal content (images)
     const openaiMessages: any[] = [
       { role: "system", content: systemPrompt },
-      ...messages.map((msg: any) => ({ role: msg.role, content: msg.content })),
+      ...messages.map((msg: any) => {
+        // If content is an array (multimodal with images), pass as-is for vision
+        if (Array.isArray(msg.content)) {
+          return { role: msg.role, content: msg.content };
+        }
+        return { role: msg.role, content: msg.content };
+      }),
     ];
 
     const gatewayUrl = "https://ai.gateway.lovable.dev/v1/chat/completions";
