@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Send, X, Trash2, Loader2, Bot, Sparkles, Plus, MessageSquare, Mic, MicOff, Check, RotateCcw } from "lucide-react";
+import { Send, X, Trash2, Loader2, Bot, Sparkles, Plus, MessageSquare, Mic, MicOff, Check, RotateCcw, ImagePlus, XCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -11,7 +11,25 @@ import { useAuth } from "@/hooks/useAuth";
 import { useLocation } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 
-type Msg = { role: "user" | "assistant"; content: string };
+type MsgContent = string | Array<{ type: "text"; text: string } | { type: "image_url"; image_url: { url: string } }>;
+type Msg = { role: "user" | "assistant"; content: MsgContent };
+
+function getMsgText(content: MsgContent): string {
+  if (typeof content === "string") return content;
+  return content.filter((p) => p.type === "text").map((p) => (p as any).text).join("");
+}
+function getMsgImages(content: MsgContent): string[] {
+  if (typeof content === "string") return [];
+  return content.filter((p) => p.type === "image_url").map((p) => (p as any).image_url.url);
+}
+function fileToBase64(file: File): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(reader.result as string);
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
+}
 
 const QUICK_PROMPTS = [
   "Give me a clinic summary",
@@ -73,6 +91,8 @@ export function AICopilotPanel({ open, onClose, inline = false }: AICopilotPanel
   const [isRecording, setIsRecording] = useState(false);
   const [transcribedText, setTranscribedText] = useState("");
   const [showTranscriptConfirm, setShowTranscriptConfirm] = useState(false);
+  const [attachedImages, setAttachedImages] = useState<{ file: File; preview: string; base64: string }[]>([]);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const recognitionRef = useRef<any>(null);
@@ -130,30 +150,70 @@ export function AICopilotPanel({ open, onClose, inline = false }: AICopilotPanel
       .eq("id", conversationId);
   }, []);
 
+  const handleImageSelect = useCallback(async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.target.files || []);
+    const newImages: { file: File; preview: string; base64: string }[] = [];
+    for (const file of files.slice(0, 5)) {
+      if (!file.type.startsWith("image/")) continue;
+      const base64 = await fileToBase64(file);
+      newImages.push({ file, preview: URL.createObjectURL(file), base64 });
+    }
+    setAttachedImages((prev) => [...prev, ...newImages].slice(0, 5));
+    if (fileInputRef.current) fileInputRef.current.value = "";
+  }, []);
+
+  const removeImage = useCallback((index: number) => {
+    setAttachedImages((prev) => {
+      const copy = [...prev];
+      URL.revokeObjectURL(copy[index].preview);
+      copy.splice(index, 1);
+      return copy;
+    });
+  }, []);
+
   const sendMessage = useCallback(async (text: string) => {
-    if (!text.trim() || isLoading) return;
-    const userMsg: Msg = { role: "user", content: text };
+    if ((!text.trim() && attachedImages.length === 0) || isLoading) return;
+
+    // Build multimodal content if images attached
+    let userContent: MsgContent;
+    if (attachedImages.length > 0) {
+      const parts: Array<{ type: "text"; text: string } | { type: "image_url"; image_url: { url: string } }> = [];
+      if (text.trim()) parts.push({ type: "text", text: text.trim() });
+      for (const img of attachedImages) {
+        parts.push({ type: "image_url", image_url: { url: img.base64 } });
+      }
+      if (!text.trim()) parts.unshift({ type: "text", text: "Analyze this image" });
+      userContent = parts;
+    } else {
+      userContent = text;
+    }
+
+    const userMsg: Msg = { role: "user", content: userContent };
     const updatedMessages = [...localMessages, userMsg];
     setLocalMessages(updatedMessages);
     setInput("");
+    setAttachedImages([]);
     setIsLoading(true);
 
     try {
       // Create conversation if needed
       let convoId = activeConvoId;
       if (!convoId && orgId && userId) {
-        convoId = await createConversation(text);
+        convoId = await createConversation(getMsgText(userContent) || "Image analysis");
         setActiveConvoId(convoId);
       }
 
-      // Persist user message
+      // Persist user message (text only for DB)
       if (convoId) {
-        await saveMessage(convoId, "user", text);
+        await saveMessage(convoId, "user", getMsgText(userContent) || "[Image uploaded]");
       }
 
       const { data, error } = await supabase.functions.invoke("ai-copilot", {
         body: {
-          messages: updatedMessages,
+          messages: updatedMessages.map((m) => ({
+            role: m.role,
+            content: m.content,
+          })),
           orgId: currentOrg?.org_id,
           context: { page: location.pathname },
         },
@@ -186,7 +246,7 @@ export function AICopilotPanel({ open, onClose, inline = false }: AICopilotPanel
     } finally {
       setIsLoading(false);
     }
-  }, [isLoading, localMessages, activeConvoId, currentOrg?.org_id, location.pathname, orgId, userId, createConversation, saveMessage, qc]);
+  }, [isLoading, localMessages, activeConvoId, currentOrg?.org_id, location.pathname, orgId, userId, createConversation, saveMessage, qc, attachedImages]);
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === "Enter" && !e.shiftKey) {
@@ -417,11 +477,19 @@ export function AICopilotPanel({ open, onClose, inline = false }: AICopilotPanel
             </div>
           )}
           <div className={`max-w-[80%] rounded-2xl px-4 py-2.5 text-sm leading-relaxed ${msg.role === "user" ? "bg-primary text-primary-foreground rounded-br-md shadow-sm" : "bg-muted/70 rounded-bl-md border border-border/30"}`}>
+            {/* Show attached images */}
+            {getMsgImages(msg.content).length > 0 && (
+              <div className="flex flex-wrap gap-1.5 mb-2">
+                {getMsgImages(msg.content).map((url, idx) => (
+                  <img key={idx} src={url} alt="Attached" className="w-16 h-16 rounded-lg object-cover border border-border/20" />
+                ))}
+              </div>
+            )}
             {msg.role === "assistant" ? (
               <div className="prose prose-sm dark:prose-invert max-w-none [&>*:first-child]:mt-0 [&>*:last-child]:mb-0">
-                <ReactMarkdown>{msg.content}</ReactMarkdown>
+                <ReactMarkdown>{getMsgText(msg.content)}</ReactMarkdown>
               </div>
-            ) : msg.content}
+            ) : getMsgText(msg.content)}
           </div>
         </motion.div>
       ))}
@@ -496,6 +564,33 @@ export function AICopilotPanel({ open, onClose, inline = false }: AICopilotPanel
         )}
       </AnimatePresence>
 
+      {/* Image preview strip */}
+      {attachedImages.length > 0 && (
+        <div className="flex gap-2 mb-2 flex-wrap">
+          {attachedImages.map((img, idx) => (
+            <div key={idx} className="relative group">
+              <img src={img.preview} alt="Attach" className="w-14 h-14 rounded-lg object-cover border border-border" />
+              <button
+                onClick={() => removeImage(idx)}
+                className="absolute -top-1.5 -right-1.5 bg-background rounded-full shadow-sm opacity-0 group-hover:opacity-100 transition-opacity"
+              >
+                <XCircle className="w-4 h-4 text-destructive" />
+              </button>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* Hidden file input */}
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept="image/*"
+        multiple
+        className="hidden"
+        onChange={handleImageSelect}
+      />
+
       <div className="flex gap-2 items-end">
         <div className="flex-1">
           <Textarea
@@ -503,11 +598,21 @@ export function AICopilotPanel({ open, onClose, inline = false }: AICopilotPanel
             value={input}
             onChange={(e) => setInput(e.target.value)}
             onKeyDown={handleKeyDown}
-            placeholder="Ask me anything or tap the mic..."
+            placeholder={attachedImages.length > 0 ? "Describe what to do with the image(s)..." : "Ask me anything or tap the mic..."}
             className="min-h-[44px] max-h-[120px] resize-none text-sm rounded-xl border-border/60 bg-muted/30 focus:bg-background transition-colors py-3"
             rows={1}
           />
         </div>
+        <Button
+          variant="outline"
+          size="icon"
+          className="shrink-0 h-11 w-11 rounded-xl transition-all duration-200"
+          onClick={() => fileInputRef.current?.click()}
+          disabled={isLoading || attachedImages.length >= 5}
+          title="Attach images"
+        >
+          <ImagePlus className="w-4 h-4" />
+        </Button>
         <Button
           variant={isRecording ? "destructive" : "outline"}
           size="icon"
@@ -520,7 +625,7 @@ export function AICopilotPanel({ open, onClose, inline = false }: AICopilotPanel
         </Button>
         <Button
           onClick={() => sendMessage(input)}
-          disabled={!input.trim() || isLoading}
+          disabled={(!input.trim() && attachedImages.length === 0) || isLoading}
           size="icon"
           className="shrink-0 h-11 w-11 rounded-xl shadow-md hover:shadow-lg transition-all duration-200 disabled:opacity-40"
         >
