@@ -1,4 +1,4 @@
-import { SidebarTrigger } from "@/components/ui/sidebar";
+import { SidebarTrigger, useSidebar } from "@/components/ui/sidebar";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -6,7 +6,7 @@ import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem,
   DropdownMenuSeparator, DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Bell, User, Settings, LogOut, ChevronDown, Command, ChevronRight, Search, Bot } from "lucide-react";
+import { Bell, User, Settings, LogOut, ChevronDown, Command, ChevronRight, Search, Bot, Menu } from "lucide-react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { useOrg } from "@/hooks/useOrg";
@@ -52,6 +52,7 @@ interface DashboardHeaderProps {
 export function DashboardHeader({ onToggleAI, aiOpen }: DashboardHeaderProps = {}) {
   const { profile, user, signOut } = useAuth();
   const { basePath, currentOrg } = useOrg();
+  const { toggleSidebar } = useSidebar();
   const { data: unreadCount = 0 } = useUnreadCount();
   const navigate = useNavigate();
   const location = useLocation();
@@ -71,7 +72,17 @@ export function DashboardHeader({ onToggleAI, aiOpen }: DashboardHeaderProps = {
   return (
     <header className="header-accent relative sticky top-0 z-40 flex h-14 items-center gap-4 border-b border-border bg-card px-4 lg:px-6 shadow-sm">
 
-      <SidebarTrigger className="-ml-1 text-muted-foreground hover:text-foreground" />
+      {/* Desktop: icon-only */}
+      <SidebarTrigger className="-ml-1 text-muted-foreground hover:text-foreground hidden md:flex" />
+
+      {/* Mobile: prominent button with "Menu" label */}
+      <button
+        className="flex md:hidden items-center gap-1.5 -ml-1 px-2.5 py-1.5 rounded-lg bg-muted/70 hover:bg-muted border border-border/50 text-foreground transition-colors"
+        onClick={toggleSidebar}
+      >
+        <Menu className="h-4 w-4" />
+        <span className="text-xs font-semibold">Menu</span>
+      </button>
 
       {/* Breadcrumb */}
       <nav className="hidden md:flex items-center gap-1.5 text-sm min-w-0">
