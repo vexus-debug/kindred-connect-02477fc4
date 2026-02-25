@@ -27,14 +27,28 @@ interface AICopilotPanelProps {
   inline?: boolean;
 }
 
+const STORAGE_KEY = "clinexus-ai-chat";
+
+function loadMessages(): Msg[] {
+  try {
+    const stored = sessionStorage.getItem(STORAGE_KEY);
+    return stored ? JSON.parse(stored) : [];
+  } catch { return []; }
+}
+
 export function AICopilotPanel({ open, onClose, inline = false }: AICopilotPanelProps) {
-  const [messages, setMessages] = useState<Msg[]>([]);
+  const [messages, setMessages] = useState<Msg[]>(loadMessages);
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const { currentOrg } = useOrg();
   const location = useLocation();
+
+  // Persist messages to sessionStorage
+  useEffect(() => {
+    sessionStorage.setItem(STORAGE_KEY, JSON.stringify(messages));
+  }, [messages]);
 
   useEffect(() => {
     if (scrollRef.current) {
@@ -112,7 +126,7 @@ export function AICopilotPanel({ open, onClose, inline = false }: AICopilotPanel
         </div>
       </div>
       <div className="flex items-center gap-1">
-        <Button variant="ghost" size="icon" className="h-8 w-8 rounded-lg hover:bg-destructive/10 hover:text-destructive" onClick={() => setMessages([])} title="Clear chat">
+        <Button variant="ghost" size="icon" className="h-8 w-8 rounded-lg hover:bg-destructive/10 hover:text-destructive" onClick={() => { setMessages([]); sessionStorage.removeItem(STORAGE_KEY); }} title="Clear chat">
           <Trash2 className="w-3.5 h-3.5" />
         </Button>
         {!inline && (
