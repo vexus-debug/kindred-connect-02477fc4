@@ -6,7 +6,7 @@ import { AICopilotPanel } from "./AICopilotPanel";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { motion, AnimatePresence } from "framer-motion";
 import { useLocation, useNavigationType } from "react-router-dom";
-import { Bot, LayoutDashboard } from "lucide-react";
+import { Bot, LayoutDashboard, Sparkles } from "lucide-react";
 
 interface DashboardLayoutProps {
   children: ReactNode;
@@ -80,7 +80,27 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
               </AnimatePresence>
 
               {/* Mobile bottom toggle */}
-              <div className="flex items-center border-t border-border bg-background shrink-0">
+              <div className="relative flex items-center border-t border-border bg-background shrink-0">
+                {/* Floating AI hint — only when AI tab is not active */}
+                <AnimatePresence>
+                  {!aiOpen && (
+                    <motion.div
+                      initial={{ opacity: 0, y: 6, scale: 0.9 }}
+                      animate={{ opacity: 1, y: 0, scale: 1 }}
+                      exit={{ opacity: 0, y: 6, scale: 0.9 }}
+                      transition={{ type: "spring", stiffness: 400, damping: 25 }}
+                      className="absolute right-[25%] -translate-x-1/2 -top-10 pointer-events-none z-10"
+                    >
+                      <div className="relative flex items-center gap-1.5 bg-primary text-primary-foreground text-[10px] font-semibold px-2.5 py-1 rounded-full shadow-lg shadow-primary/25">
+                        <Sparkles className="w-3 h-3" />
+                        <span>Try AI</span>
+                        {/* Caret */}
+                        <div className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-2 h-2 bg-primary rotate-45 rounded-[1px]" />
+                      </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+
                 <button
                   onClick={() => setAiOpen(false)}
                   className={`flex-1 flex items-center justify-center gap-2 py-3 text-sm font-medium transition-colors ${
@@ -94,7 +114,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
                 </button>
                 <button
                   onClick={() => setAiOpen(true)}
-                  className={`flex-1 flex items-center justify-center gap-2 py-3 text-sm font-medium transition-colors ${
+                  className={`flex-1 flex items-center justify-center gap-2 py-3 text-sm font-medium transition-colors relative ${
                     aiOpen
                       ? "text-primary border-t-2 border-primary -mt-px"
                       : "text-muted-foreground hover:text-foreground"
@@ -102,6 +122,10 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
                 >
                   <Bot className="w-4 h-4" />
                   AI Chat
+                  {/* Subtle pulse dot */}
+                  {!aiOpen && (
+                    <span className="absolute top-2 right-[calc(50%-28px)] w-1.5 h-1.5 rounded-full bg-primary animate-pulse" />
+                  )}
                 </button>
               </div>
             </>
