@@ -71,9 +71,17 @@ export function AICopilotPanel({ open, onClose, inline = false }: AICopilotPanel
       setMessages(prev => [...prev, { role: "assistant", content: reply }]);
     } catch (err: any) {
       console.error("AI Copilot error:", err);
+      let errorMsg = "Failed to reach AI. Please try again.";
+      if (err?.message?.includes("429") || err?.context?.status === 429) {
+        errorMsg = "Rate limited — please wait a moment and try again.";
+      } else if (err?.message?.includes("402") || err?.context?.status === 402) {
+        errorMsg = "AI credits exhausted. Please add credits to your Lovable workspace.";
+      } else if (err?.message) {
+        errorMsg = err.message;
+      }
       setMessages(prev => [
         ...prev,
-        { role: "assistant", content: `⚠️ Error: ${err.message || "Failed to reach AI. Please try again."}` },
+        { role: "assistant", content: `⚠️ ${errorMsg}` },
       ]);
     } finally {
       setIsLoading(false);

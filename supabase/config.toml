@@ -1,1 +1,16 @@
 project_id = "agkmbgxtmvhsyftcrplp"
+
+[functions.ai-copilot]
+verify_jwt = false
+
+[functions.admin-user-actions]
+verify_jwt = false
+
+[functions.daily-automation]
+verify_jwt = false
+
+[functions.manage-staff-user]
+verify_jwt = false
+
+[functions.public-booking]
+verify_jwt = false
