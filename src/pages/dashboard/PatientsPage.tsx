@@ -344,7 +344,7 @@ export default function PatientsPage() {
                                       <a href={`tel:${p.phone}`}><Phone className="mr-2 h-3.5 w-3.5" />Call Patient</a>
                                     </DropdownMenuItem>
                                     <DropdownMenuItem asChild>
-                                      <a href={`https://wa.me/${p.phone.replace(/\D/g, '')}`} target="_blank" rel="noopener noreferrer">
+                                      <a href={`https://wa.me/${(p.phone || '').replace(/\D/g, '')}`} target="_blank" rel="noopener noreferrer">
                                         <MessageCircle className="mr-2 h-3.5 w-3.5" />WhatsApp
                                       </a>
                                     </DropdownMenuItem>
