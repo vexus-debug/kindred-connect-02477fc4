@@ -1,10 +1,12 @@
-import { ReactNode, useRef } from "react";
+import { ReactNode, useState } from "react";
 import { SidebarProvider } from "@/components/ui/sidebar";
 import { DashboardSidebar } from "./DashboardSidebar";
 import { DashboardHeader } from "./DashboardHeader";
-import { AICopilot } from "./AICopilot";
+import { AICopilotPanel } from "./AICopilotPanel";
+import { useIsMobile } from "@/hooks/use-mobile";
 import { motion, AnimatePresence } from "framer-motion";
 import { useLocation, useNavigationType } from "react-router-dom";
+import { Bot, LayoutDashboard } from "lucide-react";
 
 interface DashboardLayoutProps {
   children: ReactNode;
@@ -18,26 +20,16 @@ const springTransition = {
 };
 
 export function DashboardLayout({ children }: DashboardLayoutProps) {
+  const [aiOpen, setAiOpen] = useState(false);
+  const isMobile = useIsMobile();
   const location = useLocation();
   const navType = useNavigationType();
   const isBack = navType === "POP";
 
   const pageVariants = {
-    initial: {
-      opacity: 0,
-      x: isBack ? -40 : 40,
-      scale: 0.98,
-    },
-    animate: {
-      opacity: 1,
-      x: 0,
-      scale: 1,
-    },
-    exit: {
-      opacity: 0,
-      x: isBack ? 40 : -40,
-      scale: 0.98,
-    },
+    initial: { opacity: 0, x: isBack ? -40 : 40, scale: 0.98 },
+    animate: { opacity: 1, x: 0, scale: 1 },
+    exit: { opacity: 0, x: isBack ? 40 : -40, scale: 0.98 },
   };
 
   return (
@@ -45,24 +37,95 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
       <div className="flex h-dvh w-full overflow-hidden dashboard-bg">
         <DashboardSidebar />
         <div className="flex flex-1 flex-col h-full overflow-hidden">
-          <DashboardHeader />
-          <main className="flex-1 overflow-y-auto overscroll-contain p-4 lg:p-6 scroll-momentum">
-            <AnimatePresence mode="wait">
-              <motion.div
-                key={location.pathname}
-                variants={pageVariants}
-                initial="initial"
-                animate="animate"
-                exit="exit"
-                transition={springTransition}
-                className="gpu-accelerated"
-              >
-                {children}
-              </motion.div>
-            </AnimatePresence>
-          </main>
+          <DashboardHeader onToggleAI={() => setAiOpen(!aiOpen)} aiOpen={aiOpen} />
+
+          {isMobile ? (
+            <>
+              <AnimatePresence mode="wait">
+                {!aiOpen ? (
+                  <motion.main
+                    key="dashboard"
+                    initial={{ opacity: 0, x: -20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    exit={{ opacity: 0, x: -20 }}
+                    transition={{ duration: 0.2 }}
+                    className="flex-1 overflow-y-auto overscroll-contain p-4 scroll-momentum"
+                  >
+                    <AnimatePresence mode="wait">
+                      <motion.div
+                        key={location.pathname}
+                        variants={pageVariants}
+                        initial="initial"
+                        animate="animate"
+                        exit="exit"
+                        transition={springTransition}
+                        className="gpu-accelerated"
+                      >
+                        {children}
+                      </motion.div>
+                    </AnimatePresence>
+                  </motion.main>
+                ) : (
+                  <motion.div
+                    key="ai"
+                    initial={{ opacity: 0, x: 20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    exit={{ opacity: 0, x: 20 }}
+                    transition={{ duration: 0.2 }}
+                    className="flex-1 flex flex-col overflow-hidden"
+                  >
+                    <AICopilotPanel open={true} onClose={() => setAiOpen(false)} inline />
+                  </motion.div>
+                )}
+              </AnimatePresence>
+
+              {/* Mobile bottom toggle */}
+              <div className="flex items-center border-t border-border bg-background shrink-0">
+                <button
+                  onClick={() => setAiOpen(false)}
+                  className={`flex-1 flex items-center justify-center gap-2 py-3 text-sm font-medium transition-colors ${
+                    !aiOpen
+                      ? "text-primary border-t-2 border-primary -mt-px"
+                      : "text-muted-foreground hover:text-foreground"
+                  }`}
+                >
+                  <LayoutDashboard className="w-4 h-4" />
+                  Dashboard
+                </button>
+                <button
+                  onClick={() => setAiOpen(true)}
+                  className={`flex-1 flex items-center justify-center gap-2 py-3 text-sm font-medium transition-colors ${
+                    aiOpen
+                      ? "text-primary border-t-2 border-primary -mt-px"
+                      : "text-muted-foreground hover:text-foreground"
+                  }`}
+                >
+                  <Bot className="w-4 h-4" />
+                  AI Chat
+                </button>
+              </div>
+            </>
+          ) : (
+            <>
+              <main className="flex-1 overflow-y-auto overscroll-contain p-4 lg:p-6 scroll-momentum">
+                <AnimatePresence mode="wait">
+                  <motion.div
+                    key={location.pathname}
+                    variants={pageVariants}
+                    initial="initial"
+                    animate="animate"
+                    exit="exit"
+                    transition={springTransition}
+                    className="gpu-accelerated"
+                  >
+                    {children}
+                  </motion.div>
+                </AnimatePresence>
+              </main>
+              <AICopilotPanel open={aiOpen} onClose={() => setAiOpen(false)} />
+            </>
+          )}
         </div>
-        <AICopilot />
       </div>
     </SidebarProvider>
   );

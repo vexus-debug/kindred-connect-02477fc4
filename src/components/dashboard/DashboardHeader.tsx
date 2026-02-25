@@ -6,7 +6,7 @@ import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem,
   DropdownMenuSeparator, DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Bell, User, Settings, LogOut, ChevronDown, Command, ChevronRight, Search } from "lucide-react";
+import { Bell, User, Settings, LogOut, ChevronDown, Command, ChevronRight, Search, Bot } from "lucide-react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { useOrg } from "@/hooks/useOrg";
@@ -44,7 +44,12 @@ const breadcrumbLabels: Record<string, string> = {
   "revenue-allocation": "Revenue Allocation",
 };
 
-export function DashboardHeader() {
+interface DashboardHeaderProps {
+  onToggleAI?: () => void;
+  aiOpen?: boolean;
+}
+
+export function DashboardHeader({ onToggleAI, aiOpen }: DashboardHeaderProps = {}) {
   const { profile, user, signOut } = useAuth();
   const { basePath, currentOrg } = useOrg();
   const { data: unreadCount = 0 } = useUnreadCount();
@@ -94,6 +99,19 @@ export function DashboardHeader() {
       </div>
 
       <div className="flex items-center gap-1">
+        {/* AI Toggle - hidden on mobile since mobile has bottom bar */}
+        {onToggleAI && (
+          <Button
+            variant={aiOpen ? "default" : "ghost"}
+            size="icon"
+            className={`hidden md:flex h-8 w-8 rounded-lg transition-all ${aiOpen ? "" : "text-muted-foreground hover:text-foreground hover:bg-muted/50"}`}
+            onClick={onToggleAI}
+            title="AI Assistant"
+          >
+            <Bot className="h-4 w-4" />
+          </Button>
+        )}
+
         {/* Notification Bell */}
         <Button variant="ghost" size="icon" className="relative h-8 w-8 text-muted-foreground hover:text-foreground hover:bg-muted/50" asChild>
           <Link to={`${basePath}/notifications`}>
