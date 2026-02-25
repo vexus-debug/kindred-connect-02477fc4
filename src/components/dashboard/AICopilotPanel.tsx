@@ -4,6 +4,9 @@ import { Send, X, Trash2, Loader2, Bot, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import ReactMarkdown from "react-markdown";
+import { supabase } from "@/integrations/supabase/client";
+import { useOrg } from "@/hooks/useOrg";
+import { useLocation } from "react-router-dom";
 
 type Msg = { role: "user" | "assistant"; content: string };
 
@@ -30,6 +33,8 @@ export function AICopilotPanel({ open, onClose, inline = false }: AICopilotPanel
   const [isLoading, setIsLoading] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const { currentOrg } = useOrg();
+  const location = useLocation();
 
   useEffect(() => {
     if (scrollRef.current) {
@@ -46,17 +51,34 @@ export function AICopilotPanel({ open, onClose, inline = false }: AICopilotPanel
   const sendMessage = useCallback(async (text: string) => {
     if (!text.trim() || isLoading) return;
     const userMsg: Msg = { role: "user", content: text };
-    setMessages(prev => [...prev, userMsg]);
+    const updatedMessages = [...messages, userMsg];
+    setMessages(updatedMessages);
     setInput("");
     setIsLoading(true);
-    setTimeout(() => {
+
+    try {
+      const { data, error } = await supabase.functions.invoke("ai-copilot", {
+        body: {
+          messages: updatedMessages,
+          orgId: currentOrg?.org_id,
+          context: { page: location.pathname },
+        },
+      });
+
+      if (error) throw error;
+
+      const reply = data?.reply || "Sorry, I couldn't process that request.";
+      setMessages(prev => [...prev, { role: "assistant", content: reply }]);
+    } catch (err: any) {
+      console.error("AI Copilot error:", err);
       setMessages(prev => [
         ...prev,
-        { role: "assistant", content: "Hey! Your assistant AI is currently having a routine upgrade/maintenance. Check back later! 🛠️" },
+        { role: "assistant", content: `⚠️ Error: ${err.message || "Failed to reach AI. Please try again."}` },
       ]);
+    } finally {
       setIsLoading(false);
-    }, 1500);
-  }, [isLoading]);
+    }
+  }, [isLoading, messages, currentOrg?.org_id, location.pathname]);
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === "Enter" && !e.shiftKey) {

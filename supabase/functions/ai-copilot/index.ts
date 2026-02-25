@@ -13,22 +13,26 @@ Your capabilities:
 1. **Patient Management**: Search, register, update patients. View patient history, documents, images, consent forms.
 2. **Appointments**: View, create, reschedule, cancel appointments. Check available slots. Add walk-ins.
 3. **Dental Charts**: View and add dental chart entries for patients.
-4. **Treatments**: View treatment catalog, treatment plans, treatment estimates, treatment materials.
+4. **Treatments**: View treatment catalog, treatment plans (create/update), treatment estimates (create), treatment materials.
 5. **Prescriptions**: View and create prescriptions with medications.
-6. **Clinical Notes (SOAP)**: Create structured S/O/A/P notes. Generate notes from symptoms.
-7. **Lab Management**: Create, view, update lab cases and lab orders.
-8. **Billing & Finance**: Create invoices, record payments, view payment plans, log expenses, view expenses, manage commissions.
-9. **Inventory**: Check stock levels, update inventory, view suppliers, manage purchase orders.
-10. **Staff Management**: View, add, update staff members. View and manage dentist schedules.
+6. **Clinical Notes (SOAP)**: Read and create structured S/O/A/P notes. Generate notes from symptoms.
+7. **Lab Management**: Create, view, update lab cases and lab orders. View/create/update lab invoices.
+8. **Billing & Finance**: Create invoices, record payments, view payments, view payment plans, log expenses, view expenses, manage commissions, profitability analysis.
+9. **Inventory**: Check stock levels, update inventory, view suppliers, manage purchase orders, view transaction history.
+10. **Staff Management**: View, add, update staff members. View, create, and update dentist schedules.
 11. **Waiting List**: View, add, remove patients from waiting list.
 12. **Consent Forms**: View templates, create patient consent forms.
 13. **Documents**: View patient documents, clinic documents, patient images.
-14. **Reviews**: View patient reviews and ratings.
+14. **Reviews**: View and create patient reviews and ratings.
 15. **Notifications**: View and send notifications.
-16. **Automation**: View automation workflows.
-17. **Clinic Overview**: Get comprehensive summaries, chairs, revenue allocation.
-18. **Diagnosis Suggestions**: Based on symptoms, suggest possible diagnoses with confidence levels.
-19. **Treatment Plan Advice**: Recommend treatment sequences and priorities.
+16. **Messages**: Read and send internal clinic messages.
+17. **Automation**: View automation workflows.
+18. **Clinic Overview**: Get comprehensive summaries, chairs, revenue allocation rules/breakdown, clinic settings (read/update).
+19. **Shop**: View/create/update products, view/update orders.
+20. **Registration Fees**: View and record patient registration fees.
+21. **Activity Log**: View clinic activity audit trail.
+22. **Diagnosis Suggestions**: Based on symptoms, suggest possible diagnoses with confidence levels.
+23. **Treatment Plan Advice**: Recommend treatment sequences and priorities.
 
 Guidelines:
 - Be concise and professional. Use bullet points and headers.
@@ -693,6 +697,320 @@ const TOOLS = [
         description: "Get automation workflows configured for the clinic.",
         parameters: { type: "object", properties: {} },
       },
+      // ==================== LAB INVOICES ====================
+      {
+        name: "get_lab_invoices",
+        description: "Get lab invoices. Can filter by status.",
+        parameters: {
+          type: "object",
+          properties: { status: { type: "string" }, limit: { type: "integer" } },
+        },
+      },
+      {
+        name: "create_lab_invoice",
+        description: "Create a lab invoice.",
+        parameters: {
+          type: "object",
+          properties: {
+            lab_case_id: { type: "string" }, patient_name: { type: "string" },
+            clinic_code: { type: "string" }, subtotal: { type: "number" },
+            discount: { type: "number" }, notes: { type: "string" },
+          },
+          required: ["subtotal"],
+        },
+      },
+      {
+        name: "update_lab_invoice",
+        description: "Update a lab invoice status or details.",
+        parameters: {
+          type: "object",
+          properties: {
+            lab_invoice_id: { type: "string" },
+            status: { type: "string", description: "draft, unpaid, paid, cancelled" },
+            notes: { type: "string" },
+          },
+          required: ["lab_invoice_id"],
+        },
+      },
+
+      // ==================== SHOP PRODUCTS & ORDERS ====================
+      {
+        name: "get_shop_products",
+        description: "Get shop products. Can filter by active status.",
+        parameters: {
+          type: "object",
+          properties: { active_only: { type: "boolean" }, category: { type: "string" } },
+        },
+      },
+      {
+        name: "create_shop_product",
+        description: "Create a new shop product.",
+        parameters: {
+          type: "object",
+          properties: {
+            name: { type: "string" }, description: { type: "string" },
+            price: { type: "number" }, category: { type: "string" },
+            stock: { type: "integer" }, sku: { type: "string" },
+          },
+          required: ["name", "price"],
+        },
+      },
+      {
+        name: "update_shop_product",
+        description: "Update a shop product.",
+        parameters: {
+          type: "object",
+          properties: {
+            product_id: { type: "string" },
+            name: { type: "string" }, price: { type: "number" },
+            stock: { type: "integer" }, is_active: { type: "boolean" },
+            description: { type: "string" },
+          },
+          required: ["product_id"],
+        },
+      },
+      {
+        name: "get_shop_orders",
+        description: "Get shop orders. Can filter by status.",
+        parameters: {
+          type: "object",
+          properties: { status: { type: "string" }, limit: { type: "integer" } },
+        },
+      },
+      {
+        name: "update_shop_order",
+        description: "Update a shop order status.",
+        parameters: {
+          type: "object",
+          properties: {
+            order_id: { type: "string" },
+            status: { type: "string", description: "pending, confirmed, shipped, delivered, cancelled" },
+            payment_status: { type: "string" },
+          },
+          required: ["order_id"],
+        },
+      },
+
+      // ==================== REVENUE ALLOCATION ====================
+      {
+        name: "get_revenue_allocation_rules",
+        description: "Get revenue allocation rules (how revenue is split between categories).",
+        parameters: { type: "object", properties: {} },
+      },
+      {
+        name: "get_revenue_allocation_breakdown",
+        description: "Get revenue allocation breakdown showing amounts per category.",
+        parameters: { type: "object", properties: {} },
+      },
+
+      // ==================== REGISTRATION FEES ====================
+      {
+        name: "get_registration_fees",
+        description: "Get patient registration fees. Shows who paid and how much.",
+        parameters: {
+          type: "object",
+          properties: { limit: { type: "integer" } },
+        },
+      },
+      {
+        name: "create_registration_fee",
+        description: "Record a patient registration fee.",
+        parameters: {
+          type: "object",
+          properties: {
+            patient_id: { type: "string" }, amount: { type: "number" },
+            payment_method: { type: "string" }, notes: { type: "string" },
+          },
+          required: ["patient_id", "amount"],
+        },
+      },
+
+      // ==================== ACTIVITY/AUDIT LOG ====================
+      {
+        name: "get_activity_log",
+        description: "Get the clinic activity log showing recent actions (appointments, payments, patient registrations, etc.).",
+        parameters: {
+          type: "object",
+          properties: {
+            entity_type: { type: "string", description: "Filter by type: appointment, patient, invoice, etc." },
+            limit: { type: "integer" },
+          },
+        },
+      },
+
+      // ==================== MESSAGES ====================
+      {
+        name: "get_messages",
+        description: "Get internal clinic messages.",
+        parameters: {
+          type: "object",
+          properties: { limit: { type: "integer" } },
+        },
+      },
+      {
+        name: "send_message",
+        description: "Send an internal message to staff members.",
+        parameters: {
+          type: "object",
+          properties: {
+            subject: { type: "string" }, body: { type: "string" },
+            recipient_ids: { type: "array", items: { type: "string" }, description: "User IDs of recipients" },
+            is_urgent: { type: "boolean" },
+            sender_id: { type: "string", description: "User ID of sender" },
+          },
+          required: ["subject", "body", "recipient_ids", "sender_id"],
+        },
+      },
+
+      // ==================== CLINIC SETTINGS ====================
+      {
+        name: "get_clinic_settings",
+        description: "Get the clinic organization settings and details.",
+        parameters: { type: "object", properties: {} },
+      },
+      {
+        name: "update_clinic_settings",
+        description: "Update clinic settings (name, address, phone, email, etc.).",
+        parameters: {
+          type: "object",
+          properties: {
+            name: { type: "string" }, address: { type: "string" },
+            phone: { type: "string" }, email: { type: "string" },
+          },
+        },
+      },
+
+      // ==================== TREATMENT PLAN CRUD ====================
+      {
+        name: "create_treatment_plan",
+        description: "Create a treatment plan for a patient.",
+        parameters: {
+          type: "object",
+          properties: {
+            patient_id: { type: "string" }, title: { type: "string" },
+            notes: { type: "string" },
+            items: {
+              type: "array", items: {
+                type: "object",
+                properties: {
+                  treatment_id: { type: "string" }, tooth_number: { type: "string" },
+                  notes: { type: "string" }, cost: { type: "number" },
+                  sequence: { type: "integer" },
+                },
+              },
+            },
+          },
+          required: ["patient_id", "title"],
+        },
+      },
+      {
+        name: "update_treatment_plan",
+        description: "Update a treatment plan status.",
+        parameters: {
+          type: "object",
+          properties: {
+            plan_id: { type: "string" },
+            status: { type: "string", description: "draft, proposed, accepted, in-progress, completed, cancelled" },
+            notes: { type: "string" },
+          },
+          required: ["plan_id"],
+        },
+      },
+
+      // ==================== TREATMENT ESTIMATE CRUD ====================
+      {
+        name: "create_treatment_estimate",
+        description: "Create a treatment estimate/quote for a patient.",
+        parameters: {
+          type: "object",
+          properties: {
+            patient_id: { type: "string" }, title: { type: "string" },
+            valid_until: { type: "string" }, notes: { type: "string" },
+            items: {
+              type: "array", items: {
+                type: "object",
+                properties: {
+                  description: { type: "string" }, quantity: { type: "integer" },
+                  unit_price: { type: "number" },
+                },
+                required: ["description", "unit_price"],
+              },
+            },
+          },
+          required: ["patient_id", "title", "items"],
+        },
+      },
+
+      // ==================== DENTIST SCHEDULE CRUD ====================
+      {
+        name: "set_dentist_schedule",
+        description: "Set or update a dentist's schedule for a day of the week.",
+        parameters: {
+          type: "object",
+          properties: {
+            staff_id: { type: "string" }, day_of_week: { type: "integer", description: "0=Sunday, 1=Monday, ..., 6=Saturday" },
+            start_time: { type: "string" }, end_time: { type: "string" },
+            break_start: { type: "string" }, break_end: { type: "string" },
+            is_available: { type: "boolean" },
+          },
+          required: ["staff_id", "day_of_week", "start_time", "end_time"],
+        },
+      },
+
+      // ==================== PATIENT REVIEWS CRUD ====================
+      {
+        name: "create_review",
+        description: "Create a patient review/rating.",
+        parameters: {
+          type: "object",
+          properties: {
+            patient_id: { type: "string" }, staff_id: { type: "string" },
+            rating: { type: "integer", description: "1-5" }, comment: { type: "string" },
+          },
+          required: ["rating"],
+        },
+      },
+
+      // ==================== CLINICAL NOTES READ ====================
+      {
+        name: "get_clinical_notes",
+        description: "Get clinical (SOAP) notes for a patient.",
+        parameters: {
+          type: "object",
+          properties: { patient_id: { type: "string" }, limit: { type: "integer" } },
+          required: ["patient_id"],
+        },
+      },
+
+      // ==================== INVENTORY TRANSACTIONS ====================
+      {
+        name: "get_inventory_transactions",
+        description: "Get inventory transaction history (restocks, usage).",
+        parameters: {
+          type: "object",
+          properties: { inventory_id: { type: "string" }, limit: { type: "integer" } },
+        },
+      },
+
+      // ==================== PROFITABILITY ====================
+      {
+        name: "get_profitability",
+        description: "Get profitability data: revenue vs expenses for a period.",
+        parameters: {
+          type: "object",
+          properties: { start_date: { type: "string" }, end_date: { type: "string" } },
+        },
+      },
+
+      // ==================== PAYMENTS ====================
+      {
+        name: "get_payments",
+        description: "Get payments for an invoice or all recent payments.",
+        parameters: {
+          type: "object",
+          properties: { invoice_id: { type: "string" }, limit: { type: "integer" } },
+        },
+      },
     ],
   },
 ];
@@ -1335,6 +1653,273 @@ async function executeTool(name: string, args: any, db: any, orgId: string) {
       const { data, error } = await db.from("automation_workflows").select("id, name, workflow_type, channel, timing_value, timing_unit, is_enabled, trigger_event, description").eq("org_id", orgId).order("name");
       if (error) throw error;
       return data?.length ? data : "No automation workflows configured.";
+    }
+
+    // ---- LAB INVOICES ----
+    case "get_lab_invoices": {
+      let query = db.from("lab_invoices").select("id, invoice_number, invoice_date, clinic_code, patient_name, subtotal, discount, total, status, lab_case_id, notes, created_at").eq("org_id", orgId).order("created_at", { ascending: false });
+      if (args.status) query = query.eq("status", args.status);
+      const { data, error } = await query.limit(args.limit || 30);
+      if (error) throw error;
+      return data?.length ? data : "No lab invoices found.";
+    }
+
+    case "create_lab_invoice": {
+      const { count } = await db.from("lab_invoices").select("*", { count: "exact", head: true }).eq("org_id", orgId);
+      const num = `LAB-${String((count || 0) + 1).padStart(5, "0")}`;
+      const discount = args.discount || 0;
+      const total = (args.subtotal || 0) - discount;
+      const { data, error } = await db.from("lab_invoices").insert({
+        org_id: orgId, invoice_number: num, subtotal: args.subtotal || 0,
+        discount, total, lab_case_id: args.lab_case_id || null,
+        patient_name: args.patient_name || null, clinic_code: args.clinic_code || null,
+        notes: args.notes || null,
+      }).select("id, invoice_number, total").single();
+      if (error) throw error;
+      return { success: true, invoice_number: data.invoice_number, total: data.total, message: `Lab invoice ${num} created.` };
+    }
+
+    case "update_lab_invoice": {
+      const { lab_invoice_id, ...updates } = args;
+      const clean: Record<string, any> = {};
+      for (const [k, v] of Object.entries(updates)) { if (v !== undefined && v !== null) clean[k] = v; }
+      const { data, error } = await db.from("lab_invoices").update(clean).eq("id", lab_invoice_id).eq("org_id", orgId).select("id, invoice_number, status").single();
+      if (error) throw error;
+      return { success: true, message: `Lab invoice ${data.invoice_number} updated → ${data.status}.` };
+    }
+
+    // ---- SHOP ----
+    case "get_shop_products": {
+      let query = db.from("shop_products").select("id, name, description, price, compare_at_price, category, stock, sku, is_active, created_at").eq("org_id", orgId).order("name");
+      if (args.active_only) query = query.eq("is_active", true);
+      if (args.category) query = query.eq("category", args.category);
+      const { data, error } = await query;
+      if (error) throw error;
+      return data?.length ? data : "No shop products found.";
+    }
+
+    case "create_shop_product": {
+      const { data, error } = await db.from("shop_products").insert({
+        org_id: orgId, name: args.name, description: args.description || null,
+        price: args.price, category: args.category || "general",
+        stock: args.stock || 0, sku: args.sku || null, is_active: true,
+      }).select("id, name").single();
+      if (error) throw error;
+      return { success: true, message: `Shop product "${data.name}" created.` };
+    }
+
+    case "update_shop_product": {
+      const { product_id, ...updates } = args;
+      const clean: Record<string, any> = {};
+      for (const [k, v] of Object.entries(updates)) { if (v !== undefined && v !== null) clean[k] = v; }
+      const { data, error } = await db.from("shop_products").update(clean).eq("id", product_id).eq("org_id", orgId).select("id, name").single();
+      if (error) throw error;
+      return { success: true, message: `Product "${data.name}" updated.` };
+    }
+
+    case "get_shop_orders": {
+      let query = db.from("shop_orders").select("id, order_number, customer_name, customer_email, customer_phone, status, subtotal, total, payment_status, payment_method, created_at").eq("org_id", orgId).order("created_at", { ascending: false });
+      if (args.status) query = query.eq("status", args.status);
+      const { data, error } = await query.limit(args.limit || 30);
+      if (error) throw error;
+      return data?.length ? data : "No shop orders found.";
+    }
+
+    case "update_shop_order": {
+      const { order_id, ...updates } = args;
+      const clean: Record<string, any> = {};
+      for (const [k, v] of Object.entries(updates)) { if (v !== undefined && v !== null) clean[k] = v; }
+      const { data, error } = await db.from("shop_orders").update(clean).eq("id", order_id).eq("org_id", orgId).select("id, order_number, status").single();
+      if (error) throw error;
+      return { success: true, message: `Order ${data.order_number} updated → ${data.status}.` };
+    }
+
+    // ---- REVENUE ALLOCATION ----
+    case "get_revenue_allocation_rules": {
+      const { data, error } = await db.from("revenue_allocation_rules").select("*").eq("org_id", orgId).order("category");
+      if (error) throw error;
+      return data?.length ? data : "No revenue allocation rules configured.";
+    }
+
+    case "get_revenue_allocation_breakdown": {
+      const { data: allocations, error } = await db.from("revenue_allocations").select("category, amount, created_at").eq("org_id", orgId);
+      if (error) throw error;
+      const allTime: Record<string, number> = {};
+      (allocations || []).forEach((a: any) => { allTime[a.category] = (allTime[a.category] || 0) + Number(a.amount); });
+      return { allocations: allTime, total: Object.values(allTime).reduce((s, v) => s + v, 0) };
+    }
+
+    // ---- REGISTRATION FEES ----
+    case "get_registration_fees": {
+      const { data, error } = await db.from("registration_fees").select("id, patient_id, amount, payment_method, payment_date, receipt_number, notes, created_at").eq("org_id", orgId).order("created_at", { ascending: false }).limit(args.limit || 30);
+      if (error) throw error;
+      if (!data?.length) return "No registration fees recorded.";
+      const pIds = [...new Set(data.map((f: any) => f.patient_id).filter(Boolean))];
+      const { data: patients } = pIds.length ? await db.from("patients").select("id, first_name, last_name").in("id", pIds) : { data: [] };
+      const pMap = Object.fromEntries((patients || []).map((p: any) => [p.id, `${p.first_name} ${p.last_name}`]));
+      return data.map((f: any) => ({ ...f, patient_name: pMap[f.patient_id] || "Unknown" }));
+    }
+
+    case "create_registration_fee": {
+      const { data, error } = await db.from("registration_fees").insert({
+        org_id: orgId, patient_id: args.patient_id, amount: args.amount,
+        payment_method: args.payment_method || "cash", notes: args.notes || "",
+      }).select("id, amount").single();
+      if (error) throw error;
+      return { success: true, message: `Registration fee of ${data.amount} recorded.` };
+    }
+
+    // ---- ACTIVITY LOG ----
+    case "get_activity_log": {
+      let query = db.from("activity_log").select("id, event_type, entity_type, entity_id, description, created_at, user_id").eq("org_id", orgId).order("created_at", { ascending: false });
+      if (args.entity_type) query = query.eq("entity_type", args.entity_type);
+      const { data, error } = await query.limit(args.limit || 30);
+      if (error) throw error;
+      return data?.length ? data : "No activity log entries.";
+    }
+
+    // ---- MESSAGES ----
+    case "get_messages": {
+      const { data, error } = await db.from("messages").select("id, subject, body, sender_id, is_urgent, created_at").eq("org_id", orgId).order("created_at", { ascending: false }).limit(args.limit || 20);
+      if (error) throw error;
+      return data?.length ? data : "No messages.";
+    }
+
+    case "send_message": {
+      const { data: msg, error } = await db.from("messages").insert({
+        org_id: orgId, sender_id: args.sender_id, subject: args.subject,
+        body: args.body, is_urgent: args.is_urgent || false,
+      }).select("id").single();
+      if (error) throw error;
+      if (args.recipient_ids?.length) {
+        await db.from("message_recipients").insert(
+          args.recipient_ids.map((rid: string) => ({ message_id: msg.id, recipient_id: rid }))
+        );
+      }
+      return { success: true, message: `Message "${args.subject}" sent to ${args.recipient_ids?.length || 0} recipient(s).` };
+    }
+
+    // ---- CLINIC SETTINGS ----
+    case "get_clinic_settings": {
+      const { data, error } = await db.from("organizations").select("id, name, slug, address, phone, email, clinic_type, logo_url, settings").eq("id", orgId).single();
+      if (error) throw error;
+      return data;
+    }
+
+    case "update_clinic_settings": {
+      const clean: Record<string, any> = {};
+      for (const [k, v] of Object.entries(args)) { if (v !== undefined && v !== null && v !== "") clean[k] = v; }
+      const { data, error } = await db.from("organizations").update(clean).eq("id", orgId).select("id, name").single();
+      if (error) throw error;
+      return { success: true, message: `Clinic settings updated: ${Object.keys(clean).join(", ")}.` };
+    }
+
+    // ---- TREATMENT PLAN CRUD ----
+    case "create_treatment_plan": {
+      const totalCost = (args.items || []).reduce((s: number, i: any) => s + (i.cost || 0), 0);
+      const { data: plan, error } = await db.from("treatment_plans").insert({
+        org_id: orgId, patient_id: args.patient_id, title: args.title,
+        notes: args.notes || null, total_cost: totalCost, status: "draft",
+      }).select("id, title").single();
+      if (error) throw error;
+      if (args.items?.length) {
+        await db.from("treatment_plan_items").insert(args.items.map((i: any, idx: number) => ({
+          plan_id: plan.id, treatment_id: i.treatment_id || null,
+          tooth_number: i.tooth_number || null, notes: i.notes || null,
+          cost: i.cost || 0, sequence: i.sequence || idx + 1,
+        })));
+      }
+      return { success: true, message: `Treatment plan "${plan.title}" created with ${args.items?.length || 0} items.` };
+    }
+
+    case "update_treatment_plan": {
+      const { plan_id, ...updates } = args;
+      const clean: Record<string, any> = {};
+      for (const [k, v] of Object.entries(updates)) { if (v !== undefined && v !== null) clean[k] = v; }
+      const { data, error } = await db.from("treatment_plans").update(clean).eq("id", plan_id).eq("org_id", orgId).select("id, title, status").single();
+      if (error) throw error;
+      return { success: true, message: `Treatment plan "${data.title}" updated → ${data.status}.` };
+    }
+
+    // ---- TREATMENT ESTIMATE CRUD ----
+    case "create_treatment_estimate": {
+      const items = args.items || [];
+      const total = items.reduce((s: number, i: any) => s + (i.unit_price * (i.quantity || 1)), 0);
+      const { data: est, error } = await db.from("treatment_estimates").insert({
+        org_id: orgId, patient_id: args.patient_id, title: args.title,
+        total, notes: args.notes || null, valid_until: args.valid_until || null, status: "draft",
+      }).select("id, title").single();
+      if (error) throw error;
+      if (items.length) {
+        await db.from("treatment_estimate_items").insert(items.map((i: any) => ({
+          estimate_id: est.id, description: i.description,
+          quantity: i.quantity || 1, unit_price: i.unit_price,
+          line_total: i.unit_price * (i.quantity || 1),
+        })));
+      }
+      return { success: true, message: `Treatment estimate "${est.title}" created (total: ${total}).` };
+    }
+
+    // ---- DENTIST SCHEDULE CRUD ----
+    case "set_dentist_schedule": {
+      const { data, error } = await db.from("dentist_schedules").upsert({
+        org_id: orgId, staff_id: args.staff_id, day_of_week: args.day_of_week,
+        start_time: args.start_time, end_time: args.end_time,
+        break_start: args.break_start || null, break_end: args.break_end || null,
+        is_available: args.is_available !== false,
+      }, { onConflict: "staff_id,day_of_week" }).select("id").single();
+      if (error) throw error;
+      const dayNames = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+      return { success: true, message: `Schedule set for ${dayNames[args.day_of_week]}: ${args.start_time} - ${args.end_time}.` };
+    }
+
+    // ---- REVIEWS CREATE ----
+    case "create_review": {
+      const { data, error } = await db.from("patient_reviews").insert({
+        org_id: orgId, patient_id: args.patient_id || null,
+        staff_id: args.staff_id || null, rating: args.rating,
+        comment: args.comment || null,
+      }).select("id").single();
+      if (error) throw error;
+      return { success: true, message: `Review (${args.rating}/5) recorded.` };
+    }
+
+    // ---- CLINICAL NOTES READ ----
+    case "get_clinical_notes": {
+      const { data, error } = await db.from("clinical_notes").select("id, subjective, objective, assessment, plan, created_at, appointment_id, created_by").eq("patient_id", args.patient_id).eq("org_id", orgId).order("created_at", { ascending: false }).limit(args.limit || 10);
+      if (error) throw error;
+      return data?.length ? data : "No clinical notes for this patient.";
+    }
+
+    // ---- INVENTORY TRANSACTIONS ----
+    case "get_inventory_transactions": {
+      let query = db.from("inventory_transactions").select("id, inventory_id, quantity, transaction_type, unit_cost, total_cost, notes, reference, created_at").eq("org_id", orgId).order("created_at", { ascending: false });
+      if (args.inventory_id) query = query.eq("inventory_id", args.inventory_id);
+      const { data, error } = await query.limit(args.limit || 30);
+      if (error) throw error;
+      return data?.length ? data : "No inventory transactions found.";
+    }
+
+    // ---- PROFITABILITY ----
+    case "get_profitability": {
+      const start = args.start_date || new Date(Date.now() - 30 * 86400000).toISOString().split("T")[0];
+      const end = args.end_date || today;
+      const [{ data: invoices }, { data: expenses }] = await Promise.all([
+        db.from("invoices").select("total, status").eq("org_id", orgId).eq("status", "paid").gte("invoice_date", start).lte("invoice_date", end),
+        db.from("expenses").select("amount").eq("org_id", orgId).gte("expense_date", start).lte("expense_date", end),
+      ]);
+      const revenue = (invoices || []).reduce((s: number, i: any) => s + Number(i.total), 0);
+      const totalExpenses = (expenses || []).reduce((s: number, e: any) => s + Number(e.amount), 0);
+      return { period: `${start} to ${end}`, revenue, expenses: totalExpenses, profit: revenue - totalExpenses, margin: revenue > 0 ? `${((revenue - totalExpenses) / revenue * 100).toFixed(1)}%` : "N/A" };
+    }
+
+    // ---- PAYMENTS ----
+    case "get_payments": {
+      let query = db.from("payments").select("id, invoice_id, amount, payment_method, payment_date, reference, created_at").eq("org_id", orgId).order("payment_date", { ascending: false });
+      if (args.invoice_id) query = query.eq("invoice_id", args.invoice_id);
+      const { data, error } = await query.limit(args.limit || 30);
+      if (error) throw error;
+      return data?.length ? data : "No payments found.";
     }
 
     default:
