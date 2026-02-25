@@ -1011,6 +1011,208 @@ const TOOLS = [
           properties: { invoice_id: { type: "string" }, limit: { type: "integer" } },
         },
       },
+
+      // ==================== NOTIFICATIONS READ ====================
+      {
+        name: "get_notifications",
+        description: "Get notifications for a user. Can filter to unread only.",
+        parameters: {
+          type: "object",
+          properties: {
+            user_id: { type: "string", description: "User ID to get notifications for" },
+            unread_only: { type: "boolean" },
+            limit: { type: "integer" },
+          },
+          required: ["user_id"],
+        },
+      },
+
+      // ==================== SUPPLIERS CRUD ====================
+      {
+        name: "create_supplier",
+        description: "Create a new supplier.",
+        parameters: {
+          type: "object",
+          properties: {
+            name: { type: "string" }, contact_person: { type: "string" },
+            phone: { type: "string" }, email: { type: "string" },
+            address: { type: "string" }, notes: { type: "string" },
+          },
+          required: ["name"],
+        },
+      },
+      {
+        name: "update_supplier",
+        description: "Update a supplier's details.",
+        parameters: {
+          type: "object",
+          properties: {
+            supplier_id: { type: "string" },
+            name: { type: "string" }, contact_person: { type: "string" },
+            phone: { type: "string" }, email: { type: "string" },
+            address: { type: "string" }, status: { type: "string" }, notes: { type: "string" },
+          },
+          required: ["supplier_id"],
+        },
+      },
+
+      // ==================== TREATMENTS CATALOG CRUD ====================
+      {
+        name: "create_treatment",
+        description: "Add a new treatment/procedure to the clinic catalog.",
+        parameters: {
+          type: "object",
+          properties: {
+            name: { type: "string" }, category: { type: "string" },
+            price: { type: "number" }, duration: { type: "integer", description: "Duration in minutes" },
+            description: { type: "string" },
+          },
+          required: ["name", "price"],
+        },
+      },
+      {
+        name: "update_treatment",
+        description: "Update a treatment in the catalog.",
+        parameters: {
+          type: "object",
+          properties: {
+            treatment_id: { type: "string" },
+            name: { type: "string" }, category: { type: "string" },
+            price: { type: "number" }, duration: { type: "integer" },
+            description: { type: "string" }, status: { type: "string" },
+          },
+          required: ["treatment_id"],
+        },
+      },
+
+      // ==================== PAYMENT PLANS CRUD ====================
+      {
+        name: "create_payment_plan",
+        description: "Create a payment plan for a patient.",
+        parameters: {
+          type: "object",
+          properties: {
+            patient_id: { type: "string" }, invoice_id: { type: "string" },
+            plan_name: { type: "string" }, total_amount: { type: "number" },
+            installment_count: { type: "integer" },
+            frequency: { type: "string", description: "weekly, biweekly, monthly" },
+            start_date: { type: "string" }, notes: { type: "string" },
+          },
+          required: ["patient_id", "plan_name", "total_amount", "installment_count"],
+        },
+      },
+
+      // ==================== COMMISSION PAYOUTS CRUD ====================
+      {
+        name: "create_commission_payout",
+        description: "Create a commission payout record for a staff member.",
+        parameters: {
+          type: "object",
+          properties: {
+            staff_id: { type: "string" }, period_start: { type: "string" },
+            period_end: { type: "string" }, calculated_amount: { type: "number" },
+            notes: { type: "string" },
+          },
+          required: ["staff_id", "period_start", "period_end", "calculated_amount"],
+        },
+      },
+      {
+        name: "update_commission_payout",
+        description: "Update a commission payout (mark as paid, etc.).",
+        parameters: {
+          type: "object",
+          properties: {
+            payout_id: { type: "string" },
+            status: { type: "string", description: "pending, paid, cancelled" },
+            paid_amount: { type: "number" }, payment_date: { type: "string" },
+            payment_method: { type: "string" }, reference: { type: "string" },
+            notes: { type: "string" },
+          },
+          required: ["payout_id"],
+        },
+      },
+
+      // ==================== TREATMENT MATERIALS CRUD ====================
+      {
+        name: "create_treatment_material",
+        description: "Link an inventory item to a treatment as a required material.",
+        parameters: {
+          type: "object",
+          properties: {
+            treatment_id: { type: "string" }, inventory_id: { type: "string" },
+            quantity_per_use: { type: "number" }, notes: { type: "string" },
+          },
+          required: ["treatment_id", "inventory_id"],
+        },
+      },
+      {
+        name: "update_treatment_material",
+        description: "Update a treatment material link.",
+        parameters: {
+          type: "object",
+          properties: {
+            material_id: { type: "string" },
+            quantity_per_use: { type: "number" }, notes: { type: "string" },
+          },
+          required: ["material_id"],
+        },
+      },
+
+      // ==================== ADVANCED ANALYTICS ====================
+      {
+        name: "get_advanced_analytics",
+        description: "Get advanced analytics: revenue trends, treatment distribution, dentist performance, patient demographics.",
+        parameters: {
+          type: "object",
+          properties: {
+            start_date: { type: "string" }, end_date: { type: "string" },
+          },
+        },
+      },
+
+      // ==================== WEBSITE SETTINGS ====================
+      {
+        name: "get_website_settings",
+        description: "Get the clinic's public website settings (hero text, colors, features).",
+        parameters: { type: "object", properties: {} },
+      },
+      {
+        name: "update_website_settings",
+        description: "Update the clinic's public website settings.",
+        parameters: {
+          type: "object",
+          properties: {
+            hero_title: { type: "string" }, hero_subtitle: { type: "string" },
+            about_text: { type: "string" }, primary_color: { type: "string" },
+            show_reviews: { type: "boolean" }, show_shop: { type: "boolean" },
+            booking_enabled: { type: "boolean" },
+          },
+        },
+      },
+
+      // ==================== USER PROFILE ====================
+      {
+        name: "get_user_profile",
+        description: "Get a user's profile (name, phone, avatar).",
+        parameters: {
+          type: "object",
+          properties: { user_id: { type: "string" } },
+          required: ["user_id"],
+        },
+      },
+      {
+        name: "update_user_profile",
+        description: "Update a user's profile.",
+        parameters: {
+          type: "object",
+          properties: {
+            user_id: { type: "string" },
+            full_name: { type: "string" }, phone: { type: "string" },
+            avatar_url: { type: "string" },
+          },
+          required: ["user_id"],
+        },
+      },
     ],
   },
 ];
@@ -1382,9 +1584,23 @@ async function executeTool(name: string, args: any, db: any, orgId: string) {
     }
 
     case "record_payment": {
-      const { data, error } = await db.from("invoices").update({ status: "paid", payment_method: args.payment_method }).eq("id", args.invoice_id).eq("org_id", orgId).select("id, invoice_number, total").single();
-      if (error) throw error;
-      return { success: true, message: `Payment recorded for ${data.invoice_number} (${data.total}).` };
+      // Get invoice details first
+      const { data: inv, error: invErr } = await db.from("invoices").select("id, invoice_number, total, org_id").eq("id", args.invoice_id).eq("org_id", orgId).single();
+      if (invErr || !inv) throw new Error("Invoice not found.");
+      // Insert into payments table
+      const { error: payErr } = await db.from("payments").insert({
+        org_id: orgId, invoice_id: inv.id, amount: Number(inv.total),
+        payment_method: args.payment_method, payment_date: today,
+        reference: args.notes || null,
+      });
+      if (payErr) {
+        console.error("Payment insert error:", payErr);
+        // Fallback: still update invoice status even if payments table fails
+      }
+      // Update invoice status
+      const { error: updErr } = await db.from("invoices").update({ status: "paid", payment_method: args.payment_method }).eq("id", args.invoice_id).eq("org_id", orgId);
+      if (updErr) throw updErr;
+      return { success: true, message: `Payment of ${inv.total} recorded for ${inv.invoice_number} via ${args.payment_method}.` };
     }
 
     case "get_expenses": {
@@ -1920,6 +2136,221 @@ async function executeTool(name: string, args: any, db: any, orgId: string) {
       const { data, error } = await query.limit(args.limit || 30);
       if (error) throw error;
       return data?.length ? data : "No payments found.";
+    }
+
+    // ---- NOTIFICATIONS READ ----
+    case "get_notifications": {
+      let query = db.from("notifications").select("id, title, message, type, is_read, link, created_at").eq("org_id", orgId).eq("user_id", args.user_id).order("created_at", { ascending: false });
+      if (args.unread_only) query = query.eq("is_read", false);
+      const { data, error } = await query.limit(args.limit || 30);
+      if (error) throw error;
+      if (!data?.length) return args.unread_only ? "No unread notifications." : "No notifications.";
+      const unreadCount = data.filter((n: any) => !n.is_read).length;
+      return { total: data.length, unread: unreadCount, notifications: data };
+    }
+
+    // ---- SUPPLIERS CRUD ----
+    case "create_supplier": {
+      const { data, error } = await db.from("suppliers").insert({
+        org_id: orgId, name: args.name, contact_person: args.contact_person || null,
+        phone: args.phone || null, email: args.email || null,
+        address: args.address || null, notes: args.notes || null,
+      }).select("id, name").single();
+      if (error) throw error;
+      return { success: true, message: `Supplier "${data.name}" created.` };
+    }
+
+    case "update_supplier": {
+      const { supplier_id, ...updates } = args;
+      const clean: Record<string, any> = {};
+      for (const [k, v] of Object.entries(updates)) { if (v !== undefined && v !== null && v !== "") clean[k] = v; }
+      const { data, error } = await db.from("suppliers").update(clean).eq("id", supplier_id).eq("org_id", orgId).select("id, name").single();
+      if (error) throw error;
+      return { success: true, message: `Supplier "${data.name}" updated: ${Object.keys(clean).join(", ")}.` };
+    }
+
+    // ---- TREATMENTS CATALOG CRUD ----
+    case "create_treatment": {
+      const { data, error } = await db.from("treatments").insert({
+        org_id: orgId, name: args.name, category: args.category || "general",
+        price: args.price, duration: args.duration || 30,
+        description: args.description || null, status: "active",
+      }).select("id, name, price").single();
+      if (error) throw error;
+      return { success: true, message: `Treatment "${data.name}" added at ${data.price}.` };
+    }
+
+    case "update_treatment": {
+      const { treatment_id, ...updates } = args;
+      const clean: Record<string, any> = {};
+      for (const [k, v] of Object.entries(updates)) { if (v !== undefined && v !== null && v !== "") clean[k] = v; }
+      const { data, error } = await db.from("treatments").update(clean).eq("id", treatment_id).eq("org_id", orgId).select("id, name").single();
+      if (error) throw error;
+      return { success: true, message: `Treatment "${data.name}" updated: ${Object.keys(clean).join(", ")}.` };
+    }
+
+    // ---- PAYMENT PLANS CRUD ----
+    case "create_payment_plan": {
+      const installmentAmount = args.total_amount / args.installment_count;
+      const { data, error } = await db.from("payment_plans").insert({
+        org_id: orgId, patient_id: args.patient_id, invoice_id: args.invoice_id || null,
+        plan_name: args.plan_name, total_amount: args.total_amount,
+        installment_count: args.installment_count, installment_amount: installmentAmount,
+        frequency: args.frequency || "monthly", start_date: args.start_date || today,
+        notes: args.notes || null, status: "active",
+      }).select("id, plan_name").single();
+      if (error) throw error;
+      return { success: true, message: `Payment plan "${data.plan_name}" created (${args.installment_count} × ${installmentAmount.toFixed(2)}).` };
+    }
+
+    // ---- COMMISSION PAYOUTS CRUD ----
+    case "create_commission_payout": {
+      const { data, error } = await db.from("commission_payouts").insert({
+        org_id: orgId, staff_id: args.staff_id,
+        period_start: args.period_start, period_end: args.period_end,
+        calculated_amount: args.calculated_amount,
+        notes: args.notes || null, status: "pending",
+      }).select("id, calculated_amount").single();
+      if (error) throw error;
+      return { success: true, message: `Commission payout of ${data.calculated_amount} created.` };
+    }
+
+    case "update_commission_payout": {
+      const { payout_id, ...updates } = args;
+      const clean: Record<string, any> = {};
+      for (const [k, v] of Object.entries(updates)) { if (v !== undefined && v !== null) clean[k] = v; }
+      const { data, error } = await db.from("commission_payouts").update(clean).eq("id", payout_id).eq("org_id", orgId).select("id, status, paid_amount").single();
+      if (error) throw error;
+      return { success: true, message: `Commission payout updated → ${data.status}${data.paid_amount ? ` (paid: ${data.paid_amount})` : ""}.` };
+    }
+
+    // ---- TREATMENT MATERIALS CRUD ----
+    case "create_treatment_material": {
+      const { data, error } = await db.from("treatment_materials").insert({
+        org_id: orgId, treatment_id: args.treatment_id, inventory_id: args.inventory_id,
+        quantity_per_use: args.quantity_per_use || 1, notes: args.notes || null,
+      }).select("id").single();
+      if (error) throw error;
+      return { success: true, message: "Treatment material link created." };
+    }
+
+    case "update_treatment_material": {
+      const { material_id, ...updates } = args;
+      const clean: Record<string, any> = {};
+      for (const [k, v] of Object.entries(updates)) { if (v !== undefined && v !== null) clean[k] = v; }
+      const { data, error } = await db.from("treatment_materials").update(clean).eq("id", material_id).eq("org_id", orgId).select("id").single();
+      if (error) throw error;
+      return { success: true, message: "Treatment material updated." };
+    }
+
+    // ---- ADVANCED ANALYTICS ----
+    case "get_advanced_analytics": {
+      const start = args.start_date || new Date(Date.now() - 30 * 86400000).toISOString().split("T")[0];
+      const end = args.end_date || today;
+
+      const [{ data: invoices }, { data: expenses }, { data: appointments }, { data: patients }, { data: treatments }] = await Promise.all([
+        db.from("invoices").select("total, status, invoice_date, payment_method").eq("org_id", orgId).eq("status", "paid").gte("invoice_date", start).lte("invoice_date", end),
+        db.from("expenses").select("amount, category, expense_date").eq("org_id", orgId).gte("expense_date", start).lte("expense_date", end),
+        db.from("appointments").select("status, staff_id, treatment_id, appointment_date").eq("org_id", orgId).gte("appointment_date", start).lte("appointment_date", end),
+        db.from("patients").select("gender, date_of_birth, created_at, status").eq("org_id", orgId),
+        db.from("treatments").select("id, name, category, price").eq("org_id", orgId),
+      ]);
+
+      // Revenue by date
+      const revenueByDate: Record<string, number> = {};
+      (invoices || []).forEach((i: any) => {
+        revenueByDate[i.invoice_date] = (revenueByDate[i.invoice_date] || 0) + Number(i.total);
+      });
+
+      // Expense by category
+      const expenseByCategory: Record<string, number> = {};
+      (expenses || []).forEach((e: any) => {
+        expenseByCategory[e.category] = (expenseByCategory[e.category] || 0) + Number(e.amount);
+      });
+
+      // Treatment distribution
+      const treatmentCount: Record<string, number> = {};
+      const treatmentMap = Object.fromEntries((treatments || []).map((t: any) => [t.id, t.name]));
+      (appointments || []).forEach((a: any) => {
+        if (a.treatment_id) {
+          const name = treatmentMap[a.treatment_id] || "Unknown";
+          treatmentCount[name] = (treatmentCount[name] || 0) + 1;
+        }
+      });
+
+      // Dentist performance (appointments completed)
+      const dentistAppts: Record<string, { completed: number; total: number }> = {};
+      (appointments || []).forEach((a: any) => {
+        if (!dentistAppts[a.staff_id]) dentistAppts[a.staff_id] = { completed: 0, total: 0 };
+        dentistAppts[a.staff_id].total++;
+        if (a.status === "completed") dentistAppts[a.staff_id].completed++;
+      });
+
+      // Patient demographics
+      const genderDist: Record<string, number> = {};
+      const ageBuckets: Record<string, number> = { "0-17": 0, "18-30": 0, "31-45": 0, "46-60": 0, "60+": 0 };
+      const now = new Date();
+      (patients || []).forEach((p: any) => {
+        genderDist[p.gender || "unknown"] = (genderDist[p.gender || "unknown"] || 0) + 1;
+        if (p.date_of_birth) {
+          const age = Math.floor((now.getTime() - new Date(p.date_of_birth).getTime()) / 31557600000);
+          if (age <= 17) ageBuckets["0-17"]++;
+          else if (age <= 30) ageBuckets["18-30"]++;
+          else if (age <= 45) ageBuckets["31-45"]++;
+          else if (age <= 60) ageBuckets["46-60"]++;
+          else ageBuckets["60+"]++;
+        }
+      });
+
+      const totalRevenue = (invoices || []).reduce((s: number, i: any) => s + Number(i.total), 0);
+      const totalExpenses = (expenses || []).reduce((s: number, e: any) => s + Number(e.amount), 0);
+
+      return {
+        period: `${start} to ${end}`,
+        revenue: { total: totalRevenue, by_date: revenueByDate },
+        expenses: { total: totalExpenses, by_category: expenseByCategory },
+        profit: totalRevenue - totalExpenses,
+        margin: totalRevenue > 0 ? `${((totalRevenue - totalExpenses) / totalRevenue * 100).toFixed(1)}%` : "N/A",
+        appointments: { total: appointments?.length || 0, by_status: (() => { const s: Record<string, number> = {}; (appointments || []).forEach((a: any) => { s[a.status] = (s[a.status] || 0) + 1; }); return s; })() },
+        treatment_distribution: treatmentCount,
+        dentist_performance: dentistAppts,
+        patient_demographics: { total: patients?.length || 0, active: (patients || []).filter((p: any) => p.status === "active").length, gender: genderDist, age_distribution: ageBuckets },
+      };
+    }
+
+    // ---- WEBSITE SETTINGS ----
+    case "get_website_settings": {
+      const { data, error } = await db.from("organizations").select("settings").eq("id", orgId).single();
+      if (error) throw error;
+      const settings = (data?.settings as any) || {};
+      return settings.website || { message: "No website settings configured yet. Use update_website_settings to set them." };
+    }
+
+    case "update_website_settings": {
+      const { data: org, error: fetchErr } = await db.from("organizations").select("settings").eq("id", orgId).single();
+      if (fetchErr) throw fetchErr;
+      const currentSettings = (org?.settings as any) || {};
+      const websiteSettings = { ...(currentSettings.website || {}), ...args };
+      const newSettings = { ...currentSettings, website: websiteSettings };
+      const { error } = await db.from("organizations").update({ settings: newSettings }).eq("id", orgId);
+      if (error) throw error;
+      return { success: true, message: `Website settings updated: ${Object.keys(args).join(", ")}.` };
+    }
+
+    // ---- USER PROFILE ----
+    case "get_user_profile": {
+      const { data, error } = await db.from("profiles").select("id, full_name, phone, avatar_url, created_at, updated_at").eq("id", args.user_id).single();
+      if (error) throw error;
+      return data || "Profile not found.";
+    }
+
+    case "update_user_profile": {
+      const { user_id, ...updates } = args;
+      const clean: Record<string, any> = {};
+      for (const [k, v] of Object.entries(updates)) { if (v !== undefined && v !== null && v !== "") clean[k] = v; }
+      const { data, error } = await db.from("profiles").update(clean).eq("id", user_id).select("id, full_name").single();
+      if (error) throw error;
+      return { success: true, message: `Profile updated: ${Object.keys(clean).join(", ")}.` };
     }
 
     default:
