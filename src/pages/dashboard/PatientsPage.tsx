@@ -49,7 +49,7 @@ export default function PatientsPage() {
       const matchesSearch =
         fullName.includes(search.toLowerCase()) ||
         p.id.toLowerCase().includes(search.toLowerCase()) ||
-        (canViewContact && p.phone.includes(search));
+        (canViewContact && (p.phone || '').includes(search));
       const matchesStatus = statusFilter === "all" || p.status === statusFilter;
       return matchesSearch && matchesStatus;
     })
@@ -236,7 +236,7 @@ export default function PatientsPage() {
                               <a href={`tel:${p.phone}`} className="text-muted-foreground hover:text-primary transition-colors p-1 rounded" title="Call">
                                 <Phone className="h-3.5 w-3.5" />
                               </a>
-                              <a href={`https://wa.me/${p.phone.replace(/\D/g, '')}`} target="_blank" rel="noopener noreferrer" className="text-muted-foreground hover:text-emerald-600 transition-colors p-1 rounded" title="WhatsApp">
+                              <a href={`https://wa.me/${(p.phone || '').replace(/\D/g, '')}`} target="_blank" rel="noopener noreferrer" className="text-muted-foreground hover:text-emerald-600 transition-colors p-1 rounded" title="WhatsApp">
                                 <MessageCircle className="h-3.5 w-3.5" />
                               </a>
                               <span className="text-xs text-muted-foreground ml-1 truncate">{p.phone}</span>
@@ -308,7 +308,7 @@ export default function PatientsPage() {
                                   <a href={`tel:${p.phone}`} title="Call" className="text-muted-foreground hover:text-primary transition-colors">
                                     <Phone className="h-3.5 w-3.5" />
                                   </a>
-                                  <a href={`https://wa.me/${p.phone.replace(/\D/g, '')}`} target="_blank" rel="noopener noreferrer" title="WhatsApp" className="text-muted-foreground hover:text-emerald-600 transition-colors">
+                                  <a href={`https://wa.me/${(p.phone || '').replace(/\D/g, '')}`} target="_blank" rel="noopener noreferrer" title="WhatsApp" className="text-muted-foreground hover:text-emerald-600 transition-colors">
                                     <MessageCircle className="h-3.5 w-3.5" />
                                   </a>
                                 </div>
