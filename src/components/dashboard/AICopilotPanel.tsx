@@ -211,22 +211,14 @@ export function AICopilotPanel({ open, onClose, inline = false }: AICopilotPanel
     const recognition = new SpeechRecognition();
     recognition.lang = "en-US";
     recognition.interimResults = true;
-    recognition.continuous = true;
+    recognition.continuous = false;
     recognition.maxAlternatives = 1;
 
-    let finalTranscript = "";
-
     recognition.onresult = (event: any) => {
-      let interim = "";
-      for (let i = event.resultIndex; i < event.results.length; i++) {
-        const transcript = event.results[i][0].transcript;
-        if (event.results[i].isFinal) {
-          finalTranscript += transcript + " ";
-        } else {
-          interim += transcript;
-        }
-      }
-      setTranscribedText((finalTranscript + interim).trim());
+      // Only use the final result from the last result set
+      const lastResult = event.results[event.results.length - 1];
+      const transcript = lastResult[0].transcript;
+      setTranscribedText(transcript.trim());
     };
 
     recognition.onerror = (event: any) => {
@@ -234,16 +226,28 @@ export function AICopilotPanel({ open, onClose, inline = false }: AICopilotPanel
       setIsRecording(false);
       if (event.error === "not-allowed") {
         setLocalMessages(prev => [...prev, { role: "assistant", content: "⚠️ Microphone access denied. Please allow microphone access in your browser settings." }]);
+      } else if (event.error === "network") {
+        setLocalMessages(prev => [...prev, { role: "assistant", content: "⚠️ Network error during voice recognition. Please check your connection and try again." }]);
       }
     };
 
     recognition.onend = () => {
       setIsRecording(false);
-      // Show confirmation if we have text
-      if (finalTranscript.trim()) {
-        setShowTranscriptConfirm(true);
-      }
     };
+
+    // Use a ref to track final text for the confirmation check
+    const checkShowConfirm = () => {
+      // Small delay to let the last onresult fire before checking
+      setTimeout(() => {
+        setTranscribedText(prev => {
+          if (prev.trim()) {
+            setShowTranscriptConfirm(true);
+          }
+          return prev;
+        });
+      }, 200);
+    };
+    recognition.addEventListener("end", checkShowConfirm);
 
     recognitionRef.current = recognition;
     setTranscribedText("");
