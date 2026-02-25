@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Send, X, Trash2, Loader2, Bot, Sparkles, Plus, MessageSquare } from "lucide-react";
+import { Send, X, Trash2, Loader2, Bot, Sparkles, Plus, MessageSquare, Mic, MicOff, Check, RotateCcw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -70,8 +70,12 @@ export function AICopilotPanel({ open, onClose, inline = false }: AICopilotPanel
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [showHistory, setShowHistory] = useState(false);
+  const [isRecording, setIsRecording] = useState(false);
+  const [transcribedText, setTranscribedText] = useState("");
+  const [showTranscriptConfirm, setShowTranscriptConfirm] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const recognitionRef = useRef<any>(null);
   const { currentOrg } = useOrg();
   const { user } = useAuth();
   const location = useLocation();
@@ -196,6 +200,80 @@ export function AICopilotPanel({ open, onClose, inline = false }: AICopilotPanel
     setLocalMessages([]);
     setShowHistory(false);
   };
+
+  const startRecording = useCallback(() => {
+    const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+    if (!SpeechRecognition) {
+      setLocalMessages(prev => [...prev, { role: "assistant", content: "⚠️ Voice recording is not supported in this browser. Please use Chrome, Edge, or Safari." }]);
+      return;
+    }
+
+    const recognition = new SpeechRecognition();
+    recognition.lang = "en-US";
+    recognition.interimResults = true;
+    recognition.continuous = true;
+    recognition.maxAlternatives = 1;
+
+    let finalTranscript = "";
+
+    recognition.onresult = (event: any) => {
+      let interim = "";
+      for (let i = event.resultIndex; i < event.results.length; i++) {
+        const transcript = event.results[i][0].transcript;
+        if (event.results[i].isFinal) {
+          finalTranscript += transcript + " ";
+        } else {
+          interim += transcript;
+        }
+      }
+      setTranscribedText((finalTranscript + interim).trim());
+    };
+
+    recognition.onerror = (event: any) => {
+      console.error("Speech recognition error:", event.error);
+      setIsRecording(false);
+      if (event.error === "not-allowed") {
+        setLocalMessages(prev => [...prev, { role: "assistant", content: "⚠️ Microphone access denied. Please allow microphone access in your browser settings." }]);
+      }
+    };
+
+    recognition.onend = () => {
+      setIsRecording(false);
+      // Show confirmation if we have text
+      if (finalTranscript.trim()) {
+        setShowTranscriptConfirm(true);
+      }
+    };
+
+    recognitionRef.current = recognition;
+    setTranscribedText("");
+    setIsRecording(true);
+    recognition.start();
+  }, []);
+
+  const stopRecording = useCallback(() => {
+    if (recognitionRef.current) {
+      recognitionRef.current.stop();
+    }
+  }, []);
+
+  const confirmTranscript = useCallback(() => {
+    setShowTranscriptConfirm(false);
+    sendMessage(transcribedText);
+    setTranscribedText("");
+  }, [transcribedText, sendMessage]);
+
+  const editTranscript = useCallback(() => {
+    setShowTranscriptConfirm(false);
+    setInput(transcribedText);
+    setTranscribedText("");
+    textareaRef.current?.focus();
+  }, [transcribedText]);
+
+  const discardTranscript = useCallback(() => {
+    setShowTranscriptConfirm(false);
+    setTranscribedText("");
+  }, []);
 
   const loadConversation = (convoId: string) => {
     setActiveConvoId(convoId);
@@ -364,6 +442,56 @@ export function AICopilotPanel({ open, onClose, inline = false }: AICopilotPanel
 
   const inputArea = (
     <div className="border-t border-border p-4 bg-background shrink-0">
+      {/* Transcript confirmation banner */}
+      <AnimatePresence>
+        {showTranscriptConfirm && (
+          <motion.div
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: "auto" }}
+            exit={{ opacity: 0, height: 0 }}
+            className="mb-3 rounded-xl border border-primary/20 bg-primary/5 p-3 space-y-2"
+          >
+            <p className="text-[11px] font-medium text-primary uppercase tracking-wider">Voice Transcription</p>
+            <p className="text-sm text-foreground leading-relaxed">{transcribedText}</p>
+            <div className="flex gap-2">
+              <Button size="sm" className="h-8 text-xs gap-1.5 rounded-lg" onClick={confirmTranscript}>
+                <Check className="w-3 h-3" /> Send
+              </Button>
+              <Button size="sm" variant="outline" className="h-8 text-xs gap-1.5 rounded-lg" onClick={editTranscript}>
+                <RotateCcw className="w-3 h-3" /> Edit
+              </Button>
+              <Button size="sm" variant="ghost" className="h-8 text-xs rounded-lg text-muted-foreground" onClick={discardTranscript}>
+                Discard
+              </Button>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Recording indicator */}
+      <AnimatePresence>
+        {isRecording && (
+          <motion.div
+            initial={{ opacity: 0, y: 4 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 4 }}
+            className="mb-2 flex items-center gap-2 px-3 py-2 rounded-lg bg-destructive/10 border border-destructive/20"
+          >
+            <span className="relative flex h-2.5 w-2.5">
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-destructive opacity-75" />
+              <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-destructive" />
+            </span>
+            <span className="text-xs font-medium text-destructive">Listening...</span>
+            {transcribedText && (
+              <span className="text-xs text-muted-foreground truncate flex-1 ml-1 italic">"{transcribedText}"</span>
+            )}
+            <Button size="sm" variant="ghost" className="h-6 px-2 text-xs text-destructive hover:bg-destructive/10" onClick={stopRecording}>
+              Stop
+            </Button>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       <div className="flex gap-2 items-end">
         <div className="flex-1">
           <Textarea
@@ -371,11 +499,21 @@ export function AICopilotPanel({ open, onClose, inline = false }: AICopilotPanel
             value={input}
             onChange={(e) => setInput(e.target.value)}
             onKeyDown={handleKeyDown}
-            placeholder="Ask me anything..."
+            placeholder="Ask me anything or tap the mic..."
             className="min-h-[44px] max-h-[120px] resize-none text-sm rounded-xl border-border/60 bg-muted/30 focus:bg-background transition-colors py-3"
             rows={1}
           />
         </div>
+        <Button
+          variant={isRecording ? "destructive" : "outline"}
+          size="icon"
+          className="shrink-0 h-11 w-11 rounded-xl transition-all duration-200"
+          onClick={isRecording ? stopRecording : startRecording}
+          disabled={isLoading || showTranscriptConfirm}
+          title={isRecording ? "Stop recording" : "Voice input"}
+        >
+          {isRecording ? <MicOff className="w-4 h-4" /> : <Mic className="w-4 h-4" />}
+        </Button>
         <Button
           onClick={() => sendMessage(input)}
           disabled={!input.trim() || isLoading}
