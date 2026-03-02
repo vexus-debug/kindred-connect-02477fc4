@@ -2405,9 +2405,17 @@ serve(async (req) => {
   try {
     const { messages, context, orgId } = await req.json();
 
-    const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
-    if (!LOVABLE_API_KEY) {
-      return new Response(JSON.stringify({ error: "LOVABLE_API_KEY not configured" }), {
+    // Collect all available Gemini API keys for failover
+    const geminiKeys: string[] = [];
+    const key1 = Deno.env.get("GEMINI_API_KEY");
+    const key2 = Deno.env.get("GEMINI_API_KEY_2");
+    const key3 = Deno.env.get("GEMINI_API_KEY_3");
+    if (key1) geminiKeys.push(key1);
+    if (key2) geminiKeys.push(key2);
+    if (key3) geminiKeys.push(key3);
+
+    if (geminiKeys.length === 0) {
+      return new Response(JSON.stringify({ error: "No Gemini API keys configured. Add GEMINI_API_KEY, GEMINI_API_KEY_2, or GEMINI_API_KEY_3." }), {
         status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
@@ -2439,7 +2447,6 @@ serve(async (req) => {
     const openaiMessages: any[] = [
       { role: "system", content: systemPrompt },
       ...messages.map((msg: any) => {
-        // If content is an array (multimodal with images), pass as-is for vision
         if (Array.isArray(msg.content)) {
           return { role: msg.role, content: msg.content };
         }
@@ -2447,46 +2454,72 @@ serve(async (req) => {
       }),
     ];
 
-    const gatewayUrl = "https://ai.gateway.lovable.dev/v1/chat/completions";
+    const GEMINI_MODEL = "gemini-2.5-flash";
+
+    // Helper: call Gemini with failover across all available keys
+    async function callGeminiWithFailover(body: any): Promise<{ response: Response; keyIndex: number }> {
+      let lastError: string = "";
+      for (let i = 0; i < geminiKeys.length; i++) {
+        const apiKey = geminiKeys[i];
+        const url = `https://generativelanguage.googleapis.com/v1beta/openai/chat/completions`;
+        try {
+          const response = await fetch(url, {
+            method: "POST",
+            headers: {
+              Authorization: `Bearer ${apiKey}`,
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify(body),
+          });
+
+          if (response.ok) {
+            console.log(`Gemini call succeeded with key ${i + 1}`);
+            return { response, keyIndex: i };
+          }
+
+          const errText = await response.text();
+          console.error(`Gemini key ${i + 1} failed [${response.status}]: ${errText}`);
+          lastError = `${response.status}: ${errText}`;
+
+          // If rate limited (429) or server error (5xx), try next key
+          if (response.status === 429 || response.status >= 500) {
+            continue;
+          }
+
+          // For other errors (400, 401, 403), likely a bad key or bad request — try next key too
+          continue;
+        } catch (fetchErr) {
+          console.error(`Gemini key ${i + 1} network error:`, fetchErr);
+          lastError = fetchErr instanceof Error ? fetchErr.message : "Network error";
+          continue;
+        }
+      }
+      // All keys exhausted
+      throw new Error(`All ${geminiKeys.length} Gemini API keys failed. Last error: ${lastError}`);
+    }
+
     let rounds = 8;
 
     while (rounds-- > 0) {
       const body = {
-        model: "google/gemini-3-flash-preview",
+        model: GEMINI_MODEL,
         messages: openaiMessages,
         tools: openaiTools,
         temperature: 0.7,
         max_tokens: 8192,
       };
 
-      const response = await fetch(gatewayUrl, {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${LOVABLE_API_KEY}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(body),
-      });
-
-      if (!response.ok) {
-        const err = await response.text();
-        console.error("AI gateway error:", response.status, err);
-        if (response.status === 429) {
-          return new Response(JSON.stringify({ error: "Rate limited. Please try again in a moment." }), {
-            status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" },
-          });
-        }
-        if (response.status === 402) {
-          return new Response(JSON.stringify({ error: "AI credits exhausted. Please add credits to your workspace." }), {
-            status: 402, headers: { ...corsHeaders, "Content-Type": "application/json" },
-          });
-        }
-        return new Response(JSON.stringify({ error: `AI error: ${response.status}` }), {
-          status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      let result: any;
+      try {
+        const { response } = await callGeminiWithFailover(body);
+        result = await response.json();
+      } catch (e) {
+        console.error("All Gemini keys exhausted:", e);
+        return new Response(JSON.stringify({ error: e instanceof Error ? e.message : "AI service unavailable" }), {
+          status: 503, headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
 
-      const result = await response.json();
       const choice = result.choices?.[0];
       if (!choice) {
         return new Response(JSON.stringify({ error: "No AI response" }), {
