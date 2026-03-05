@@ -2453,7 +2453,7 @@ serve(async (req) => {
 
     while (rounds-- > 0) {
       const body = {
-        model: GEMINI_MODEL,
+        model: XAI_MODEL,
         messages: openaiMessages,
         tools: openaiTools,
         temperature: 0.7,
@@ -2462,10 +2462,31 @@ serve(async (req) => {
 
       let result: any;
       try {
-        const { response } = await callGeminiWithFailover(body);
+        const response = await fetch(XAI_URL, {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${XAI_API_KEY}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(body),
+        });
+
+        if (!response.ok) {
+          const errText = await response.text();
+          console.error(`xAI API error [${response.status}]: ${errText}`);
+          if (response.status === 429) {
+            return new Response(JSON.stringify({ error: "Rate limited by xAI. Please try again shortly." }), {
+              status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" },
+            });
+          }
+          return new Response(JSON.stringify({ error: `xAI API error: ${response.status}` }), {
+            status: 502, headers: { ...corsHeaders, "Content-Type": "application/json" },
+          });
+        }
+
         result = await response.json();
       } catch (e) {
-        console.error("All Gemini keys exhausted:", e);
+        console.error("xAI API call failed:", e);
         return new Response(JSON.stringify({ error: e instanceof Error ? e.message : "AI service unavailable" }), {
           status: 503, headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
