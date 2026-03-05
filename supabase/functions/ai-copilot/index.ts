@@ -2405,17 +2405,9 @@ serve(async (req) => {
   try {
     const { messages, context, orgId } = await req.json();
 
-    // Collect all available Gemini API keys for failover
-    const geminiKeys: string[] = [];
-    const key1 = Deno.env.get("GEMINI_API_KEY");
-    const key2 = Deno.env.get("GEMINI_API_KEY_2");
-    const key3 = Deno.env.get("GEMINI_API_KEY_3");
-    if (key1) geminiKeys.push(key1);
-    if (key2) geminiKeys.push(key2);
-    if (key3) geminiKeys.push(key3);
-
-    if (geminiKeys.length === 0) {
-      return new Response(JSON.stringify({ error: "No Gemini API keys configured. Add GEMINI_API_KEY, GEMINI_API_KEY_2, or GEMINI_API_KEY_3." }), {
+    const XAI_API_KEY = Deno.env.get("XAI_API_KEY");
+    if (!XAI_API_KEY) {
+      return new Response(JSON.stringify({ error: "XAI_API_KEY is not configured." }), {
         status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
@@ -2454,55 +2446,14 @@ serve(async (req) => {
       }),
     ];
 
-    const GEMINI_MODEL = "gemini-2.5-flash";
-
-    // Helper: call Gemini with failover across all available keys
-    async function callGeminiWithFailover(body: any): Promise<{ response: Response; keyIndex: number }> {
-      let lastError: string = "";
-      for (let i = 0; i < geminiKeys.length; i++) {
-        const apiKey = geminiKeys[i];
-        const url = `https://generativelanguage.googleapis.com/v1beta/openai/chat/completions`;
-        try {
-          const response = await fetch(url, {
-            method: "POST",
-            headers: {
-              Authorization: `Bearer ${apiKey}`,
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify(body),
-          });
-
-          if (response.ok) {
-            console.log(`Gemini call succeeded with key ${i + 1}`);
-            return { response, keyIndex: i };
-          }
-
-          const errText = await response.text();
-          console.error(`Gemini key ${i + 1} failed [${response.status}]: ${errText}`);
-          lastError = `${response.status}: ${errText}`;
-
-          // If rate limited (429) or server error (5xx), try next key
-          if (response.status === 429 || response.status >= 500) {
-            continue;
-          }
-
-          // For other errors (400, 401, 403), likely a bad key or bad request — try next key too
-          continue;
-        } catch (fetchErr) {
-          console.error(`Gemini key ${i + 1} network error:`, fetchErr);
-          lastError = fetchErr instanceof Error ? fetchErr.message : "Network error";
-          continue;
-        }
-      }
-      // All keys exhausted
-      throw new Error(`All ${geminiKeys.length} Gemini API keys failed. Last error: ${lastError}`);
-    }
+    const XAI_MODEL = "grok-4-1-fast-reasoning";
+    const XAI_URL = "https://api.x.ai/v1/chat/completions";
 
     let rounds = 8;
 
     while (rounds-- > 0) {
       const body = {
-        model: GEMINI_MODEL,
+        model: XAI_MODEL,
         messages: openaiMessages,
         tools: openaiTools,
         temperature: 0.7,
@@ -2511,10 +2462,31 @@ serve(async (req) => {
 
       let result: any;
       try {
-        const { response } = await callGeminiWithFailover(body);
+        const response = await fetch(XAI_URL, {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${XAI_API_KEY}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(body),
+        });
+
+        if (!response.ok) {
+          const errText = await response.text();
+          console.error(`xAI API error [${response.status}]: ${errText}`);
+          if (response.status === 429) {
+            return new Response(JSON.stringify({ error: "Rate limited by xAI. Please try again shortly." }), {
+              status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" },
+            });
+          }
+          return new Response(JSON.stringify({ error: `xAI API error: ${response.status}` }), {
+            status: 502, headers: { ...corsHeaders, "Content-Type": "application/json" },
+          });
+        }
+
         result = await response.json();
       } catch (e) {
-        console.error("All Gemini keys exhausted:", e);
+        console.error("xAI API call failed:", e);
         return new Response(JSON.stringify({ error: e instanceof Error ? e.message : "AI service unavailable" }), {
           status: 503, headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
