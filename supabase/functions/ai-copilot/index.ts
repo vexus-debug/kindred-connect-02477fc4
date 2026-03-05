@@ -2405,17 +2405,9 @@ serve(async (req) => {
   try {
     const { messages, context, orgId } = await req.json();
 
-    // Collect all available Gemini API keys for failover
-    const geminiKeys: string[] = [];
-    const key1 = Deno.env.get("GEMINI_API_KEY");
-    const key2 = Deno.env.get("GEMINI_API_KEY_2");
-    const key3 = Deno.env.get("GEMINI_API_KEY_3");
-    if (key1) geminiKeys.push(key1);
-    if (key2) geminiKeys.push(key2);
-    if (key3) geminiKeys.push(key3);
-
-    if (geminiKeys.length === 0) {
-      return new Response(JSON.stringify({ error: "No Gemini API keys configured. Add GEMINI_API_KEY, GEMINI_API_KEY_2, or GEMINI_API_KEY_3." }), {
+    const XAI_API_KEY = Deno.env.get("XAI_API_KEY");
+    if (!XAI_API_KEY) {
+      return new Response(JSON.stringify({ error: "XAI_API_KEY is not configured." }), {
         status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
