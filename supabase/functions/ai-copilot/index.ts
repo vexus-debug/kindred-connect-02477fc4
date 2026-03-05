@@ -2446,49 +2446,8 @@ serve(async (req) => {
       }),
     ];
 
-    const GEMINI_MODEL = "gemini-2.5-flash";
-
-    // Helper: call Gemini with failover across all available keys
-    async function callGeminiWithFailover(body: any): Promise<{ response: Response; keyIndex: number }> {
-      let lastError: string = "";
-      for (let i = 0; i < geminiKeys.length; i++) {
-        const apiKey = geminiKeys[i];
-        const url = `https://generativelanguage.googleapis.com/v1beta/openai/chat/completions`;
-        try {
-          const response = await fetch(url, {
-            method: "POST",
-            headers: {
-              Authorization: `Bearer ${apiKey}`,
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify(body),
-          });
-
-          if (response.ok) {
-            console.log(`Gemini call succeeded with key ${i + 1}`);
-            return { response, keyIndex: i };
-          }
-
-          const errText = await response.text();
-          console.error(`Gemini key ${i + 1} failed [${response.status}]: ${errText}`);
-          lastError = `${response.status}: ${errText}`;
-
-          // If rate limited (429) or server error (5xx), try next key
-          if (response.status === 429 || response.status >= 500) {
-            continue;
-          }
-
-          // For other errors (400, 401, 403), likely a bad key or bad request — try next key too
-          continue;
-        } catch (fetchErr) {
-          console.error(`Gemini key ${i + 1} network error:`, fetchErr);
-          lastError = fetchErr instanceof Error ? fetchErr.message : "Network error";
-          continue;
-        }
-      }
-      // All keys exhausted
-      throw new Error(`All ${geminiKeys.length} Gemini API keys failed. Last error: ${lastError}`);
-    }
+    const XAI_MODEL = "grok-4-1-fast-reasoning";
+    const XAI_URL = "https://api.x.ai/v1/chat/completions";
 
     let rounds = 8;
 
